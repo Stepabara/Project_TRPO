@@ -190,13 +190,6 @@ const SERVICES = [
         description: 'Доступ к каталогу игр',
         price: 3.99,
         category: 'развлечения'
-    },
-    {
-        id: 'Мояк',
-        name: 'Мояк',
-        description: 'Моячек после звонка',
-        price: 0,
-        category: 'Звонок'
     }
 ];
 
@@ -213,36 +206,6 @@ const NEWS = [
         title: 'Бонус за пополнение',
         date: '10 декабря 2024',
         content: 'Пополните баланс на 20+ BYN и получите бонус 10% к следующему пополнению'
-    },
-    {
-        id: 3,
-        title: "Новая система реферальных бонусов",
-        date: "15 декабря 2024",
-        content: "Пригласите друга и получите 15 BYN на счет при его первой покупке от 50 BYN"
-    },
-    {
-        id: 4,
-        title: "Бонус за пополнение",
-        date: "10 декабря 2024",
-        content: "Пополните баланс на 20+ BYN и получите бонус 10% к следующему пополнению"
-    },
-    {
-        id: 5,
-        title: "Сезонная акция - Зимняя распродажа",
-        date: "5 декабря 2024",
-        content: "Скидка 25% на все услуги премиум-категории до конца декабря"
-    },
-    {
-        id: 6,
-        title: "Запуск мобильного приложения",
-        date: "1 декабря 2024",
-        content: "Теперь вы можете пользоваться нашим сервисом через новое мобильное приложение"
-    },
-    {
-        id: 7,
-        title: "Добавлены новые способы оплаты",
-        date: "28 ноября 2024",
-        content: "Теперь доступна оплата через криптовалюту и электронные кошельки"
     }
 ];
 
@@ -273,12 +236,93 @@ async function checkAdmin() {
                 phone: '+375256082909',
                 password: hashedPassword,
                 role: 'admin',
-                tariff: TARIFFS.standard
+                tariff: TARIFFS.standard,
+                registrationDate: new Date()
             });
             console.log('✅ Администратор создан');
         }
     } catch (error) {
         console.error('Ошибка создания администратора:', error);
+    }
+}
+
+// Создание тестовых данных при запуске
+async function createTestData() {
+    try {
+        const userCount = await User.countDocuments({ role: 'client' });
+        if (userCount === 0) {
+            console.log('📝 Создание тестовых данных...');
+            
+            const testUsers = [
+                {
+                    fio: 'Иванов Иван Иванович',
+                    phone: '+375291234567',
+                    password: '123123',
+                    balance: 150.50,
+                    tariff: TARIFFS.standard
+                },
+                {
+                    fio: 'Петров Петр Петрович', 
+                    phone: '+375292345678',
+                    password: '123123',
+                    balance: -25.00,
+                    tariff: TARIFFS['plus+']
+                },
+                {
+                    fio: 'Сидорова Анна Михайловна',
+                    phone: '+375293456789',
+                    password: '123123',
+                    balance: 75.00,
+                    tariff: TARIFFS['Super plus']
+                }
+            ];
+            
+            for (const userData of testUsers) {
+                const hashedPassword = await bcrypt.hash(userData.password, 10);
+                
+                const user = new User({
+                    fio: userData.fio,
+                    phone: userData.phone,
+                    password: hashedPassword,
+                    balance: userData.balance,
+                    tariff: userData.tariff,
+                    role: 'client',
+                    registrationDate: new Date()
+                });
+                
+                await user.save();
+                
+                // Создаем тестовые звонки
+                const call = new Call({
+                    userId: user._id,
+                    phone: user.phone,
+                    callType: 'local',
+                    number: '+375291111111',
+                    duration: Math.floor(Math.random() * 30) + 1,
+                    cost: Math.random() * 5,
+                    date: new Date(),
+                    month: new Date().toISOString().slice(0, 7)
+                });
+                await call.save();
+                
+                // Создаем тестовые платежи
+                if (userData.balance > 0) {
+                    const payment = new Payment({
+                        userId: user._id,
+                        phone: user.phone,
+                        amount: userData.balance,
+                        method: 'Банковская карта',
+                        type: 'topup',
+                        date: new Date()
+                    });
+                    await payment.save();
+                }
+            }
+            
+            console.log('✅ Тестовые данные созданы');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка создания тестовых данных:', error);
     }
 }
 
@@ -374,7 +418,7 @@ app.post('/api/login', checkDatabaseConnection, async (req, res) => {
 // Регистрация
 app.post('/api/register', checkDatabaseConnection, async (req, res) => {
     try {
-        const { fio, phone, password } = req.body;
+        const { fio, phone, password, balance = 0, tariff = 'standard' } = req.body;
 
         if (!fio || !phone || !password) {
             return res.json({ 
@@ -392,36 +436,44 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Получаем выбранный тариф
+        const selectedTariff = TARIFFS[tariff] || TARIFFS.standard;
 
         const newUser = new User({
             fio,
             phone,
             password: hashedPassword,
-            tariff: TARIFFS.standard
+            balance: parseFloat(balance),
+            tariff: selectedTariff,
+            role: 'client',
+            registrationDate: new Date() // Явно устанавливаем дату регистрации
         });
 
         await newUser.save();
 
-        const userData = {
-            fio: newUser.fio,
-            phone: newUser.phone,
-            role: newUser.role,
-            balance: newUser.balance,
-            creditLimit: newUser.creditLimit,
-            status: newUser.status,
-            tariff: {
-                ...newUser.tariff.toObject(),
-                features: TARIFFS.standard.features
-            },
-            registrationDate: newUser.registrationDate.toLocaleDateString('ru-RU'),
-            debt: newUser.debt
-        };
+        // Если указан начальный баланс, создаем запись о платеже
+        if (balance > 0) {
+            const payment = new Payment({
+                userId: newUser._id,
+                phone: newUser.phone,
+                amount: parseFloat(balance),
+                method: 'Начальный баланс',
+                type: 'topup'
+            });
+            await payment.save();
+        }
 
         res.json({ 
             success: true, 
             message: 'Регистрация успешна!',
-            redirect: '/client',
-            user: userData
+            user: {
+                fio: newUser.fio,
+                phone: newUser.phone,
+                balance: newUser.balance,
+                tariff: newUser.tariff,
+                registrationDate: newUser.registrationDate.toLocaleDateString('ru-RU')
+            }
         });
 
     } catch (error) {
@@ -1443,42 +1495,74 @@ app.get('/api/user/debt', checkDatabaseConnection, async (req, res) => {
 // Списание абонентской платы
 app.post('/api/admin/charge-subscription', checkDatabaseConnection, async (req, res) => {
     try {
-        const users = await User.find({ role: 'client' });
+        const users = await User.find({ role: 'client', status: 'active' });
         
-        const results = [];
-        
-        for (const user of users) {
-            const oldBalance = user.balance;
-            user.balance -= user.tariff.price;
-            
-            if (user.balance < 0) {
-                user.debt = Math.abs(user.balance);
-            }
-            
-            await user.save();
-            
-            const payment = new Payment({
-                userId: user._id,
-                phone: user.phone,
-                amount: -user.tariff.price,
-                method: 'Автосписание',
-                type: 'subscription'
-            });
-            await payment.save();
-            
-            results.push({
-                user: user.fio,
-                phone: user.phone,
-                amount: user.tariff.price.toFixed(2) + ' BYN',
-                oldBalance: oldBalance.toFixed(2) + ' BYN',
-                newBalance: user.balance.toFixed(2) + ' BYN',
-                debt: user.debt.toFixed(2) + ' BYN'
+        if (users.length === 0) {
+            return res.json({
+                success: true,
+                message: 'Нет активных клиентов для списания',
+                results: []
             });
         }
         
+        const results = [];
+        const currentDate = new Date();
+        
+        for (const user of users) {
+            try {
+                const oldBalance = user.balance;
+                const subscriptionAmount = user.tariff?.price || 19.99;
+                
+                // Списание абонентской платы
+                user.balance -= subscriptionAmount;
+                
+                // Обновляем долг если баланс отрицательный
+                if (user.balance < 0) {
+                    user.debt = Math.abs(user.balance);
+                }
+                
+                await user.save();
+                
+                // Создаем запись о платеже
+                const payment = new Payment({
+                    userId: user._id,
+                    phone: user.phone,
+                    amount: -subscriptionAmount,
+                    method: 'Автосписание',
+                    type: 'subscription',
+                    date: currentDate
+                });
+                await payment.save();
+                
+                results.push({
+                    user: user.fio,
+                    phone: user.phone,
+                    amount: subscriptionAmount.toFixed(2) + ' BYN',
+                    oldBalance: oldBalance.toFixed(2) + ' BYN',
+                    newBalance: user.balance.toFixed(2) + ' BYN',
+                    debt: (user.debt || 0).toFixed(2) + ' BYN',
+                    status: 'Успешно'
+                });
+                
+            } catch (userError) {
+                console.error(`Ошибка списания для пользователя ${user.phone}:`, userError);
+                results.push({
+                    user: user.fio,
+                    phone: user.phone,
+                    amount: '0 BYN',
+                    oldBalance: user.balance.toFixed(2) + ' BYN',
+                    newBalance: user.balance.toFixed(2) + ' BYN',
+                    debt: (user.debt || 0).toFixed(2) + ' BYN',
+                    status: 'Ошибка'
+                });
+            }
+        }
+        
+        const successfulCharges = results.filter(r => r.status === 'Успешно').length;
+        
         res.json({
             success: true,
-            message: `Абонентская плата списана с ${results.length} пользователей`,
+            message: `Абонентская плата списана с ${successfulCharges} из ${users.length} пользователей`,
             results: results
         });
         
@@ -1491,25 +1575,66 @@ app.post('/api/admin/charge-subscription', checkDatabaseConnection, async (req, 
     }
 });
 
-// API для админ-панели
+// API для админ-панели - получение всех клиентов
 app.get('/api/admin/clients', checkDatabaseConnection, async (req, res) => {
     try {
-        const clients = await User.find({ role: 'client' })
-            .select('fio phone balance debt status tariff createdAt')
-            .sort({ createdAt: -1 })
+        const { search, status, tariff, page = 1, limit = 50 } = req.query;
+        
+        let filter = { role: 'client' };
+        
+        // Поиск по ФИО или телефону
+        if (search) {
+            filter.$or = [
+                { fio: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Фильтр по статусу
+        if (status === 'debtor') {
+            filter.debt = { $gt: 0 };
+        } else if (status === 'active') {
+            filter.balance = { $gte: 0 };
+        }
+        
+        // Фильтр по тарифу
+        if (tariff) {
+            filter['tariff.id'] = tariff;
+        }
+        
+        const clients = await User.find(filter)
+            .select('fio phone balance debt status tariff registrationDate')
+            .sort({ registrationDate: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
             .lean();
         
+        // Форматируем данные для фронтенда
         const clientsWithFormattedData = clients.map(client => ({
-            ...client,
-            balance: client.balance.toFixed(2) + ' BYN',
-            debt: client.debt.toFixed(2) + ' BYN',
-            'tariff.price': client.tariff.price.toFixed(2) + ' BYN'
+            _id: client._id,
+            fio: client.fio,
+            phone: client.phone,
+            balance: client.balance?.toFixed(2) + ' BYN',
+            debt: (client.debt || 0).toFixed(2) + ' BYN',
+            status: client.status,
+            tariff: {
+                id: client.tariff?.id || 'standard',
+                name: client.tariff?.name || 'Стандарт',
+                price: client.tariff?.price || 19.99
+            },
+            registrationDate: client.registrationDate ? client.registrationDate.toLocaleDateString('ru-RU') : 'Не указана'
         }));
+        
+        const total = await User.countDocuments(filter);
         
         res.json({
             success: true,
-            clients: clientsWithFormattedData
+            clients: clientsWithFormattedData,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            total
         });
+        
     } catch (error) {
         console.error('❌ Ошибка получения клиентов:', error);
         res.status(500).json({ 
@@ -1519,17 +1644,308 @@ app.get('/api/admin/clients', checkDatabaseConnection, async (req, res) => {
     }
 });
 
+// Удаление пользователя (админ)
+app.delete('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        console.log(`🗑️ Запрос удаления пользователя: ${id}`);
+        
+        // Находим пользователя
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+        
+        // Нельзя удалить администратора
+        if (user.role === 'admin') {
+            return res.status(403).json({ 
+                success: false,
+                error: 'Нельзя удалить администратора' 
+            });
+        }
+        
+        // Удаляем связанные данные пользователя
+        await Promise.all([
+            Call.deleteMany({ userId: id }),
+            Payment.deleteMany({ userId: id }),
+            UserService.deleteMany({ userId: id })
+        ]);
+        
+        // Удаляем самого пользователя
+        await User.findByIdAndDelete(id);
+        
+        console.log(`✅ Пользователь ${user.fio} (${user.phone}) удален`);
+        
+        res.json({ 
+            success: true, 
+            message: `Пользователь ${user.fio} успешно удален`,
+            deletedUser: {
+                fio: user.fio,
+                phone: user.phone
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка удаления пользователя:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка удаления пользователя: ' + error.message 
+        });
+    }
+});
+
+// Массовое удаление пользователей (админ)
+app.post('/api/admin/clients/bulk-delete', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { ids } = req.body;
+        
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указаны ID пользователей для удаления' 
+            });
+        }
+        
+        console.log(`🗑️ Массовое удаление пользователей: ${ids.length} пользователей`);
+        
+        // Находим пользователей
+        const users = await User.find({ _id: { $in: ids }, role: 'client' });
+        
+        if (users.length === 0) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователи не найдены' 
+            });
+        }
+        
+        const results = [];
+        
+        for (const user of users) {
+            try {
+                // Удаляем связанные данные пользователя
+                await Promise.all([
+                    Call.deleteMany({ userId: user._id }),
+                    Payment.deleteMany({ userId: user._id }),
+                    UserService.deleteMany({ userId: user._id })
+                ]);
+                
+                // Удаляем самого пользователя
+                await User.findByIdAndDelete(user._id);
+                
+                results.push({
+                    user: user.fio,
+                    phone: user.phone,
+                    status: 'Удален'
+                });
+                
+            } catch (userError) {
+                console.error(`Ошибка удаления пользователя ${user.phone}:`, userError);
+                results.push({
+                    user: user.fio,
+                    phone: user.phone,
+                    status: 'Ошибка: ' + userError.message
+                });
+            }
+        }
+        
+        const successfulDeletes = results.filter(r => r.status === 'Удален').length;
+        
+        res.json({
+            success: true,
+            message: `Удалено ${successfulDeletes} из ${users.length} пользователей`,
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка массового удаления пользователей:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка массового удаления пользователей' 
+        });
+    }
+});
+
+// Получение детальной статистики для админ-панели
+app.get('/api/admin/statistics', checkDatabaseConnection, async (req, res) => {
+    try {
+        const totalClients = await User.countDocuments({ role: 'client' });
+        const activeClients = await User.countDocuments({ 
+            role: 'client', 
+            balance: { $gte: 0 } 
+        });
+        const debtors = await User.countDocuments({ 
+            role: 'client', 
+            debt: { $gt: 0 } 
+        });
+        
+        const totalDebtResult = await User.aggregate([
+            { $match: { role: 'client', debt: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$debt' } } }
+        ]);
+        
+        const totalDebt = totalDebtResult.length > 0 ? totalDebtResult[0].total : 0;
+        
+        // Статистика по тарифам
+        const tariffStats = await User.aggregate([
+            { $match: { role: 'client' } },
+            { $group: { 
+                _id: '$tariff.id', 
+                count: { $sum: 1 },
+                totalRevenue: { $sum: '$tariff.price' }
+            } }
+        ]);
+        
+        res.json({
+            success: true,
+            statistics: {
+                totalClients,
+                activeClients,
+                debtors,
+                totalDebt: totalDebt.toFixed(2),
+                tariffStats
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения статистики:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения статистики' 
+        });
+    }
+});
+
+// Создание тестовых данных (для разработки)
+app.post('/api/admin/test-data', checkDatabaseConnection, async (req, res) => {
+    try {
+        const testUsers = [
+            {
+                fio: 'Иванов Иван Иванович',
+                phone: '+375291234567',
+                password: '123123',
+                balance: 150.50,
+                tariff: TARIFFS.standard
+            },
+            {
+                fio: 'Петров Петр Петрович', 
+                phone: '+375292345678',
+                password: '123123',
+                balance: -25.00,
+                tariff: TARIFFS['plus+']
+            },
+            {
+                fio: 'Сидорова Анна Михайловна',
+                phone: '+375293456789',
+                password: '123123',
+                balance: 75.00,
+                tariff: TARIFFS['Super plus']
+            }
+        ];
+        
+        const createdUsers = [];
+        
+        for (const userData of testUsers) {
+            try {
+                // Проверяем, существует ли пользователь
+                const existingUser = await User.findOne({ phone: userData.phone });
+                if (existingUser) {
+                    createdUsers.push({
+                        user: userData.fio,
+                        phone: userData.phone,
+                        status: 'Уже существует'
+                    });
+                    continue;
+                }
+                
+                // Хешируем пароль
+                const hashedPassword = await bcrypt.hash(userData.password, 10);
+                
+                // Создаем пользователя
+                const user = new User({
+                    fio: userData.fio,
+                    phone: userData.phone,
+                    password: hashedPassword,
+                    balance: userData.balance,
+                    tariff: userData.tariff,
+                    role: 'client',
+                    registrationDate: new Date()
+                });
+                
+                await user.save();
+                
+                // Создаем тестовые звонки
+                const call = new Call({
+                    userId: user._id,
+                    phone: user.phone,
+                    callType: 'local',
+                    number: '+375291111111',
+                    duration: Math.floor(Math.random() * 30) + 1,
+                    cost: Math.random() * 5,
+                    date: new Date(),
+                    month: new Date().toISOString().slice(0, 7)
+                });
+                await call.save();
+                
+                // Создаем тестовые платежи
+                if (userData.balance > 0) {
+                    const payment = new Payment({
+                        userId: user._id,
+                        phone: user.phone,
+                        amount: userData.balance,
+                        method: 'Банковская карта',
+                        type: 'topup',
+                        date: new Date()
+                    });
+                    await payment.save();
+                }
+                
+                createdUsers.push({
+                    user: userData.fio,
+                    phone: userData.phone,
+                    status: 'Создан'
+                });
+                
+            } catch (userError) {
+                console.error(`Ошибка создания пользователя ${userData.phone}:`, userError);
+                createdUsers.push({
+                    user: userData.fio,
+                    phone: userData.phone,
+                    status: 'Ошибка: ' + userError.message
+                });
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: 'Тестовые данные созданы',
+            results: createdUsers
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка создания тестовых данных:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка создания тестовых данных' 
+        });
+    }
+});
+
 // Инициализация приложения
 async function initializeApp() {
     try {
         await connectToDatabase();
         await checkAdmin();
+        await createTestData();
         
         app.listen(PORT, () => {
             console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
             console.log(`📞 Мобильный оператор - Учет звонков`);
-            console.log(`💰 Все цены в белорусских рублях (BYN)`);
             console.log(`✅ Готов к работе`);
+            console.log(`👤 Администратор: +375256082909 / 123123`);
         });
     } catch (error) {
         console.error('❌ Ошибка инициализации приложения:', error);
