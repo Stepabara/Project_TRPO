@@ -38,7 +38,7 @@ async function connectToDatabase() {
     }
 }
 
-// Схема пользователя
+// Схема пользователя (обновленная)
 const userSchema = new mongoose.Schema({
     fio: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
@@ -64,6 +64,7 @@ const userSchema = new mongoose.Schema({
 // Схема звонков
 const callSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userFio: { type: String, required: true },
     phone: { type: String, required: true },
     callType: { type: String, enum: ['local', 'international'], required: true },
     number: { type: String, required: true },
@@ -73,31 +74,23 @@ const callSchema = new mongoose.Schema({
     month: { type: String, required: true }
 });
 
-// Схема платежей
+// Схема платежей (обновленная)
 const paymentSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     phone: { type: String, required: true },
     amount: { type: Number, required: true },
     method: { type: String, required: true },
     date: { type: Date, default: Date.now },
-    type: { type: String, enum: ['topup', 'subscription', 'call_payment'], default: 'topup' }
-});
-
-// Схема услуг пользователя
-const userServiceSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    phone: { type: String, required: true },
-    serviceId: { type: String, required: true },
-    serviceName: { type: String, required: true },
-    active: { type: Boolean, default: false },
-    activationDate: { type: Date },
-    deactivationDate: { type: Date }
+    type: { 
+        type: String, 
+        enum: ['topup', 'subscription', 'call_payment', 'tariff_change', 'withdrawal'], 
+        default: 'topup' 
+    }
 });
 
 const User = mongoose.model('User', userSchema);
 const Call = mongoose.model('Call', callSchema);
 const Payment = mongoose.model('Payment', paymentSchema);
-const UserService = mongoose.model('UserService', userServiceSchema);
 
 // Тарифы в белорусских рублях
 const TARIFFS = {
@@ -109,14 +102,7 @@ const TARIFFS = {
         internetGB: 15,
         smsCount: 100,
         minutePrice: 0.10,
-        internationalMinutePrice: 1.50,
-        features: [
-            '300 минут местных звонков', 
-            '15 ГБ интернета',
-            '100 SMS сообщений',
-            'Местные звонки сверх лимита: 0.10 BYN/мин', 
-            'Международные звонки: 1.50 BYN/мин'
-        ]
+        internationalMinutePrice: 1.50
     },
     'plus+': { 
         id: 'plus+', 
@@ -126,14 +112,7 @@ const TARIFFS = {
         internetGB: 50,
         smsCount: 300,
         minutePrice: 0.15,
-        internationalMinutePrice: 2.0,
-        features: [
-            '300 минут местных звонков', 
-            '50 ГБ интернета',
-            '300 SMS сообщений',
-            'Местные звонки сверх лимита: 0.10 BYN/мин', 
-            'Международные звонки: 2.0 BYN/мин'
-        ]
+        internationalMinutePrice: 2.0
     },
     'Super plus': { 
         id: 'Super plus', 
@@ -143,113 +122,25 @@ const TARIFFS = {
         internetGB: 100,
         smsCount: 600,
         minutePrice: 0.20,
-        internationalMinutePrice: 1.50,
-        features: [
-            '600 минут местных звонков', 
-            '100 ГБ интернета',
-            '600 SMS сообщений',
-            'Местные звонки сверх лимита: 0.10 BYN/мин', 
-            'Международные звонки: 1.50 BYN/мин'
-        ]
+        internationalMinutePrice: 1.50
     }
 };
-
-// Услуги в белорусских рублях
-const SERVICES = [
-    {
-        id: 'antivirus',
-        name: 'Антивирус',
-        description: 'Защита устройства от вирусов и вредоносных программ',
-        price: 2.99,
-        category: 'безопасность'
-    },
-    {
-        id: 'music',
-        name: 'Музыка',
-        description: 'Стриминг музыки без рекламы и ограничений',
-        price: 4.99,
-        category: 'развлечения'
-    },
-    {
-        id: 'cloud',
-        name: 'Облако',
-        description: '50 ГБ облачного хранилища для файлов',
-        price: 1.99,
-        category: 'хранилище'
-    },
-    {
-        id: 'tv',
-        name: 'МТС TV',
-        description: 'Доступ к 100+ телеканалам',
-        price: 7.99,
-        category: 'развлечения'
-    },
-    {
-        id: 'games',
-        name: 'Игровая подписка',
-        description: 'Доступ к каталогу игр',
-        price: 3.99,
-        category: 'развлечения'
-    },
-    {
-        id: 'Мояк',
-        name: 'Мояк',
-        description: 'Моячек после звонка',
-        price: 0,
-        category: 'Звонок'
-    }
-];
-
-// Новости
-const NEWS = [
-    {
-        id: 1,
-        title: 'Новый тариф "Безлимитный"',
-        date: '15 декабря 2024',
-        content: 'Теперь доступен новый тариф с безлимитным интернетом и звонками по всей стране всего за 29.99 BYN/мес'
-    },
-    {
-        id: 2,
-        title: 'Бонус за пополнение',
-        date: '10 декабря 2024',
-        contet: 'Пополните баланс на 20+ BYN и получите бонус 10% к следующему пополнению'
-        },
-    {
-        id: 3,
-        title: "Новая система реферальных бонусов",
-        date: "15 декабря 2024",
-        content: "Пригласите друга и получите 15 BYN на счет при его первой покупке от 50 BYN"
-    },
-    {
-        id: 4,
-        title: "Бонус за пополнение",
-        date: "10 декабря 2024",
-        content: "Пополните баланс на 20+ BYN и получите бонус 10% к следующему пополнению"
-    },
-    {
-        id: 5,
-        title: "Сезонная акция - Зимняя распродажа",
-        date: "5 декабря 2024",
-        content: "Скидка 25% на все услуги премиум-категории до конца декабря"
-    },
-    {
-        id: 6,
-        title: "Запуск мобильного приложения",
-        date: "1 декабря 2024",
-        content: "Теперь вы можете пользоваться нашим сервисом через новое мобильное приложение"
-    },
-    {
-        id: 7,
-        title: "Добавлены новые способы оплаты",
-        date: "28 ноября 2024",
-        content: "Теперь доступна оплата через криптовалюту и электронные кошельки"
-    }
-];
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
+
+// CORS middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 // Проверка подключения к БД
 function checkDatabaseConnection(req, res, next) {
@@ -274,6 +165,7 @@ async function checkAdmin() {
                 password: hashedPassword,
                 role: 'admin',
                 tariff: TARIFFS.standard,
+                creditLimit: 100,
                 registrationDate: new Date()
             });
             console.log('✅ Администратор создан');
@@ -283,7 +175,7 @@ async function checkAdmin() {
     }
 }
 
-// Создание тестовых данных при запуске
+// Создание тестовых данных при запуске (обновленное)
 async function createTestData() {
     try {
         const userCount = await User.countDocuments({ role: 'client' });
@@ -296,21 +188,24 @@ async function createTestData() {
                     phone: '+375291234567',
                     password: '123123',
                     balance: 150.50,
-                    tariff: TARIFFS.standard
+                    tariff: TARIFFS.standard,
+                    creditLimit: 50
                 },
                 {
                     fio: 'Петров Петр Петрович', 
                     phone: '+375292345678',
                     password: '123123',
                     balance: -25.00,
-                    tariff: TARIFFS['plus+']
+                    tariff: TARIFFS['plus+'],
+                    creditLimit: 50
                 },
                 {
                     fio: 'Сидорова Анна Михайловна',
                     phone: '+375293456789',
                     password: '123123',
                     balance: 75.00,
-                    tariff: TARIFFS['Super plus']
+                    tariff: TARIFFS['Super plus'],
+                    creditLimit: 50
                 }
             ];
             
@@ -323,6 +218,7 @@ async function createTestData() {
                     password: hashedPassword,
                     balance: userData.balance,
                     tariff: userData.tariff,
+                    creditLimit: userData.creditLimit,
                     role: 'client',
                     registrationDate: new Date()
                 });
@@ -332,6 +228,7 @@ async function createTestData() {
                 // Создаем тестовые звонки
                 const call = new Call({
                     userId: user._id,
+                    userFio: user.fio,
                     phone: user.phone,
                     callType: 'local',
                     number: '+375291111111',
@@ -341,19 +238,6 @@ async function createTestData() {
                     month: new Date().toISOString().slice(0, 7)
                 });
                 await call.save();
-                
-                // Создаем тестовые платежи
-                if (userData.balance > 0) {
-                    const payment = new Payment({
-                        userId: user._id,
-                        phone: user.phone,
-                        amount: userData.balance,
-                        method: 'Банковская карта',
-                        type: 'topup',
-                        date: new Date()
-                    });
-                    await payment.save();
-                }
             }
             
             console.log('✅ Тестовые данные созданы');
@@ -363,7 +247,8 @@ async function createTestData() {
     }
 }
 
-// Роуты
+// ========== ОСНОВНЫЕ РОУТЫ ==========
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
@@ -404,25 +289,6 @@ app.post('/api/login', checkDatabaseConnection, async (req, res) => {
             });
         }
 
-        // Форматируем данные тарифа
-        const tariffData = {
-            id: user.tariff.id || 'standard',
-            name: user.tariff.name || 'Стандарт',
-            price: user.tariff.price || 19.99,
-            includedMinutes: user.tariff.includedMinutes || 300,
-            internetGB: user.tariff.internetGB || 15,
-            smsCount: user.tariff.smsCount || 100,
-            minutePrice: user.tariff.minutePrice || 0.10,
-            internationalMinutePrice: user.tariff.internationalMinutePrice || 1.50,
-            features: TARIFFS[user.tariff.id]?.features || [
-                '300 минут местных звонков',
-                '15 ГБ интернета',
-                '100 SMS сообщений',
-                'Местные звонки сверх лимита: 0.10 BYN/мин',
-                'Международные звонки: 1.50 BYN/мин'
-            ]
-        };
-
         const userData = {
             fio: user.fio,
             phone: user.phone,
@@ -430,7 +296,7 @@ app.post('/api/login', checkDatabaseConnection, async (req, res) => {
             balance: user.balance || 0,
             creditLimit: user.creditLimit || 50,
             status: user.status || 'active',
-            tariff: tariffData,
+            tariff: user.tariff,
             registrationDate: user.registrationDate.toLocaleDateString('ru-RU'),
             debt: user.debt || 0
         };
@@ -452,7 +318,7 @@ app.post('/api/login', checkDatabaseConnection, async (req, res) => {
     }
 });
 
-// Регистрация
+// Регистрация (добавление клиента)
 app.post('/api/register', checkDatabaseConnection, async (req, res) => {
     try {
         const { fio, phone, password, balance = 0, tariff = 'standard' } = req.body;
@@ -483,8 +349,9 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
             password: hashedPassword,
             balance: parseFloat(balance),
             tariff: selectedTariff,
+            creditLimit: 50,
             role: 'client',
-            registrationDate: new Date() // Явно устанавливаем дату регистрации
+            registrationDate: new Date()
         });
 
         await newUser.save();
@@ -503,12 +370,13 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
 
         res.json({ 
             success: true, 
-            message: 'Регистрация успешна!',
+            message: 'Клиент успешно добавлен!',
             user: {
                 fio: newUser.fio,
                 phone: newUser.phone,
                 balance: newUser.balance,
                 tariff: newUser.tariff,
+                creditLimit: newUser.creditLimit,
                 registrationDate: newUser.registrationDate.toLocaleDateString('ru-RU')
             }
         });
@@ -518,191 +386,6 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
         res.json({ 
             success: false, 
             message: 'Ошибка сервера' 
-        });
-    }
-});
-
-// Получение данных пользователя
-app.get('/api/user/data', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-
-        console.log(`📞 Запрос данных пользователя: ${phone}`);
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-        
-        // Форматируем данные тарифа
-        const tariffData = {
-            id: user.tariff.id || 'standard',
-            name: user.tariff.name || 'Стандарт',
-            price: user.tariff.price || 19.99,
-            includedMinutes: user.tariff.includedMinutes || 300,
-            internetGB: user.tariff.internetGB || 15,
-            smsCount: user.tariff.smsCount || 100,
-            minutePrice: user.tariff.minutePrice || 0.10,
-            internationalMinutePrice: user.tariff.internationalMinutePrice || 1.50,
-            features: TARIFFS[user.tariff.id]?.features || [
-                '300 минут местных звонков',
-                '15 ГБ интернета',
-                '100 SMS сообщений',
-                'Местные звонки сверх лимита: 0.10 BYN/мин',
-                'Международные звонки: 1.50 BYN/мин'
-            ]
-        };
-        
-        const responseData = {
-            success: true,
-            fio: user.fio,
-            phone: user.phone,
-            balance: user.balance || 0,
-            creditLimit: user.creditLimit || 50,
-            status: user.status || 'active',
-            tariff: tariffData,
-            registrationDate: user.registrationDate.toLocaleDateString('ru-RU'),
-            debt: user.debt || 0
-        };
-
-        console.log('✅ Данные пользователя отправлены:', responseData);
-        
-        res.json(responseData);
-    } catch (error) {
-        console.error('❌ Ошибка получения данных пользователя:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения данных' 
-        });
-    }
-});
-
-// Получение данных использования
-app.get('/api/user/usage', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-
-        console.log(`📊 Запрос данных использования для: ${phone}`);
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-        
-        // Получаем статистику по звонкам за текущий месяц
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const calls = await Call.find({ 
-            phone: user.phone,
-            month: currentMonth 
-        });
-        
-        const totalMinutes = calls.reduce((sum, call) => sum + call.duration, 0);
-        const localMinutes = calls
-            .filter(call => call.callType === 'local')
-            .reduce((sum, call) => sum + call.duration, 0);
-        const internationalMinutes = calls
-            .filter(call => call.callType === 'international')
-            .reduce((sum, call) => sum + call.duration, 0);
-        
-        // Генерируем реалистичные данные использования на основе тарифа
-        const internetUsed = Math.min(
-            Math.random() * user.tariff.internetGB * 0.8,
-            user.tariff.internetGB - 0.5
-        );
-        
-        const smsUsed = Math.min(
-            Math.floor(Math.random() * user.tariff.smsCount * 0.6),
-            user.tariff.smsCount - 5
-        );
-        
-        const usageData = {
-            success: true,
-            internet: { 
-                used: parseFloat(internetUsed.toFixed(1)),
-                total: user.tariff.internetGB || 15
-            },
-            calls: { 
-                used: localMinutes,
-                total: user.tariff.includedMinutes || 300,
-                international: internationalMinutes,
-                totalMinutes: totalMinutes
-            },
-            sms: { 
-                used: smsUsed,
-                total: user.tariff.smsCount || 100
-            }
-        };
-        
-        console.log('✅ Данные использования отправлены:', usageData);
-        
-        res.json(usageData);
-    } catch (error) {
-        console.error('❌ Ошибка получения данных использования:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения данных использования' 
-        });
-    }
-});
-
-// Получение истории звонков
-app.get('/api/user/calls', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone, month } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-        
-        let filter = { phone };
-        if (month) {
-            filter.month = month;
-        }
-        
-        const calls = await Call.find(filter)
-            .sort({ date: -1 })
-            .limit(50);
-        
-        const callsHistory = calls.map(call => ({
-            date: call.date.toLocaleString('ru-RU'),
-            number: call.number,
-            type: call.callType === 'local' ? 'Местный' : 'Международный',
-            duration: `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}`,
-            cost: `${call.cost.toFixed(2)} BYN`
-        }));
-        
-        res.json({
-            success: true,
-            calls: callsHistory
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения истории звонков:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения истории звонков' 
         });
     }
 });
@@ -732,28 +415,13 @@ app.post('/api/calls/register', checkDatabaseConnection, async (req, res) => {
         if (callType === 'international') {
             cost = duration * (user.tariff.internationalMinutePrice || 1.50);
         } else {
-            // Для местных звонков проверяем не превышен ли лимит
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            const monthlyCalls = await Call.find({ 
-                phone: user.phone,
-                month: currentMonth,
-                callType: 'local'
-            });
-            
-            const usedMinutes = monthlyCalls.reduce((sum, call) => sum + call.duration, 0);
-            const remainingMinutes = Math.max(0, (user.tariff.includedMinutes || 300) - usedMinutes);
-            
-            if (duration <= remainingMinutes) {
-                cost = 0; // Включено в абонентскую плату
-            } else {
-                const paidMinutes = duration - remainingMinutes;
-                cost = paidMinutes * (user.tariff.minutePrice || 0.10);
-            }
+            cost = duration * (user.tariff.minutePrice || 0.10);
         }
 
         // Создаем запись о звонке
         const call = new Call({
             userId: user._id,
+            userFio: user.fio,
             phone: user.phone,
             callType,
             number,
@@ -765,17 +433,15 @@ app.post('/api/calls/register', checkDatabaseConnection, async (req, res) => {
         await call.save();
 
         // Списание стоимости звонка с баланса
-        if (cost > 0) {
-            user.balance -= cost;
-            if (user.balance < 0) {
-                user.debt = Math.abs(user.balance);
-            }
-            await user.save();
+        user.balance -= cost;
+        if (user.balance < 0) {
+            user.debt = Math.abs(user.balance);
         }
+        await user.save();
 
         res.json({ 
             success: true, 
-            message: 'Звонок зарегистрирован',
+            message: 'Звонок успешно зарегистрирован',
             call: {
                 date: call.date.toLocaleString('ru-RU'),
                 number: call.number,
@@ -794,53 +460,12 @@ app.post('/api/calls/register', checkDatabaseConnection, async (req, res) => {
     }
 });
 
-// Получение истории платежей
-app.get('/api/user/payments', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-        
-        const payments = await Payment.find({ phone })
-            .sort({ date: -1 })
-            .limit(50);
-        
-        const paymentsHistory = payments.map(payment => ({
-            date: payment.date.toLocaleDateString('ru-RU'),
-            amount: `${payment.amount.toFixed(2)} BYN`,
-            method: payment.method,
-            type: payment.type === 'topup' ? 'Пополнение' : 
-                  payment.type === 'subscription' ? 'Абонентская плата' : 'Оплата звонков',
-            status: 'Успешно'
-        }));
-        
-        res.json({
-            success: true,
-            payments: paymentsHistory
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения истории платежей:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения истории платежей' 
-        });
-    }
-});
-
 // Пополнение баланса
 app.post('/api/payment/topup', checkDatabaseConnection, async (req, res) => {
     try {
-        console.log('🔄 Запрос на пополнение баланса:', req.body);
-        
         const { phone, amount } = req.body;
         
         if (!phone || !amount || amount <= 0) {
-            console.log('❌ Неверные данные:', { phone, amount });
             return res.status(400).json({ 
                 success: false,
                 error: 'Неверные данные для пополнения' 
@@ -855,11 +480,8 @@ app.post('/api/payment/topup', checkDatabaseConnection, async (req, res) => {
             });
         }
 
-        console.log(`💰 Пополнение баланса для ${phone} на сумму ${amountNumber} BYN`);
-
         const user = await User.findOne({ phone: phone });
         if (!user) {
-            console.log('❌ Пользователь не найден:', phone);
             return res.status(404).json({ 
                 success: false,
                 error: 'Пользователь не найден' 
@@ -883,8 +505,6 @@ app.post('/api/payment/topup', checkDatabaseConnection, async (req, res) => {
         });
         await payment.save();
 
-        console.log('✅ Баланс успешно пополнен. Новый баланс:', user.balance);
-
         res.json({ 
             success: true, 
             message: `Баланс успешно пополнен на ${amountNumber} BYN`,
@@ -901,21 +521,27 @@ app.post('/api/payment/topup', checkDatabaseConnection, async (req, res) => {
     }
 });
 
-// Смена тарифа пользователя
-app.post('/api/user/tariff/change', checkDatabaseConnection, async (req, res) => {
+// API для списания средств
+app.post('/api/payment/withdraw', checkDatabaseConnection, async (req, res) => {
     try {
-        const { phone, tariffId } = req.body;
+        const { phone, amount } = req.body;
         
-        if (!phone || !tariffId) {
+        if (!phone || !amount || amount <= 0) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Не указаны номер телефона или ID тарифа' 
+                error: 'Неверные данные для списания' 
             });
         }
 
-        console.log(`🔄 Запрос смены тарифа: ${phone} -> ${tariffId}`);
-        
-        const user = await User.findOne({ phone });
+        const amountNumber = parseFloat(amount);
+        if (isNaN(amountNumber)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Неверная сумма списания' 
+            });
+        }
+
+        const user = await User.findOne({ phone: phone });
         if (!user) {
             return res.status(404).json({ 
                 success: false,
@@ -923,540 +549,262 @@ app.post('/api/user/tariff/change', checkDatabaseConnection, async (req, res) =>
             });
         }
 
-        // Проверяем существование тарифа
-        const newTariff = TARIFFS[tariffId];
-        if (!newTariff) {
+        // Проверяем достаточно ли средств с учетом кредитного лимита
+        const availableBalance = user.balance + (user.creditLimit || 0);
+        if (amountNumber > availableBalance) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Указанный тариф не существует' 
+                error: 'Недостаточно средств для списания' 
             });
         }
 
-        // Обновляем тариф пользователя
-        user.tariff = {
-            id: newTariff.id,
-            name: newTariff.name,
-            price: newTariff.price,
-            includedMinutes: newTariff.includedMinutes,
-            internetGB: newTariff.internetGB,
-            smsCount: newTariff.smsCount,
-            minutePrice: newTariff.minutePrice,
-            internationalMinutePrice: newTariff.internationalMinutePrice
-        };
-
+        // Списание средств
+        const oldBalance = user.balance;
+        user.balance -= amountNumber;
+        
+        // Обновляем долг если баланс отрицательный
+        if (user.balance < 0) {
+            user.debt = Math.abs(user.balance);
+        } else {
+            user.debt = 0;
+        }
+        
         await user.save();
 
-        console.log('✅ Тариф успешно изменен:', user.tariff);
+        // Создаем запись о платеже
+        const payment = new Payment({
+            userId: user._id,
+            phone: user.phone,
+            amount: -amountNumber,
+            method: 'Административное списание',
+            type: 'withdrawal',
+            date: new Date()
+        });
+        await payment.save();
+
+        console.log(`✅ Списание средств: ${user.phone}, сумма: ${amountNumber}, старый баланс: ${oldBalance}, новый баланс: ${user.balance}`);
 
         res.json({ 
             success: true, 
-            message: `Тариф успешно изменен на "${newTariff.name}"`,
-            newTariff: {
-                ...user.tariff.toObject(),
-                features: newTariff.features
-            }
+            message: `Успешно списано ${amountNumber} BYN`,
+            newBalance: user.balance,
+            debt: user.debt
         });
 
     } catch (error) {
-        console.error('❌ Ошибка смены тарифа:', error);
+        console.error('❌ Ошибка списания средств:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Ошибка смены тарифа: ' + error.message 
+            error: 'Ошибка списания средств: ' + error.message 
         });
     }
 });
 
-// Получение текущего тарифа пользователя
-app.get('/api/user/tariff', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-
-        const tariffData = {
-            id: user.tariff.id || 'standard',
-            name: user.tariff.name || 'Стандарт',
-            price: user.tariff.price || 19.99,
-            includedMinutes: user.tariff.includedMinutes || 300,
-            internetGB: user.tariff.internetGB || 15,
-            smsCount: user.tariff.smsCount || 100,
-            minutePrice: user.tariff.minutePrice || 0.10,
-            internationalMinutePrice: user.tariff.internationalMinutePrice || 1.50,
-            features: TARIFFS[user.tariff.id]?.features || [
-                '300 минут местных звонков',
-                '15 ГБ интернета',
-                '100 SMS сообщений',
-                'Местные звонки сверх лимита: 0.10 BYN/мин',
-                'Международные звонки: 1.50 BYN/мин'
-            ]
-        };
-
-        res.json({
-            success: true,
-            tariff: tariffData
-        });
-
-    } catch (error) {
-        console.error('❌ Ошибка получения тарифа:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения тарифа' 
-        });
-    }
-});
-
-// Получение услуг пользователя
-app.get('/api/user/services', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-
-        // Получаем услуги пользователя из базы
-        const userServices = await UserService.find({ phone });
-        
-        // Создаем массив всех услуг с информацией о статусе
-        const servicesWithStatus = SERVICES.map(service => {
-            const userService = userServices.find(us => us.serviceId === service.id);
-            return {
-                ...service,
-                active: userService ? userService.active : false,
-                price: `${service.price} BYN`,
-                activationDate: userService ? userService.activationDate : null,
-                deactivationDate: userService ? userService.deactivationDate : null
-            };
-        });
-
-        res.json({
-            success: true,
-            services: servicesWithStatus
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения услуг:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения услуг' 
-        });
-    }
-});
-
-// Подключение/отключение услуги
-app.post('/api/user/services/toggle', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone, serviceId, activate } = req.body;
-        
-        if (!phone || !serviceId || activate === undefined) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не все поля заполнены' 
-            });
-        }
-
-        console.log(`🔄 Запрос изменения услуги: ${phone} -> ${serviceId}, активация: ${activate}`);
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-
-        // Проверяем существование услуги
-        const service = SERVICES.find(s => s.id === serviceId);
-        if (!service) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Указанная услуга не существует' 
-            });
-        }
-
-        // Ищем существующую запись об услуге
-        let userService = await UserService.findOne({ phone, serviceId });
-
-        if (activate) {
-            // Подключение услуги
-            if (userService) {
-                // Обновляем существующую запись
-                userService.active = true;
-                userService.activationDate = new Date();
-                userService.deactivationDate = null;
-            } else {
-                // Создаем новую запись
-                userService = new UserService({
-                    userId: user._id,
-                    phone: user.phone,
-                    serviceId: service.id,
-                    serviceName: service.name,
-                    active: true,
-                    activationDate: new Date()
-                });
-            }
-
-            // Списание стоимости услуги с баланса (если услуга платная)
-            if (service.price > 0) {
-                if (user.balance < service.price) {
-                    return res.status(400).json({ 
-                        success: false,
-                        error: 'Недостаточно средств на балансе для подключения услуги' 
-                    });
-                }
-                user.balance -= service.price;
-                await user.save();
-
-                // Создаем запись о платеже
-                const payment = new Payment({
-                    userId: user._id,
-                    phone: user.phone,
-                    amount: -service.price,
-                    method: 'Автосписание',
-                    type: 'subscription'
-                });
-                await payment.save();
-            }
-        } else {
-            // Отключение услуги
-            if (userService) {
-                userService.active = false;
-                userService.deactivationDate = new Date();
-            } else {
-                return res.status(400).json({ 
-                    success: false,
-                    error: 'Услуга не была подключена' 
-                });
-            }
-        }
-
-        await userService.save();
-
-        console.log(`✅ Услуга "${service.name}" ${activate ? 'подключена' : 'отключена'}`);
-
-        res.json({ 
-            success: true, 
-            message: `Услуга "${service.name}" успешно ${activate ? 'подключена' : 'отключена'}`,
-            service: {
-                id: service.id,
-                name: service.name,
-                active: activate,
-                activationDate: userService.activationDate,
-                deactivationDate: userService.deactivationDate
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Ошибка изменения услуги:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка изменения услуги: ' + error.message 
-        });
-    }
-});
-
-// Получение доступных тарифов
-app.get('/api/tariffs', checkDatabaseConnection, async (req, res) => {
-    try {
-        const tariffs = Object.values(TARIFFS).map(tariff => ({
-            ...tariff,
-            price: `${tariff.price} BYN`,
-            minutePrice: `${tariff.minutePrice} BYN`,
-            internationalMinutePrice: `${tariff.internationalMinutePrice} BYN`
-        }));
-        
-        res.json({
-            success: true,
-            tariffs: tariffs
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения тарифов:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения тарифов' 
-        });
-    }
-});
-
-// Получение информации о кредите
-app.get('/api/user/credit-info', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-        
-        const availableCredit = Math.max(0, user.creditLimit + user.balance);
-        const daysUntilPayment = Math.floor(Math.random() * 30) + 1;
-        
-        res.json({
-            success: true,
-            availableCredit: availableCredit,
-            daysUntilPayment: daysUntilPayment
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения информации о кредите:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения информации о кредите' 
-        });
-    }
-});
-
-// Получение уведомлений
-app.get('/api/user/notifications', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-        
-        const notifications = [
-            {
-                id: 1,
-                type: 'info',
-                title: 'Обновление тарифов',
-                message: 'С 1 января вводятся новые тарифные планы',
-                date: '2024-12-20',
-                read: false
-            },
-            {
-                id: 2,
-                type: 'warning',
-                title: 'Заканчивается пакет интернета',
-                message: 'Осталось 0.5 ГБ из 15 ГБ',
-                date: '2024-12-18',
-                read: true
-            }
-        ];
-        
-        res.json({
-            success: true,
-            notifications: notifications
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения уведомлений:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения уведомлений' 
-        });
-    }
-});
-
-// Получение новостей
-app.get('/api/news', checkDatabaseConnection, async (req, res) => {
-    try {
-        res.json({
-            success: true,
-            news: NEWS
-        });
-    } catch (error) {
-        console.error('❌ Ошибка получения новостей:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения новостей' 
-        });
-    }
-});
-
-// Обновление профиля
+// API для обновления настроек пользователя
 app.put('/api/user/settings', checkDatabaseConnection, async (req, res) => {
     try {
-        const { fio, phone } = req.body;
-        
-        if (!fio || !phone) {
+        const { phone, fio, status, creditLimit } = req.body;
+
+        if (!phone) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Не заполнены обязательные поля' 
+                error: 'Не указан телефон пользователя' 
             });
         }
-        
-        const user = await User.findOneAndUpdate(
-            { phone },
-            { fio: fio },
-            { new: true }
-        );
-        
+
+        const user = await User.findOne({ phone });
         if (!user) {
             return res.status(404).json({ 
                 success: false,
                 error: 'Пользователь не найден' 
             });
         }
-        
-        // Форматируем обновленные данные тарифа
-        const tariffData = {
-            id: user.tariff.id || 'standard',
-            name: user.tariff.name || 'Стандарт',
-            price: user.tariff.price || 19.99,
-            includedMinutes: user.tariff.includedMinutes || 300,
-            internetGB: user.tariff.internetGB || 15,
-            smsCount: user.tariff.smsCount || 100,
-            minutePrice: user.tariff.minutePrice || 0.10,
-            internationalMinutePrice: user.tariff.internationalMinutePrice || 1.50,
-            features: TARIFFS[user.tariff.id]?.features || [
-                '300 минут местных звонков',
-                '15 ГБ интернета',
-                '100 SMS сообщений',
-                'Местные звонки сверх лимита: 0.10 BYN/мин',
-                'Международные звонки: 1.50 BYN/мин'
-            ]
-        };
-        
+
+        // Обновляем данные
+        const updateData = {};
+        if (fio) updateData.fio = fio;
+        if (status) updateData.status = status;
+        if (creditLimit !== undefined) updateData.creditLimit = parseFloat(creditLimit);
+
+        await User.updateOne({ phone }, { $set: updateData });
+
+        console.log(`✅ Настройки пользователя обновлены: ${phone}`);
+
         res.json({ 
             success: true, 
-            message: 'Настройки сохранены',
+            message: 'Настройки пользователя обновлены',
             user: {
-                fio: user.fio,
+                fio: fio || user.fio,
                 phone: user.phone,
-                balance: user.balance,
-                creditLimit: user.creditLimit,
-                status: user.status,
-                tariff: tariffData
+                status: status || user.status,
+                creditLimit: creditLimit !== undefined ? parseFloat(creditLimit) : user.creditLimit
             }
         });
+
     } catch (error) {
-        console.error('❌ Ошибка сохранения настроек:', error);
+        console.error('❌ Ошибка обновления настроек пользователя:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Ошибка сохранения настроек' 
+            error: 'Ошибка обновления настроек пользователя' 
         });
     }
 });
 
-// Отчет по звонкам за месяц
-app.get('/api/reports/calls', checkDatabaseConnection, async (req, res) => {
+// API для админ-панели - получение всех клиентов
+app.get('/api/admin/clients', checkDatabaseConnection, async (req, res) => {
     try {
-        const { phone, month } = req.query;
+        const { search, status, tariff, page = 1, limit = 50 } = req.query;
         
-        if (!phone || !month) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указаны номер телефона и месяц' 
-            });
+        let filter = { role: 'client' };
+        
+        // Поиск по ФИО или телефону
+        if (search) {
+            filter.$or = [
+                { fio: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Фильтр по статусу
+        if (status === 'debtor') {
+            filter.debt = { $gt: 0 };
+        } else if (status === 'active') {
+            filter.balance = { $gte: 0 };
+        }
+        
+        // Фильтр по тарифу
+        if (tariff) {
+            filter['tariff.id'] = tariff;
+        }
+        
+        const clients = await User.find(filter)
+            .select('fio phone balance debt status tariff creditLimit registrationDate')
+            .sort({ registrationDate: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .lean();
+        
+        // Форматируем данные для фронтенда
+        const clientsWithFormattedData = clients.map(client => ({
+            _id: client._id,
+            fio: client.fio,
+            phone: client.phone,
+            balance: client.balance?.toFixed(2) + ' BYN',
+            debt: (client.debt || 0).toFixed(2) + ' BYN',
+            status: client.status,
+            tariff: {
+                id: client.tariff?.id || 'standard',
+                name: client.tariff?.name || 'Стандарт',
+                price: client.tariff?.price || 19.99
+            },
+            creditLimit: client.creditLimit || 50,
+            registrationDate: client.registrationDate ? client.registrationDate.toLocaleDateString('ru-RU') : 'Не указана'
+        }));
+        
+        const total = await User.countDocuments(filter);
+        
+        res.json({
+            success: true,
+            clients: clientsWithFormattedData,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            total
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения клиентов:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения клиентов' 
+        });
+    }
+});
+
+// Получение истории звонков для админ-панели
+app.get('/api/admin/calls', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 10, 
+            phone, 
+            callType, 
+            startDate, 
+            endDate 
+        } = req.query;
+
+        let filter = {};
+
+        // Фильтр по номеру телефона
+        if (phone) {
+            filter.phone = { $regex: phone, $options: 'i' };
         }
 
-        const calls = await Call.find({ phone, month })
-            .sort({ date: 1 });
+        // Фильтр по типу звонка
+        if (callType) {
+            filter.callType = callType;
+        }
 
-        const totalCost = calls.reduce((sum, call) => sum + call.cost, 0);
-        const totalMinutes = calls.reduce((sum, call) => sum + call.duration, 0);
-        const localCalls = calls.filter(call => call.callType === 'local');
-        const internationalCalls = calls.filter(call => call.callType === 'international');
-
-        const report = {
-            success: true,
-            month: month,
-            totalCalls: calls.length,
-            totalMinutes: totalMinutes,
-            totalCost: totalCost.toFixed(2) + ' BYN',
-            localCalls: {
-                count: localCalls.length,
-                minutes: localCalls.reduce((sum, call) => sum + call.duration, 0),
-                cost: localCalls.reduce((sum, call) => sum + call.cost, 0).toFixed(2) + ' BYN'
-            },
-            internationalCalls: {
-                count: internationalCalls.length,
-                minutes: internationalCalls.reduce((sum, call) => sum + call.duration, 0),
-                cost: internationalCalls.reduce((sum, call) => sum + call.cost, 0).toFixed(2) + ' BYN'
-            },
-            calls: calls.map(call => ({
-                date: call.date.toLocaleString('ru-RU'),
-                number: call.number,
-                type: call.callType === 'local' ? 'Местный' : 'Международный',
-                duration: call.duration,
-                cost: call.cost.toFixed(2) + ' BYN'
-            }))
-        };
-
-        res.json(report);
-    } catch (error) {
-        console.error('❌ Ошибка формирования отчета по звонкам:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка формирования отчета' 
-        });
-    }
-});
-
-// Отчет по платежам
-app.get('/api/reports/payments', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { startDate, endDate } = req.query;
-        
-        let filter = {};
+        // Фильтр по дате
         if (startDate && endDate) {
             filter.date = {
                 $gte: new Date(startDate),
-                $lte: new Date(endDate)
+                $lte: new Date(endDate + 'T23:59:59.999Z')
             };
         }
 
-        const payments = await Payment.find(filter)
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Получаем звонки с пагинацией
+        const calls = await Call.find(filter)
             .populate('userId', 'fio phone')
-            .sort({ date: -1 });
+            .sort({ date: -1 })
+            .skip(skip)
+            .limit(limitNum)
+            .lean();
 
-        const report = {
+        // Получаем общее количество для пагинации
+        const totalCalls = await Call.countDocuments(filter);
+
+        // Получаем статистику
+        const totalLocalCalls = await Call.countDocuments({ ...filter, callType: 'local' });
+        const totalInternationalCalls = await Call.countDocuments({ ...filter, callType: 'international' });
+        
+        const costAggregation = await Call.aggregate([
+            { $match: filter },
+            { $group: { _id: null, totalCost: { $sum: '$cost' } } }
+        ]);
+        const totalCost = costAggregation.length > 0 ? costAggregation[0].totalCost : 0;
+
+        // Форматируем данные для ответа
+        const formattedCalls = calls.map(call => ({
+            _id: call._id,
+            date: call.date.toLocaleString('ru-RU'),
+            userFio: call.userId?.fio || call.userFio || 'Неизвестно',
+            phone: call.phone,
+            number: call.number,
+            callType: call.callType,
+            duration: call.duration,
+            cost: call.cost
+        }));
+
+        res.json({
             success: true,
-            period: startDate && endDate ? `${startDate} - ${endDate}` : 'Весь период',
-            totalPayments: payments.length,
-            totalAmount: payments.reduce((sum, payment) => sum + payment.amount, 0).toFixed(2) + ' BYN',
-            payments: payments.map(payment => ({
-                date: payment.date.toLocaleDateString('ru-RU'),
-                user: payment.userId.fio,
-                phone: payment.userId.phone,
-                amount: payment.amount.toFixed(2) + ' BYN',
-                method: payment.method,
-                type: payment.type === 'topup' ? 'Пополнение' : 
-                      payment.type === 'subscription' ? 'Абонентская плата' : 'Оплата звонков'
-            }))
-        };
+            calls: formattedCalls,
+            totalCalls,
+            totalPages: Math.ceil(totalCalls / limitNum),
+            currentPage: pageNum,
+            localCalls: totalLocalCalls,
+            internationalCalls: totalInternationalCalls,
+            totalCost
+        });
 
-        res.json(report);
     } catch (error) {
-        console.error('❌ Ошибка формирования отчета по платежам:', error);
+        console.error('❌ Ошибка получения истории звонков:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Ошибка формирования отчета' 
+            error: 'Ошибка получения истории звонков' 
         });
     }
 });
@@ -1488,43 +836,6 @@ app.get('/api/reports/debtors', checkDatabaseConnection, async (req, res) => {
         res.status(500).json({ 
             success: false,
             error: 'Ошибка формирования отчета' 
-        });
-    }
-});
-
-// Проверка задолженности клиента
-app.get('/api/user/debt', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { phone } = req.query;
-        
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указан номер телефона' 
-            });
-        }
-
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователь не найден' 
-            });
-        }
-
-        res.json({
-            success: true,
-            hasDebt: user.debt > 0,
-            debtAmount: user.debt.toFixed(2) + ' BYN',
-            balance: user.balance.toFixed(2) + ' BYN',
-            creditLimit: user.creditLimit.toFixed(2) + ' BYN',
-            availableCredit: Math.max(0, user.creditLimit + user.balance).toFixed(2) + ' BYN'
-        });
-    } catch (error) {
-        console.error('❌ Ошибка проверки задолженности:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка проверки задолженности' 
         });
     }
 });
@@ -1612,75 +923,6 @@ app.post('/api/admin/charge-subscription', checkDatabaseConnection, async (req, 
     }
 });
 
-// API для админ-панели - получение всех клиентов
-app.get('/api/admin/clients', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { search, status, tariff, page = 1, limit = 50 } = req.query;
-        
-        let filter = { role: 'client' };
-        
-        // Поиск по ФИО или телефону
-        if (search) {
-            filter.$or = [
-                { fio: { $regex: search, $options: 'i' } },
-                { phone: { $regex: search, $options: 'i' } }
-            ];
-        }
-        
-        // Фильтр по статусу
-        if (status === 'debtor') {
-            filter.debt = { $gt: 0 };
-        } else if (status === 'active') {
-            filter.balance = { $gte: 0 };
-        }
-        
-        // Фильтр по тарифу
-        if (tariff) {
-            filter['tariff.id'] = tariff;
-        }
-        
-        const clients = await User.find(filter)
-            .select('fio phone balance debt status tariff registrationDate')
-            .sort({ registrationDate: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .lean();
-        
-        // Форматируем данные для фронтенда
-        const clientsWithFormattedData = clients.map(client => ({
-            _id: client._id,
-            fio: client.fio,
-            phone: client.phone,
-            balance: client.balance?.toFixed(2) + ' BYN',
-            debt: (client.debt || 0).toFixed(2) + ' BYN',
-            status: client.status,
-            tariff: {
-                id: client.tariff?.id || 'standard',
-                name: client.tariff?.name || 'Стандарт',
-                price: client.tariff?.price || 19.99
-            },
-            registrationDate: client.registrationDate ? client.registrationDate.toLocaleDateString('ru-RU') : 'Не указана'
-        }));
-        
-        const total = await User.countDocuments(filter);
-        
-        res.json({
-            success: true,
-            clients: clientsWithFormattedData,
-            totalPages: Math.ceil(total / limit),
-            currentPage: page,
-            total
-        });
-        
-    } catch (error) {
-        console.error('❌ Ошибка получения клиентов:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка получения клиентов' 
-        });
-    }
-});
-
 // Удаление пользователя (админ)
 app.delete('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) => {
     try {
@@ -1708,8 +950,7 @@ app.delete('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) =
         // Удаляем связанные данные пользователя
         await Promise.all([
             Call.deleteMany({ userId: id }),
-            Payment.deleteMany({ userId: id }),
-            UserService.deleteMany({ userId: id })
+            Payment.deleteMany({ userId: id })
         ]);
         
         // Удаляем самого пользователя
@@ -1731,77 +972,6 @@ app.delete('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) =
         res.status(500).json({ 
             success: false,
             error: 'Ошибка удаления пользователя: ' + error.message 
-        });
-    }
-});
-
-// Массовое удаление пользователей (админ)
-app.post('/api/admin/clients/bulk-delete', checkDatabaseConnection, async (req, res) => {
-    try {
-        const { ids } = req.body;
-        
-        if (!ids || !Array.isArray(ids) || ids.length === 0) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'Не указаны ID пользователей для удаления' 
-            });
-        }
-        
-        console.log(`🗑️ Массовое удаление пользователей: ${ids.length} пользователей`);
-        
-        // Находим пользователей
-        const users = await User.find({ _id: { $in: ids }, role: 'client' });
-        
-        if (users.length === 0) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Пользователи не найдены' 
-            });
-        }
-        
-        const results = [];
-        
-        for (const user of users) {
-            try {
-                // Удаляем связанные данные пользователя
-                await Promise.all([
-                    Call.deleteMany({ userId: user._id }),
-                    Payment.deleteMany({ userId: user._id }),
-                    UserService.deleteMany({ userId: user._id })
-                ]);
-                
-                // Удаляем самого пользователя
-                await User.findByIdAndDelete(user._id);
-                
-                results.push({
-                    user: user.fio,
-                    phone: user.phone,
-                    status: 'Удален'
-                });
-                
-            } catch (userError) {
-                console.error(`Ошибка удаления пользователя ${user.phone}:`, userError);
-                results.push({
-                    user: user.fio,
-                    phone: user.phone,
-                    status: 'Ошибка: ' + userError.message
-                });
-            }
-        }
-        
-        const successfulDeletes = results.filter(r => r.status === 'Удален').length;
-        
-        res.json({
-            success: true,
-            message: `Удалено ${successfulDeletes} из ${users.length} пользователей`,
-            results: results
-        });
-        
-    } catch (error) {
-        console.error('❌ Ошибка массового удаления пользователей:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Ошибка массового удаления пользователей' 
         });
     }
 });
@@ -1856,117 +1026,252 @@ app.get('/api/admin/statistics', checkDatabaseConnection, async (req, res) => {
     }
 });
 
-// Создание тестовых данных (для разработки)
-app.post('/api/admin/test-data', checkDatabaseConnection, async (req, res) => {
+// ========== WORD ОТЧЕТЫ (ИСПРАВЛЕННЫЕ) ==========
+
+// Функция для создания правильного Word документа
+function createWordReport(reportData) {
+    // Создаем простой HTML который можно открыть в Word
+    const htmlContent = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' 
+      xmlns:w='urn:schemas-microsoft-com:office:word' 
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>${reportData.reportTitle}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2cm; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #2c3e50; }
+        .subtitle { font-size: 16px; color: #7f8c8d; margin-bottom: 20px; }
+        .info { margin-bottom: 20px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+        table th { background-color: #3498db; color: white; font-weight: bold; padding: 8px; border: 1px solid #ddd; text-align: left; }
+        table td { padding: 8px; border: 1px solid #ddd; }
+        .summary { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #e1e8ed; }
+        .footer { margin-top: 30px; text-align: center; color: #7f8c8d; font-size: 11px; border-top: 1px solid #e1e8ed; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">${reportData.reportTitle}</div>
+        <div class="subtitle">${reportData.reportSubtitle}</div>
+        <div class="info">
+            <strong>Период:</strong> ${reportData.period}<br>
+            <strong>Дата формирования:</strong> ${reportData.generationDate}<br>
+            <strong>Всего записей:</strong> ${reportData.totalRecords}
+        </div>
+    </div>
+
+    ${reportData.summary ? `
+    <div class="summary">
+        <h3>Сводная информация:</h3>
+        ${Object.entries(reportData.summary).map(([key, value]) => 
+            `<p><strong>${key}:</strong> ${value}</p>`
+        ).join('')}
+    </div>
+    ` : ''}
+
+    ${reportData.tableData ? `
+    <table>
+        <thead>
+            <tr>
+                ${reportData.tableHeaders.map(header => `<th>${header}</th>`).join('')}
+            </tr>
+        </thead>
+        <tbody>
+            ${reportData.tableData.map(row => 
+                `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+            ).join('')}
+        </tbody>
+    </table>
+    ` : ''}
+
+    <div class="footer">
+        Отчет сгенерирован автоматически системой учета мобильного оператора "BryTech"<br>
+        ${new Date().toLocaleString('ru-RU')}
+    </div>
+</body>
+</html>`;
+
+    return htmlContent;
+}
+
+// Отчет по всем пользователям в Word
+app.get('/api/reports/users/word', checkDatabaseConnection, async (req, res) => {
     try {
-        const testUsers = [
-            {
-                fio: 'Иванов Иван Иванович',
-                phone: '+375291234567',
-                password: '123123',
-                balance: 150.50,
-                tariff: TARIFFS.standard
-            },
-            {
-                fio: 'Петров Петр Петрович', 
-                phone: '+375292345678',
-                password: '123123',
-                balance: -25.00,
-                tariff: TARIFFS['plus+']
-            },
-            {
-                fio: 'Сидорова Анна Михайловна',
-                phone: '+375293456789',
-                password: '123123',
-                balance: 75.00,
-                tariff: TARIFFS['Super plus']
-            }
-        ];
+        // Получаем всех пользователей
+        const users = await User.find({ role: 'client' })
+            .select('fio phone balance debt tariff status registrationDate')
+            .sort({ fio: 1 });
+
+        const tableData = users.map(user => [
+            user.fio,
+            user.phone,
+            `${user.balance.toFixed(2)} BYN`,
+            `${user.debt.toFixed(2)} BYN`,
+            user.tariff.name,
+            user.status,
+            user.registrationDate.toLocaleDateString('ru-RU')
+        ]);
+
+        const summary = {
+            'Всего пользователей': users.length,
+            'Активных пользователей': users.filter(u => u.status === 'active').length,
+            'Пользователей с долгами': users.filter(u => u.debt > 0).length,
+            'Общая задолженность': `${users.reduce((sum, u) => sum + u.debt, 0).toFixed(2)} BYN`,
+            'Общий баланс': `${users.reduce((sum, u) => sum + u.balance, 0).toFixed(2)} BYN`
+        };
+
+        const reportData = {
+            reportTitle: 'ОТЧЕТ ПО ВСЕМ ПОЛЬЗОВАТЕЛЯМ',
+            reportSubtitle: 'Мобильный оператор "BryTech"',
+            period: 'За весь период',
+            generationDate: new Date().toLocaleDateString('ru-RU'),
+            totalRecords: users.length,
+            summary: summary,
+            tableHeaders: ['ФИО', 'Телефон', 'Баланс', 'Задолженность', 'Тариф', 'Статус', 'Дата регистрации'],
+            tableData: tableData
+        };
+
+        const htmlReport = createWordReport(reportData);
+
+        // Устанавливаем правильные заголовки для Word документа
+        res.setHeader('Content-Type', 'application/msword');
+        res.setHeader('Content-Disposition', `attachment; filename="users_report_${new Date().toISOString().split('T')[0]}.doc"`);
         
-        const createdUsers = [];
-        
-        for (const userData of testUsers) {
-            try {
-                // Проверяем, существует ли пользователь
-                const existingUser = await User.findOne({ phone: userData.phone });
-                if (existingUser) {
-                    createdUsers.push({
-                        user: userData.fio,
-                        phone: userData.phone,
-                        status: 'Уже существует'
-                    });
-                    continue;
-                }
-                
-                // Хешируем пароль
-                const hashedPassword = await bcrypt.hash(userData.password, 10);
-                
-                // Создаем пользователя
-                const user = new User({
-                    fio: userData.fio,
-                    phone: userData.phone,
-                    password: hashedPassword,
-                    balance: userData.balance,
-                    tariff: userData.tariff,
-                    role: 'client',
-                    registrationDate: new Date()
-                });
-                
-                await user.save();
-                
-                // Создаем тестовые звонки
-                const call = new Call({
-                    userId: user._id,
-                    phone: user.phone,
-                    callType: 'local',
-                    number: '+375291111111',
-                    duration: Math.floor(Math.random() * 30) + 1,
-                    cost: Math.random() * 5,
-                    date: new Date(),
-                    month: new Date().toISOString().slice(0, 7)
-                });
-                await call.save();
-                
-                // Создаем тестовые платежи
-                if (userData.balance > 0) {
-                    const payment = new Payment({
-                        userId: user._id,
-                        phone: user.phone,
-                        amount: userData.balance,
-                        method: 'Банковская карта',
-                        type: 'topup',
-                        date: new Date()
-                    });
-                    await payment.save();
-                }
-                
-                createdUsers.push({
-                    user: userData.fio,
-                    phone: userData.phone,
-                    status: 'Создан'
-                });
-                
-            } catch (userError) {
-                console.error(`Ошибка создания пользователя ${userData.phone}:`, userError);
-                createdUsers.push({
-                    user: userData.fio,
-                    phone: userData.phone,
-                    status: 'Ошибка: ' + userError.message
-                });
-            }
-        }
-        
-        res.json({
-            success: true,
-            message: 'Тестовые данные созданы',
-            results: createdUsers
-        });
-        
+        // Отправляем HTML как документ Word
+        res.send(Buffer.from(htmlReport));
+
     } catch (error) {
-        console.error('❌ Ошибка создания тестовых данных:', error);
+        console.error('❌ Ошибка формирования отчета по пользователям:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Ошибка создания тестовых данных' 
+            error: 'Ошибка формирования отчета' 
+        });
+    }
+});
+
+// Отчет по всем звонкам в Word
+app.get('/api/reports/calls/word', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        let filter = {};
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+
+        const calls = await Call.find(filter)
+            .populate('userId', 'fio phone')
+            .sort({ date: -1 })
+            .limit(1000);
+
+        const tableData = calls.map(call => [
+            call.date.toLocaleString('ru-RU'),
+            call.userId?.fio || call.userFio || 'Неизвестно',
+            call.phone,
+            call.number,
+            call.callType === 'local' ? 'Местный' : 'Международный',
+            `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}`,
+            `${call.cost.toFixed(2)} BYN`
+        ]);
+
+        const totalCost = calls.reduce((sum, call) => sum + call.cost, 0);
+        const totalMinutes = calls.reduce((sum, call) => sum + call.duration, 0) / 60;
+        const localCalls = calls.filter(c => c.callType === 'local').length;
+        const internationalCalls = calls.filter(c => c.callType === 'international').length;
+
+        const summary = {
+            'Всего звонков': calls.length,
+            'Местные звонки': localCalls,
+            'Международные звонки': internationalCalls,
+            'Общая длительность': `${totalMinutes.toFixed(2)} минут`,
+            'Общая стоимость': `${totalCost.toFixed(2)} BYN`,
+            'Средняя стоимость звонка': calls.length > 0 ? `${(totalCost / calls.length).toFixed(2)} BYN` : '0 BYN'
+        };
+
+        const reportData = {
+            reportTitle: 'ОТЧЕТ ПО ВСЕМ ЗВОНКАМ',
+            reportSubtitle: 'Мобильный оператор "BryTech"',
+            period: startDate && endDate ? `${startDate} - ${endDate}` : 'За весь период',
+            generationDate: new Date().toLocaleDateString('ru-RU'),
+            totalRecords: calls.length,
+            summary: summary,
+            tableHeaders: ['Дата и время', 'Клиент', 'Телефон', 'Номер назначения', 'Тип', 'Длительность', 'Стоимость'],
+            tableData: tableData
+        };
+
+        const htmlReport = createWordReport(reportData);
+
+        res.setHeader('Content-Type', 'application/msword');
+        res.setHeader('Content-Disposition', `attachment; filename="calls_report_${new Date().toISOString().split('T')[0]}.doc"`);
+
+        res.send(Buffer.from(htmlReport));
+
+    } catch (error) {
+        console.error('❌ Ошибка формирования отчета по звонкам:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка формирования отчета' 
+        });
+    }
+});
+
+// Отчет по должникам в Word
+app.get('/api/reports/debtors/word', checkDatabaseConnection, async (req, res) => {
+    try {
+        const debtors = await User.find({ 
+            debt: { $gt: 0 } 
+        }).select('fio phone balance debt tariff status registrationDate')
+        .sort({ debt: -1 });
+
+        const tableData = debtors.map(user => [
+            user.fio,
+            user.phone,
+            `${user.balance.toFixed(2)} BYN`,
+            `${user.debt.toFixed(2)} BYN`,
+            user.tariff.name,
+            user.status,
+            user.registrationDate.toLocaleDateString('ru-RU')
+        ]);
+
+        const totalDebt = debtors.reduce((sum, user) => sum + user.debt, 0);
+        const averageDebt = debtors.length > 0 ? totalDebt / debtors.length : 0;
+
+        const summary = {
+            'Всего должников': debtors.length,
+            'Общая сумма долгов': `${totalDebt.toFixed(2)} BYN`,
+            'Средний долг': `${averageDebt.toFixed(2)} BYN`,
+            'Максимальный долг': debtors.length > 0 ? `${Math.max(...debtors.map(d => d.debt)).toFixed(2)} BYN` : '0 BYN',
+            'Минимальный долг': debtors.length > 0 ? `${Math.min(...debtors.map(d => d.debt)).toFixed(2)} BYN` : '0 BYN'
+        };
+
+        const reportData = {
+            reportTitle: 'ОТЧЕТ ПО ДОЛЖНИКАМ',
+            reportSubtitle: 'Мобильный оператор "BryTech"',
+            period: 'Актуально на текущую дату',
+            generationDate: new Date().toLocaleDateString('ru-RU'),
+            totalRecords: debtors.length,
+            summary: summary,
+            tableHeaders: ['ФИО', 'Телефон', 'Баланс', 'Задолженность', 'Тариф', 'Статус', 'Дата регистрации'],
+            tableData: tableData
+        };
+
+        const htmlReport = createWordReport(reportData);
+
+        res.setHeader('Content-Type', 'application/msword');
+        res.setHeader('Content-Disposition', `attachment; filename="debtors_report_${new Date().toISOString().split('T')[0]}.doc"`);
+
+        res.send(Buffer.from(htmlReport));
+
+    } catch (error) {
+        console.error('❌ Ошибка формирования отчета по должникам:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка формирования отчета' 
         });
     }
 });
@@ -1983,6 +1288,13 @@ async function initializeApp() {
             console.log(`📞 Мобильный оператор - Учет звонков`);
             console.log(`✅ Готов к работе`);
             console.log(`👤 Администратор: +375256082909 / 123123`);
+            console.log(`📊 Доступны функции:`);
+            console.log(`   - Добавление клиентов`);
+            console.log(`   - Регистрация звонков`);
+            console.log(`   - Управление балансом`);
+            console.log(`   - Списание средств`);
+            console.log(`   - Редактирование пользователей`);
+            console.log(`   - Отчеты в Word формате`);
         });
     } catch (error) {
         console.error('❌ Ошибка инициализации приложения:', error);

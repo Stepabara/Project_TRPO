@@ -274,6 +274,7 @@
             font-weight: 600;
             transition: all 0.3s ease;
             border: none;
+            
         }
 
         .btn-primary {
@@ -508,6 +509,69 @@
             opacity: 1;
             transform: scale(1.1);
         }
+
+        /* Секции контента */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Отчеты */
+        .report-card {
+            background: white;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .report-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .report-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        /* Прогресс-бар */
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -527,6 +591,12 @@
                     <a class="nav-link" onclick="showSection('reports')">
                         <i class="fas fa-chart-bar"></i>
                         <span>Отчеты</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('calls')">
+                        <i class="fas fa-phone"></i>
+                        <span>История звонков</span>
                     </a>
                 </li>
             </ul>
@@ -642,11 +712,6 @@
                             </button>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
-                                <i class="fas fa-money-bill me-2"></i>Принять платеж
-                            </button>
-                        </div>
-                        <div class="col-md-3">
                             <button class="btn btn-warning w-100" onclick="showCallModal()">
                                 <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
                             </button>
@@ -655,7 +720,7 @@
                             <button class="btn btn-info w-100" onclick="chargeSubscription()">
                                 <i class="fas fa-credit-card me-2"></i>Списать абонплату
                             </button>
-                        </div>
+                       
                     </div>
                 </div>
             </div>
@@ -668,6 +733,7 @@
                 <p class="welcome-subtitle">Детальная статистика и финансовые отчеты</p>
             </div>
 
+            <!-- Экспорт отчетов -->
             <div class="main-section">
                 <div class="section-header">
                     <h3 class="section-title">Экспорт отчетов</h3>
@@ -675,24 +741,25 @@
                 <div class="section-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <button class="btn btn-outline-primary w-100" onclick="exportDebtorsReport()">
-                                <i class="fas fa-file-excel me-2"></i>Отчет по должникам
+                            <button class="btn btn-outline-primary w-100" onclick="exportUsersReport()">
+                                <i class="fas fa-file-word me-2"></i>Отчет по всем пользователям
                             </button>
                         </div>
                         <div class="col-md-4">
-                            <button class="btn btn-outline-success w-100" onclick="exportFinancialReport()">
-                                <i class="fas fa-file-excel me-2"></i>Финансовый отчет
+                            <button class="btn btn-outline-success w-100" onclick="exportCallsReport()">
+                                <i class="fas fa-file-word me-2"></i>Отчет по всем звонкам
                             </button>
                         </div>
                         <div class="col-md-4">
-                            <button class="btn btn-outline-info w-100" onclick="exportFullReport()">
-                                <i class="fas fa-file-excel me-2"></i>Полный отчет
+                            <button class="btn btn-outline-danger w-100" onclick="exportDebtorsReport()">
+                                <i class="fas fa-file-word me-2"></i>Отчет по должникам
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Статистика по должникам -->
             <div class="main-section">
                 <div class="section-header">
                     <h3 class="section-title">Статистика по должникам</h3>
@@ -700,6 +767,137 @@
                 <div class="section-body">
                     <div id="debtorsReport">
                         <!-- Отчет будет загружен здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calls History Section -->
+        <div id="calls-section" class="content-section">
+            <div class="welcome-section">
+                <h2 class="welcome-title">История звонков</h2>
+                <p class="welcome-subtitle">Просмотр и управление историей звонков всех пользователей</p>
+            </div>
+
+            <!-- Фильтры истории звонков -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Фильтры</h3>
+                </div>
+                <div class="section-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Телефон клиента</label>
+                            <input type="text" class="form-control" id="callsPhoneFilter" placeholder="+375...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Тип звонка</label>
+                            <select class="form-control" id="callsTypeFilter">
+                                <option value="">Все типы</option>
+                                <option value="local">Местные</option>
+                                <option value="international">Международные</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Дата с</label>
+                            <input type="date" class="form-control" id="callsStartDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Дата по</label>
+                            <input type="date" class="form-control" id="callsEndDate">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="loadCallsHistory()">
+                            <i class="fas fa-search me-2"></i>Поиск
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearCallsFilters()">
+                            <i class="fas fa-times me-2"></i>Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика звонков -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Всего звонков</div>
+                            <div class="stat-value" id="totalCalls">0</div>
+                        </div>
+                        <div class="stat-icon">📞</div>
+                    </div>
+                    <div class="stat-description">За выбранный период</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Местные звонки</div>
+                            <div class="stat-value" id="localCalls">0</div>
+                        </div>
+                        <div class="stat-icon">🏠</div>
+                    </div>
+                    <div class="stat-description">Внутренние звонки</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Международные</div>
+                            <div class="stat-value" id="internationalCalls">0</div>
+                        </div>
+                        <div class="stat-icon">🌍</div>
+                    </div>
+                    <div class="stat-description">Звонки за границу</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Общая стоимость</div>
+                            <div class="stat-value" id="totalCallsCost">0 BYN</div>
+                        </div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-description">Сумма всех звонков</div>
+                </div>
+            </div>
+
+            <!-- Таблица истории звонков -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">История звонков</h3>
+                </div>
+                <div class="section-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Дата и время</th>
+                                    <th>Клиент</th>
+                                    <th>Телефон</th>
+                                    <th>Номер назначения</th>
+                                    <th>Тип</th>
+                                    <th>Длительность</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody id="callsHistoryTable">
+                                <!-- История звонков будет загружена здесь -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted" id="callsPaginationInfo">
+                            Показано 0 из 0 записей
+                        </div>
+                        <nav>
+                            <ul class="pagination" id="callsPagination">
+                                <!-- Пагинация будет сгенерирована здесь -->
+                            </ul>
+                        </nav>
                     </div>
                 </div>
             </div>
@@ -773,7 +971,6 @@
                 <div class="modal-body">
                     <div class="modal-tabs">
                         <button class="modal-tab active" onclick="showUserTab('info')">Основная информация</button>
-                        <button class="modal-tab" onclick="showUserTab('tariff')">Тариф и услуги</button>
                         <button class="modal-tab" onclick="showUserTab('finance')">Финансы</button>
                     </div>
 
@@ -823,30 +1020,6 @@
                                 <input type="number" class="form-control" id="editUserCreditLimit" step="0.01" min="0">
                             </div>
                         </form>
-                    </div>
-
-                    <!-- Тариф и услуги -->
-                    <div id="userTariffTab" class="modal-tab-content">
-                        <div class="mb-4">
-                            <h6>Текущий тариф</h6>
-                            <div class="user-detail-value" id="modalUserTariff"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Сменить тариф</label>
-                            <select class="form-control" id="editUserTariff">
-                                <option value="standard">Стандарт (19.99 BYN)</option>
-                                <option value="plus+">Плюс+ (29.99 BYN)</option>
-                                <option value="Super plus">Супер плюс (35.99 BYN)</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <h6>Подключенные услуги</h6>
-                            <div id="userServicesList">
-                                <!-- Услуги будут загружены здесь -->
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Финансы -->
@@ -921,7 +1094,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Номер телефона *</label>
-                            <input type="tel" class="form-control" id="clientPhone" required>
+                            <input type="tel" class="form-control" id="clientPhone" required placeholder="+375291234567">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Пароль *</label>
@@ -949,6 +1122,81 @@
         </div>
     </div>
 
+    <!-- Модальное окно регистрации звонка -->
+    <div class="modal fade" id="callModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Зарегистрировать звонок</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="callForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="callClientPhone" required placeholder="+375291234567">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Номер назначения *</label>
+                            <input type="tel" class="form-control" id="callNumber" required placeholder="+375291111111">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тип звонка *</label>
+                            <select class="form-control" id="callType" required>
+                                <option value="local">Местный</option>
+                                <option value="international">Международный</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Длительность (секунды) *</label>
+                            <input type="number" class="form-control" id="callDuration" required min="1" value="60">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="registerCall()">Зарегистрировать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Пополнить баланс</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPaymentForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="paymentClientPhone" required placeholder="+375291234567">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Сумма пополнения (BYN) *</label>
+                            <input type="number" class="form-control" id="paymentAmount" required step="0.01" min="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Метод оплаты</label>
+                            <select class="form-control" id="paymentMethod">
+                                <option value="Банковская карта">Банковская карта</option>
+                                <option value="Наличные">Наличные</option>
+                                <option value="Электронный кошелек">Электронный кошелек</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-success" onclick="processPayment()">Пополнить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Уведомление -->
     <div class="notification" id="notification"></div>
 
@@ -957,11 +1205,20 @@
         // Глобальные переменные
         let allClients = [];
         let currentEditingUser = null;
+        let currentCallsPage = 1;
+        const callsPerPage = 10;
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             loadDashboardData();
             setInterval(loadDashboardData, 30000); // Автообновление каждые 30 секунд
+            
+            // Установка дат по умолчанию для фильтров
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
         });
 
         // Загрузка данных дашборда
@@ -1023,7 +1280,7 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="delete-btn" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </td>
@@ -1082,14 +1339,13 @@
                         </td>
                         <td>${client.registrationDate}</td>
                         <td>
-                            <button class="delete-btn" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
+                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
                                 <i class="fas fa-times"></i>
                             </button>
                         </td>
                     </tr>
                 `).join('');
                 
-                updateClientDropdowns();
             } catch (error) {
                 console.error('Ошибка загрузки клиентов:', error);
             }
@@ -1111,23 +1367,24 @@
                 document.getElementById('modalUserPhone').textContent = user.phone;
                 document.getElementById('modalUserRegDate').textContent = user.registrationDate;
                 document.getElementById('modalUserStatus').textContent = user.status || 'Активный';
-                document.getElementById('modalUserTariff').textContent = user.tariff.name;
+                
+                // Извлекаем числовые значения из строк
+                const balanceValue = parseFloat(user.balance.replace(' BYN', '')) || 0;
+                const debtValue = parseFloat(user.debt.replace(' BYN', '')) || 0;
+                const creditLimit = 50; // Стандартный кредитный лимит
+                
                 document.getElementById('modalUserBalance').textContent = user.balance;
                 document.getElementById('modalUserDebt').textContent = user.debt;
-                document.getElementById('modalUserCreditLimit').textContent = (user.creditLimit || 50) + ' BYN';
+                document.getElementById('modalUserCreditLimit').textContent = creditLimit + ' BYN';
                 
-                const availableCredit = Math.max(0, (user.creditLimit || 50) + parseFloat(user.balance));
+                const availableCredit = Math.max(0, creditLimit + balanceValue);
                 document.getElementById('modalUserAvailableCredit').textContent = availableCredit.toFixed(2) + ' BYN';
 
                 // Заполняем форму редактирования
                 document.getElementById('editUserId').value = user._id;
                 document.getElementById('editUserFio').value = user.fio;
                 document.getElementById('editUserStatus').value = user.status || 'active';
-                document.getElementById('editUserCreditLimit').value = user.creditLimit || 50;
-                document.getElementById('editUserTariff').value = user.tariff.id;
-
-                // Загружаем услуги пользователя
-                await loadUserServices(user.phone);
+                document.getElementById('editUserCreditLimit').value = creditLimit;
 
                 // Показываем модальное окно
                 const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -1136,61 +1393,6 @@
             } catch (error) {
                 console.error('Ошибка загрузки данных пользователя:', error);
                 showNotification('Ошибка загрузки данных пользователя', 'error');
-            }
-        }
-
-        // Загрузка услуг пользователя
-        async function loadUserServices(phone) {
-            try {
-                const response = await fetch(`/api/user/services?phone=${encodeURIComponent(phone)}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const servicesList = document.getElementById('userServicesList');
-                    servicesList.innerHTML = result.services.map(service => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="service-${service.id}" 
-                                   ${service.active ? 'checked' : ''}
-                                   onchange="toggleUserService('${service.id}', this.checked)">
-                            <label class="form-check-label" for="service-${service.id}">
-                                ${service.name} - ${service.price}
-                            </label>
-                        </div>
-                    `).join('');
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки услуг:', error);
-            }
-        }
-
-        // Переключение услуг пользователя
-        async function toggleUserService(serviceId, activate) {
-            if (!currentEditingUser) return;
-
-            try {
-                const response = await fetch('/api/user/services/toggle', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone: currentEditingUser.phone,
-                        serviceId: serviceId,
-                        activate: activate
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Услуга ${activate ? 'подключена' : 'отключена'}`);
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка изменения услуги:', error);
-                showNotification('Ошибка изменения услуги', 'error');
             }
         }
 
@@ -1203,7 +1405,6 @@
                 const fio = document.getElementById('editUserFio').value;
                 const status = document.getElementById('editUserStatus').value;
                 const creditLimit = document.getElementById('editUserCreditLimit').value;
-                const tariff = document.getElementById('editUserTariff').value;
 
                 // Обновление основных данных
                 const response = await fetch(`/api/user/settings`, {
@@ -1213,29 +1414,23 @@
                     },
                     body: JSON.stringify({
                         phone: currentEditingUser.phone,
-                        fio: fio
+                        fio: fio,
+                        status: status,
+                        creditLimit: parseFloat(creditLimit)
                     })
                 });
 
-                // Смена тарифа если нужно
-                if (tariff !== currentEditingUser.tariff.id) {
-                    await fetch('/api/user/tariff/change', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            phone: currentEditingUser.phone,
-                            tariffId: tariff
-                        })
-                    });
-                }
-
-                showNotification('Изменения сохранены');
-                loadDashboardData();
+                const result = await response.json();
                 
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-                modal.hide();
+                if (result.success) {
+                    showNotification('Изменения сохранены');
+                    loadDashboardData();
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                    modal.hide();
+                } else {
+                    showNotification(result.error || 'Ошибка сохранения', 'error');
+                }
 
             } catch (error) {
                 console.error('Ошибка сохранения изменений:', error);
@@ -1327,12 +1522,52 @@
                     document.getElementById('addBalanceAmount').value = '';
                     // Обновляем данные пользователя
                     editUser(currentEditingUser._id);
+                    loadDashboardData();
                 } else {
                     showNotification(result.error, 'error');
                 }
             } catch (error) {
                 console.error('Ошибка пополнения баланса:', error);
                 showNotification('Ошибка пополнения баланса', 'error');
+            }
+        }
+
+        // Списание средств с пользователя
+        async function withdrawBalanceFromUser() {
+            if (!currentEditingUser) return;
+
+            const amount = document.getElementById('withdrawBalanceAmount').value;
+            if (!amount || amount <= 0) {
+                showNotification('Введите корректную сумму', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/payment/withdraw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone: currentEditingUser.phone,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(`Списано ${amount} BYN`);
+                    document.getElementById('withdrawBalanceAmount').value = '';
+                    // Обновляем данные пользователя
+                    editUser(currentEditingUser._id);
+                    loadDashboardData();
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка списания средств:', error);
+                showNotification('Ошибка списания средств', 'error');
             }
         }
 
@@ -1353,43 +1588,10 @@
             event.target.classList.add('active');
         }
 
-        // Поиск клиентов
-        document.getElementById('searchAllClients').addEventListener('input', function(e) {
-            const search = e.target.value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const tariffFilter = document.getElementById('tariffFilter').value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
-
-        // Фильтрация по статусу
-        document.getElementById('statusFilter').addEventListener('change', function(e) {
-            const search = document.getElementById('searchAllClients').value;
-            const statusFilter = e.target.value;
-            const tariffFilter = document.getElementById('tariffFilter').value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
-
-        // Фильтрация по тарифу
-        document.getElementById('tariffFilter').addEventListener('change', function(e) {
-            const search = document.getElementById('searchAllClients').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const tariffFilter = e.target.value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
-
-        // Обновление dropdown'ов клиентов
-        function updateClientDropdowns() {
-            const paymentClientSelect = document.getElementById('paymentClient');
-            const callClientSelect = document.getElementById('callClient');
-            
-            paymentClientSelect.innerHTML = '<option value="">Выберите клиента</option>';
-            callClientSelect.innerHTML = '<option value="">Выберите клиента</option>';
-            
-            allClients.forEach(client => {
-                const option = `<option value="${client.phone}">${client.fio} (${client.phone})</option>`;
-                paymentClientSelect.innerHTML += option;
-                callClientSelect.innerHTML += option;
-            });
+        // Показать модальное окно добавления клиента
+        function showAddClientModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
+            modal.show();
         }
 
         // Добавление клиента
@@ -1436,6 +1638,297 @@
             }
         }
 
+        // Показать модальное окно регистрации звонка
+        function showCallModal() {
+            const modal = new bootstrap.Modal(document.getElementById('callModal'));
+            modal.show();
+        }
+
+        // Регистрация звонка
+        async function registerCall() {
+            try {
+                const phone = document.getElementById('callClientPhone').value;
+                const number = document.getElementById('callNumber').value;
+                const callType = document.getElementById('callType').value;
+                const duration = parseInt(document.getElementById('callDuration').value);
+
+                if (!phone || !number || !duration || !callType) {
+                    showNotification('Заполните все поля', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/calls/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone,
+                        number,
+                        duration,
+                        callType
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Звонок успешно зарегистрирован');
+                    bootstrap.Modal.getInstance(document.getElementById('callModal')).hide();
+                    document.getElementById('callForm').reset();
+                    loadCallsHistory();
+                } else {
+                    showNotification(result.error || 'Ошибка регистрации звонка', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка регистрации звонка:', error);
+                showNotification('Ошибка регистрации звонка', 'error');
+            }
+        }
+
+        // Показать модальное окно пополнения баланса
+        function showAddPaymentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
+            modal.show();
+        }
+
+        // Обработка платежа
+        async function processPayment() {
+            try {
+                const phone = document.getElementById('paymentClientPhone').value;
+                const amount = parseFloat(document.getElementById('paymentAmount').value);
+                const method = document.getElementById('paymentMethod').value;
+
+                if (!phone || !amount || amount <= 0) {
+                    showNotification('Заполните все поля корректно', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/payment/topup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone,
+                        amount,
+                        method
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(`Баланс пополнен на ${amount} BYN`);
+                    bootstrap.Modal.getInstance(document.getElementById('addPaymentModal')).hide();
+                    document.getElementById('addPaymentForm').reset();
+                    loadDashboardData();
+                } else {
+                    showNotification(result.error || 'Ошибка пополнения баланса', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка пополнения баланса:', error);
+                showNotification('Ошибка пополнения баланса', 'error');
+            }
+        }
+
+        // Списание абонентской платы
+        async function chargeSubscription() {
+            try {
+                const response = await fetch('/api/admin/charge-subscription', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message);
+                    loadDashboardData();
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка списания абонентской платы:', error);
+                showNotification('Ошибка списания абонентской платы', 'error');
+            }
+        }
+
+        // Загрузка истории звонков
+        async function loadCallsHistory(page = 1) {
+            try {
+                currentCallsPage = page;
+                const phone = document.getElementById('callsPhoneFilter').value;
+                const callType = document.getElementById('callsTypeFilter').value;
+                const startDate = document.getElementById('callsStartDate').value;
+                const endDate = document.getElementById('callsEndDate').value;
+
+                let url = `/api/admin/calls?page=${page}&limit=${callsPerPage}`;
+                
+                if (phone) url += `&phone=${encodeURIComponent(phone)}`;
+                if (callType) url += `&callType=${callType}`;
+                if (startDate) url += `&startDate=${startDate}`;
+                if (endDate) url += `&endDate=${endDate}`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    // Обновляем статистику
+                    document.getElementById('totalCalls').textContent = result.totalCalls;
+                    document.getElementById('localCalls').textContent = result.localCalls;
+                    document.getElementById('internationalCalls').textContent = result.internationalCalls;
+                    document.getElementById('totalCallsCost').textContent = result.totalCost.toFixed(2) + ' BYN';
+
+                    // Заполняем таблицу
+                    const tbody = document.getElementById('callsHistoryTable');
+                    tbody.innerHTML = result.calls.map(call => `
+                        <tr>
+                            <td>${call.date}</td>
+                            <td>${call.userFio}</td>
+                            <td>${call.phone}</td>
+                            <td>${call.number}</td>
+                            <td>
+                                <span class="badge ${call.callType === 'local' ? 'bg-primary' : 'bg-warning'}">
+                                    ${call.callType === 'local' ? 'Местный' : 'Международный'}
+                                </span>
+                            </td>
+                            <td>${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}</td>
+                            <td class="fw-bold">${call.cost.toFixed(2)} BYN</td>
+                        </tr>
+                    `).join('');
+
+                    // Обновляем пагинацию
+                    updateCallsPagination(result.totalPages, page);
+                    document.getElementById('callsPaginationInfo').textContent = 
+                        `Показано ${result.calls.length} из ${result.totalCalls} записей`;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории звонков:', error);
+                showNotification('Ошибка загрузки истории звонков', 'error');
+            }
+        }
+
+        // Обновление пагинации для истории звонков
+        function updateCallsPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('callsPagination');
+            pagination.innerHTML = '';
+
+            // Кнопка "Назад"
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${currentPage - 1})">Назад</a>`;
+            pagination.appendChild(prevLi);
+
+            // Номера страниц
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // Кнопка "Вперед"
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${currentPage + 1})">Вперед</a>`;
+            pagination.appendChild(nextLi);
+        }
+
+        // Очистка фильтров истории звонков
+        function clearCallsFilters() {
+            document.getElementById('callsPhoneFilter').value = '';
+            document.getElementById('callsTypeFilter').value = '';
+            
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
+            
+            loadCallsHistory(1);
+        }
+
+        // Экспорт отчетов
+        async function exportUsersReport() {
+            try {
+                showNotification('Формирование отчета...', 'warning');
+                
+                const response = await fetch('/api/reports/users/word');
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера');
+                }
+                
+                const blob = await response.blob();
+                
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `users_report_${new Date().toISOString().split('T')[0]}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                showNotification('Отчет по пользователям успешно сформирован');
+            } catch (error) {
+                console.error('Ошибка экспорта отчета:', error);
+                showNotification('Ошибка формирования отчета', 'error');
+            }
+        }
+
+        async function exportCallsReport() {
+            try {
+                showNotification('Формирование отчета...', 'warning');
+                
+                const response = await fetch('/api/reports/calls/word');
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера');
+                }
+                
+                const blob = await response.blob();
+                
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `calls_report_${new Date().toISOString().split('T')[0]}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                showNotification('Отчет по звонкам успешно сформирован');
+            } catch (error) {
+                console.error('Ошибка экспорта отчета:', error);
+                showNotification('Ошибка формирования отчета', 'error');
+            }
+        }
+
+        async function exportDebtorsReport() {
+            try {
+                showNotification('Формирование отчета...', 'warning');
+                
+                const response = await fetch('/api/reports/debtors/word');
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера');
+                }
+                
+                const blob = await response.blob();
+                
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `debtors_report_${new Date().toISOString().split('T')[0]}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                showNotification('Отчет по должникам успешно сформирован');
+            } catch (error) {
+                console.error('Ошибка экспорта отчета:', error);
+                showNotification('Ошибка формирования отчета', 'error');
+            }
+        }
+
         // Показать/скрыть секции
         function showSection(sectionName) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1450,7 +1943,62 @@
             event.target.classList.add('active');
             
             if (sectionName === 'reports') {
-                loadReports();
+                loadDebtorsReport();
+            } else if (sectionName === 'calls') {
+                loadCallsHistory();
+            }
+        }
+
+        // Загрузка отчета по должникам
+        async function loadDebtorsReport() {
+            try {
+                const response = await fetch('/api/reports/debtors');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const container = document.getElementById('debtorsReport');
+                    container.innerHTML = `
+                        <div class="report-card">
+                            <div class="report-header">
+                                <div class="report-title">Отчет по должникам</div>
+                                <div class="report-value">${result.totalDebtors} клиентов</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Общая задолженность:</strong> ${result.totalDebt}</p>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ФИО</th>
+                                            <th>Телефон</th>
+                                            <th>Баланс</th>
+                                            <th>Долг</th>
+                                            <th>Тариф</th>
+                                            <th>Статус</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${result.debtors.map(debtor => `
+                                            <tr>
+                                                <td>${debtor.fio}</td>
+                                                <td>${debtor.phone}</td>
+                                                <td class="text-danger">${debtor.balance}</td>
+                                                <td class="text-danger fw-bold">${debtor.debt}</td>
+                                                <td>${debtor.tariff}</td>
+                                                <td>${debtor.status}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки отчета по должникам:', error);
             }
         }
 
@@ -1472,46 +2020,34 @@
             }
         }
 
+        // Обработчики событий для фильтров
+        document.getElementById('searchAllClients').addEventListener('input', function(e) {
+            const search = e.target.value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const tariffFilter = document.getElementById('tariffFilter').value;
+            loadAllClientsTable(search, statusFilter, tariffFilter);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', function(e) {
+            const search = document.getElementById('searchAllClients').value;
+            const statusFilter = e.target.value;
+            const tariffFilter = document.getElementById('tariffFilter').value;
+            loadAllClientsTable(search, statusFilter, tariffFilter);
+        });
+
+        document.getElementById('tariffFilter').addEventListener('change', function(e) {
+            const search = document.getElementById('searchAllClients').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const tariffFilter = e.target.value;
+            loadAllClientsTable(search, statusFilter, tariffFilter);
+        });
+
         // Инициализация секций
         document.querySelectorAll('.content-section').forEach(section => {
             if (section.id !== 'dashboard-section') {
                 section.style.display = 'none';
             }
         });
-
-        // Остальные функции (loadReports, exportDebtorsReport и т.д.) остаются без изменений
-        async function loadReports() {
-            // Реализация загрузки отчетов
-        }
-
-        function exportDebtorsReport() {
-            // Реализация экспорта отчетов
-        }
-
-        function exportFinancialReport() {
-            // Реализация экспорта отчетов
-        }
-
-        function exportFullReport() {
-            // Реализация экспорта отчетов
-        }
-
-        function showAddClientModal() {
-            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
-            modal.show();
-        }
-
-        function showAddPaymentModal() {
-            // Реализация показа модального окна пополнения
-        }
-
-        function showCallModal() {
-            // Реализация показа модального окна звонка
-        }
-
-        async function chargeSubscription() {
-            // Реализация списания абонентской платы
-        }
     </script>
 </body>
 </html>

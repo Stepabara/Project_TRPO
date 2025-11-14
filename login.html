@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация с котиком - Мобильный оператор</title>
+    <title>Авторизация с котиком - Мой Оператор</title>
     <style>
         * {
             margin: 0;
@@ -14,11 +14,11 @@
 
         body {
             background: linear-gradient(45deg, 
-                #87CEEB 0%, 
-                #98FB98 25%, 
-                #FFD700 50%, 
-                #FFA07A 75%, 
-                #9370DB 100%);
+                #3c4ce1 0%, 
+                #3b5cb1 25%, 
+                #806fd2 50%, 
+                #7c3fdd 75%, 
+                #3c4ce1 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -27,7 +27,8 @@
         }
 
         .container {
-            max-width: 450px;
+            display: flex;
+            max-width: 1000px;
             width: 100%;
             background: white;
             border-radius: 20px;
@@ -35,19 +36,21 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .cat-section {
+        .left-section {
+            flex: 1;
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 20px 30px 15px 30px;
+            padding: 40px;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
             text-align: center;
             position: relative;
             overflow: hidden;
         }
 
-        .cat-section::before {
+        .left-section::before {
             content: '';
             position: absolute;
             top: -30%;
@@ -59,32 +62,74 @@
             transform: rotate(-3deg);
         }
 
-        .form-section {
-            padding: 25px 40px 35px 40px;
+        .right-section {
+            flex: 1;
+            padding: 40px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             background: #f8f9fa;
         }
 
-        h1 {
-            font-size: 22px;
-            margin-bottom: 6px;
-            color: #2c3e50;
-            font-weight: 600;
+        .wave-text span {
+            display: inline-block;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            animation: wave 2s ease-in-out infinite;
         }
 
-        .subtitle {
-            margin-bottom: 12px;
-            color: #5d6d7e;
-            font-size: 13px;
+        .wave-text span:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .wave-text span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .wave-text span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        .wave-text span:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+        .wave-text span:nth-child(5) {
+            animation-delay: 0.8s;
+        }
+        .wave-text span:nth-child(6) {
+            animation-delay: 1.0s;
+        }
+        .wave-text span:nth-child(7) {
+            animation-delay: 1.2s;
+        }
+        .wave-text span:nth-child(8) {
+            animation-delay: 1.4s;
+        }
+        .wave-text span:nth-child(9) {
+            animation-delay: 1.6s;
+        }
+        .wave-text span:nth-child(10) {
+            animation-delay: 1.8s;
+        }
+        .wave-text span:nth-child(11) {
+            animation-delay: 2.0s;
+        }
+        .wave-text span:nth-child(12) {
+            animation-delay: 2.2s;
+        }
+
+        @keyframes wave {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
         }
 
         .cat-container {
             position: relative;
             width: 180px;
             height: 180px;
-            margin: 10px 0;
+            margin: 20px 0;
         }
 
         /* Стили котика в приятных цветах */
@@ -478,24 +523,37 @@
 
         @media (max-width: 768px) {
             .container {
+                flex-direction: column;
                 max-width: 100%;
             }
             
-            .cat-section {
-                padding: 15px 20px 10px 20px;
+            .left-section, .right-section {
+                padding: 20px;
             }
             
-            .form-section {
-                padding: 20px 20px 25px 20px;
+            .wave-text span {
+                font-size: 2.5rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="cat-section">
-            <div class="company-name">Мобильный оператор</div>
-            <p class="subtitle">Добро пожаловать в систему управления</p>
+        <div class="left-section">
+            <div class="wave-text">
+                <span>М</span>
+                <span>о</span>
+                <span>й</span>
+                <span> </span>
+                <span>О</span>
+                <span>п</span>
+                <span>е</span>
+                <span>р</span>
+                <span>а</span>
+                <span>т</span>
+                <span>о</span>
+                <span>р</span>
+            </div>
             
             <div class="cat-container">
                 <!-- Уши -->
@@ -539,7 +597,7 @@
             </div>
         </div>
         
-        <div class="form-section">
+        <div class="right-section">
             <div class="form-tabs">
                 <button class="tab active" onclick="showTab('login')">Вход</button>
                 <button class="tab" onclick="showTab('register')">Регистрация</button>
