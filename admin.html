@@ -132,6 +132,21 @@
             padding: 30px 20px;
         }
 
+        /* Секции контента */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* Приветственная секция */
         .welcome-section {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -147,6 +162,11 @@
             font-size: 32px;
             font-weight: 600;
             margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
         }
 
         /* Статистика */
@@ -205,6 +225,11 @@
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 5px;
+        }
+
+        .stat-description {
+            font-size: 14px;
+            color: var(--text-light);
         }
 
         /* Основные секции */
@@ -274,7 +299,6 @@
             font-weight: 600;
             transition: all 0.3s ease;
             border: none;
-            
         }
 
         .btn-primary {
@@ -309,6 +333,17 @@
 
         .btn-success {
             background: var(--success);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
             color: white;
         }
 
@@ -486,11 +521,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         /* Кнопка удаления в строке */
         .delete-btn {
             background: none;
@@ -508,15 +538,6 @@
             color: white;
             opacity: 1;
             transform: scale(1.1);
-        }
-
-        /* Секции контента */
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
         }
 
         /* Отчеты */
@@ -720,7 +741,12 @@
                             <button class="btn btn-info w-100" onclick="chargeSubscription()">
                                 <i class="fas fa-credit-card me-2"></i>Списать абонплату
                             </button>
-                       
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
+                                <i class="fas fa-plus me-2"></i>Пополнить баланс
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1210,6 +1236,15 @@
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Инициализация админ-панели...');
+            
+            // Убедимся, что только dashboard активен
+            document.querySelectorAll('.content-section').forEach(section => {
+                if (section.id !== 'dashboard-section') {
+                    section.classList.remove('active');
+                }
+            });
+            
             loadDashboardData();
             setInterval(loadDashboardData, 30000); // Автообновление каждые 30 секунд
             
@@ -1219,7 +1254,45 @@
             
             document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
             document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
+            
+            console.log('Админ-панель инициализирована');
         });
+
+        // Показать/скрыть секции (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+        function showSection(sectionName) {
+            console.log('Переключение на секцию:', sectionName);
+            
+            // Скрыть все секции
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Убрать активный класс со всех ссылок меню
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Показать выбранную секцию
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+                console.log('Секция активирована:', targetSection.id);
+            } else {
+                console.error('Секция не найдена:', sectionName + '-section');
+            }
+            
+            // Добавить активный класс к текущей ссылке
+            event.target.classList.add('active');
+            
+            // Загрузить данные для секции
+            if (sectionName === 'reports') {
+                loadDebtorsReport();
+            } else if (sectionName === 'calls') {
+                loadCallsHistory();
+            } else if (sectionName === 'dashboard') {
+                loadDashboardData();
+            }
+        }
 
         // Загрузка данных дашборда
         async function loadDashboardData() {
@@ -1929,26 +2002,6 @@
             }
         }
 
-        // Показать/скрыть секции
-        function showSection(sectionName) {
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            document.getElementById(sectionName + '-section').style.display = 'block';
-            event.target.classList.add('active');
-            
-            if (sectionName === 'reports') {
-                loadDebtorsReport();
-            } else if (sectionName === 'calls') {
-                loadCallsHistory();
-            }
-        }
-
         // Загрузка отчета по должникам
         async function loadDebtorsReport() {
             try {
@@ -2040,13 +2093,6 @@
             const statusFilter = document.getElementById('statusFilter').value;
             const tariffFilter = e.target.value;
             loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
-
-        // Инициализация секций
-        document.querySelectorAll('.content-section').forEach(section => {
-            if (section.id !== 'dashboard-section') {
-                section.style.display = 'none';
-            }
         });
     </script>
 </body>
