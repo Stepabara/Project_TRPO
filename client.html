@@ -19,6 +19,7 @@
             --success: #27ae60;
             --warning: #f39c12;
             --danger: #e74c3c;
+            --info: #3498db;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
             --text-color: #2c3e50;
@@ -357,63 +358,18 @@
             background: linear-gradient(90deg, var(--warning), #ffb74d); 
         }
 
-        /* Новости по центру */
-        .news-section-center {
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            margin: 40px auto;
-            max-width: 800px;
-            transition: all 0.3s ease;
-        }
-
-        .news-section-center:hover {
-            box-shadow: var(--shadow-hover);
-        }
-
-        .news-item {
-            padding: 20px 25px;
-            border-bottom: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .news-item:last-child {
-            border-bottom: none;
-        }
-
-        .news-item:hover {
-            background: #f8f9fa;
-            transform: translateX(5px);
-        }
-
-        .news-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-color);
+        /* Дополнительная информация об использовании */
+        .usage-details {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-light);
             display: flex;
-            align-items: center;
-            gap: 8px;
+            justify-content: space-between;
         }
 
-        .news-title::before {
-            content: '📰';
-            font-size: 14px;
-        }
-
-        .news-date {
-            font-size: 14px;
-            color: var(--text-light);
-            margin-bottom: 8px;
-        }
-
-        .news-content {
-            font-size: 14px;
-            color: var(--text-light);
-            line-height: 1.5;
+        .over-limit {
+            color: var(--danger);
+            font-weight: 600;
         }
 
         /* Информация о тарифе */
@@ -489,73 +445,144 @@
             font-size: 12px;
         }
 
-        /* Карточки услуг */
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .service-card {
+        /* Новости по центру */
+        .news-section-center {
             background: white;
-            border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            padding: 25px;
+            border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
+            overflow: hidden;
+            margin: 40px auto;
+            max-width: 800px;
             transition: all 0.3s ease;
-            position: relative;
         }
 
-        .service-card:hover {
-            transform: translateY(-5px);
+        .news-section-center:hover {
             box-shadow: var(--shadow-hover);
         }
 
-        .service-card.active {
-            border-color: var(--success);
+        .news-item {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .service-card.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--success);
-            border-radius: var(--radius) var(--radius) 0 0;
+        .news-item:last-child {
+            border-bottom: none;
         }
 
-        .service-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
+        .news-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
         }
 
-        .service-info h4 {
-            font-size: 18px;
+        .news-title {
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .service-info p {
+        .news-title::before {
+            content: '📰';
+            font-size: 14px;
+        }
+
+        .news-date {
             font-size: 14px;
             color: var(--text-light);
-            margin: 0;
+            margin-bottom: 8px;
         }
 
-        .service-price {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .service-description {
+        .news-content {
             font-size: 14px;
             color: var(--text-light);
-            margin-bottom: 20px;
             line-height: 1.5;
+        }
+
+        /* Детальная история использования */
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .history-table .type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .type-call {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-internet {
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+
+        .type-sms {
+            background: #fff3e0;
+            color: #f39c12;
         }
 
         /* Кнопки */
@@ -616,6 +643,17 @@
             background: #c0392b;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
         .btn:disabled {
@@ -764,8 +802,12 @@
                 grid-template-columns: 1fr;
             }
 
-            .services-grid {
-                grid-template-columns: 1fr;
+            .history-filters {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                min-width: 100%;
             }
 
             .welcome-section {
@@ -805,7 +847,7 @@
         }
 
         .notification.info {
-            background: var(--primary);
+            background: var(--info);
         }
 
         .notification.warning {
@@ -837,48 +879,117 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Таблица звонков */
-        .calls-table {
+        /* Пагинация */
+        .pagination {
+            display: flex;
+            list-style: none;
+            gap: 5px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .page-item {
+            display: inline-block;
+        }
+
+        .page-link {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-item.active .page-link {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Таблицы */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        /* Карточки услуг */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .service-card.active {
+            border-color: var(--success);
+        }
+
+        .service-card.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-collapse: collapse;
+            height: 4px;
+            background: var(--success);
+            border-radius: var(--radius) var(--radius) 0 0;
         }
 
-        .calls-table th {
-            background: #f8f9fa;
-            padding: 12px 15px;
-            text-align: left;
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .service-info h4 {
+            font-size: 18px;
             font-weight: 600;
-            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 5px;
         }
 
-        .calls-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .calls-table tr {
-            transition: background 0.3s ease;
-        }
-
-        .calls-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: #e8f5e8;
-            color: var(--success);
-        }
-
-        .status-inactive {
-            background: #f5f5f5;
+        .service-info p {
+            font-size: 14px;
             color: var(--text-light);
+            margin: 0;
+        }
+
+        .service-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .service-description {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -890,27 +1001,27 @@
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a class="nav-link active" onclick="showSection('dashboard')">
+                    <a class="nav-link active" onclick="showSection('dashboard', this)">
                         <i class="fas fa-home"></i>
                         <span>Главная</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('tariffs')">
+                    <a class="nav-link" onclick="showSection('history', this)">
+                        <i class="fas fa-history"></i>
+                        <span>История</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('tariffs', this)">
                         <i class="fas fa-list-alt"></i>
                         <span>Тарифы</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('services')">
+                    <a class="nav-link" onclick="showSection('services', this)">
                         <i class="fas fa-cog"></i>
                         <span>Услуги</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('calls')">
-                        <i class="fas fa-phone"></i>
-                        <span>Звонки</span>
                     </a>
                 </li>
             </ul>
@@ -976,6 +1087,17 @@
                     </div>
                     <div class="stat-description" id="debtInfo">Нет задолженности</div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Месячные расходы</div>
+                            <div class="stat-value" id="monthlyCost">0.00 BYN</div>
+                        </div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-description" id="costBreakdown">Загрузка...</div>
+                </div>
             </div>
 
             <!-- Основные секции -->
@@ -985,7 +1107,7 @@
                     <!-- Использование услуг -->
                     <div class="main-section">
                         <div class="section-header">
-                            <h3 class="section-title">📊 Использование услуг</h3>
+                            <h3 class="section-title">📊 Использование услуг (текущий месяц)</h3>
                             <button class="btn btn-outline" onclick="loadUsageData()">
                                 <i class="fas fa-sync-alt"></i>
                                 Обновить
@@ -1003,6 +1125,10 @@
                                 <div class="usage-bar">
                                     <div class="usage-progress internet-progress" id="internetProgress" style="width: 0%"></div>
                                 </div>
+                                <div class="usage-details" id="internetDetails">
+                                    <span>Стоимость: <span id="internetCost">0.00 BYN</span></span>
+                                    <span id="internetOverLimit" class="over-limit" style="display: none;">Превышение: <span id="internetOverLimitValue">0 ГБ</span></span>
+                                </div>
                             </div>
 
                             <div class="usage-item">
@@ -1016,6 +1142,10 @@
                                 <div class="usage-bar">
                                     <div class="usage-progress calls-progress" id="callsProgress" style="width: 0%"></div>
                                 </div>
+                                <div class="usage-details" id="callsDetails">
+                                    <span>Международные: <span id="internationalCalls">0 мин</span></span>
+                                    <span id="callsOverLimit" class="over-limit" style="display: none;">Превышение: <span id="callsOverLimitValue">0 мин</span></span>
+                                </div>
                             </div>
 
                             <div class="usage-item">
@@ -1028,6 +1158,20 @@
                                 </div>
                                 <div class="usage-bar">
                                     <div class="usage-progress sms-progress" id="smsProgress" style="width: 0%"></div>
+                                </div>
+                                <div class="usage-details" id="smsDetails">
+                                    <span>Стоимость: <span id="smsCost">0.00 BYN</span></span>
+                                    <span id="smsOverLimit" class="over-limit" style="display: none;">Превышение: <span id="smsOverLimitValue">0 SMS</span></span>
+                                </div>
+                            </div>
+
+                            <div class="total-cost-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="margin-bottom: 5px;">Общая стоимость сверх лимита:</h4>
+                                        <p style="font-size: 12px; color: var(--text-light);">Стоимость превышения тарифных лимитов</p>
+                                    </div>
+                                    <div class="stat-value" id="totalOverCost" style="color: var(--danger);">0.00 BYN</div>
                                 </div>
                             </div>
                         </div>
@@ -1043,10 +1187,31 @@
                         <ul class="tariff-features" id="tariffFeatures">
                             <li>Загрузка...</li>
                         </ul>
-                        <button class="btn btn-outline" style="margin-top: 15px; width: 100%;" onclick="showSection('tariffs')">
+                        <button class="btn btn-outline" style="margin-top: 15px; width: 100%;" onclick="showSection('tariffs', document.querySelector('#tariffs-nav'))">
                             <i class="fas fa-exchange-alt"></i>
                             Сменить тариф
                         </button>
+                    </div>
+
+                    <!-- Быстрые действия -->
+                    <div class="main-section" style="margin-top: 20px;">
+                        <div class="section-header">
+                            <h3 class="section-title">⚡ Быстрые действия</h3>
+                        </div>
+                        <div class="section-body">
+                            <button class="btn btn-primary w-100" style="margin-bottom: 10px;" onclick="showTopUpModal()">
+                                <i class="fas fa-plus"></i>
+                                Пополнить баланс
+                            </button>
+                            <button class="btn btn-info w-100" style="margin-bottom: 10px;" onclick="loadUsageData()">
+                                <i class="fas fa-sync-alt"></i>
+                                Обновить статистику
+                            </button>
+                            <button class="btn btn-outline w-100" onclick="showSection('history', document.querySelector('#history-nav'))">
+                                <i class="fas fa-history"></i>
+                                История использования
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1055,11 +1220,104 @@
             <div class="news-section-center">
                 <div class="section-header">
                     <h3 class="section-title">📰 Новости и акции</h3>
+                    <button class="btn btn-outline" onclick="loadNews()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
                 <div class="section-body" id="newsContainer">
                     <div class="loading">
                         <div class="loading-spinner"></div>
                         <div>Загрузка новостей...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История использования -->
+        <div id="history-section" class="content-section">
+            <div class="welcome-section">
+                <h2 class="welcome-title">📊 История использования</h2>
+                <p class="welcome-subtitle">Детальная история всех ваших услуг: звонки, интернет и SMS</p>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Фильтры</h3>
+                </div>
+                <div class="section-body">
+                    <div class="history-filters">
+                        <div class="filter-group">
+                            <label>Тип услуги</label>
+                            <select class="form-control" id="historyTypeFilter">
+                                <option value="">Все услуги</option>
+                                <option value="calls">Звонки</option>
+                                <option value="internet">Интернет</option>
+                                <option value="sms">SMS</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Дата с</label>
+                            <input type="date" class="form-control" id="historyStartDate">
+                        </div>
+                        <div class="filter-group">
+                            <label>Дата по</label>
+                            <input type="date" class="form-control" id="historyEndDate">
+                        </div>
+                        <div class="filter-group" style="align-self: flex-end;">
+                            <button class="btn btn-primary" onclick="loadUsageHistory()">
+                                <i class="fas fa-search"></i> Поиск
+                            </button>
+                            <button class="btn btn-outline" onclick="clearHistoryFilters()">
+                                <i class="fas fa-times"></i> Очистить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица истории -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">История использования</h3>
+                    <div class="text-muted" id="historyPaginationInfo">
+                        Загрузка...
+                    </div>
+                </div>
+                <div class="section-body">
+                    <div class="table-responsive">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Дата и время</th>
+                                    <th>Тип</th>
+                                    <th>Детали</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px;">
+                                        <div class="loading">
+                                            <div class="loading-spinner"></div>
+                                            <div>Загрузка истории...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Пагинация -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted" id="historyStats">
+                            Показано 0 из 0 записей
+                        </div>
+                        <nav>
+                            <ul class="pagination" id="historyPagination">
+                                <!-- Пагинация будет сгенерирована здесь -->
+                            </ul>
+                        </nav>
                     </div>
                 </div>
             </div>
@@ -1107,49 +1365,6 @@
                             <div>Загрузка услуг...</div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Звонки -->
-        <div id="calls-section" class="content-section">
-            <div class="welcome-section">
-                <h2 class="welcome-title">📞 История звонков</h2>
-                <p class="welcome-subtitle">Просмотр истории ваших звонков</p>
-            </div>
-
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Последние звонки</h3>
-                    <div>
-                        <button class="btn btn-primary" onclick="loadCallsHistory()">
-                            <i class="fas fa-sync-alt"></i>
-                            Обновить
-                        </button>
-                    </div>
-                </div>
-                <div class="section-body">
-                    <table class="calls-table">
-                        <thead>
-                            <tr>
-                                <th>Дата и время</th>
-                                <th>Номер</th>
-                                <th>Тип</th>
-                                <th>Длительность</th>
-                                <th>Стоимость</th>
-                            </tr>
-                        </thead>
-                        <tbody id="callsTableBody">
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px;">
-                                    <div class="loading">
-                                        <div class="loading-spinner"></div>
-                                        <div>Загрузка данных...</div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -1216,6 +1431,10 @@
     <script>
         // ========== КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ ==========
         let currentUser = null;
+        let currentUsageData = null;
+        let currentHistoryPage = 1;
+        const historyPerPage = 20;
+        let totalHistoryItems = 0;
 
         // ========== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -1235,6 +1454,13 @@
                 
                 updateUserInterface();
                 await loadDashboardData();
+                
+                // Установка дат по умолчанию для фильтров истории
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                
+                document.getElementById('historyStartDate').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
                 
             } catch (error) {
                 console.error('Ошибка инициализации:', error);
@@ -1267,21 +1493,41 @@
             }, 4000);
         }
 
-        async function refreshPageData() {
-            console.log('🔄 Обновление данных страницы...');
-            await loadDashboardData();
+        // ========== УПРАВЛЕНИЕ СЕКЦИЯМИ ==========
+        function showSection(sectionName, element) {
+            // Скрыть все секции
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
             
-            // Обновляем активную секцию
-            const activeSection = document.querySelector('.content-section.active').id;
-            if (activeSection === 'tariffs-section') {
-                await loadTariffs();
-            } else if (activeSection === 'services-section') {
-                await loadServices();
-            } else if (activeSection === 'calls-section') {
-                await loadCallsHistory();
+            // Убрать активный класс со всех ссылок меню
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Показать выбранную секцию
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            // Добавить активный класс к текущей ссылке
+            if (element) {
+                element.classList.add('active');
             }
             
-            showNotification('Данные обновлены', 'info');
+            // Загрузить данные для секции
+            switch(sectionName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'history':
+                    loadUsageHistory();
+                    break;
+                case 'tariffs':
+                    loadTariffs();
+                    break;
+                case 'services':
+                    loadServices();
+                    break;
+            }
         }
 
         // ========== ЗАГРУЗКА ДАННЫХ ==========
@@ -1327,8 +1573,6 @@
                 console.error('❌ Ошибка загрузки данных пользователя:', error);
                 showNotification('Ошибка загрузки данных пользователя', 'error');
                 
-                // Используем данные из localStorage как fallback
-                console.log('🔄 Используем данные из localStorage');
                 if (currentUser) {
                     updateUserData(currentUser);
                 }
@@ -1345,105 +1589,41 @@
                     const result = await response.json();
                     console.log('📈 Данные использования:', result);
                     
-                    if (result.success !== false) {
+                    if (result.success) {
+                        currentUsageData = result;
                         updateUsageData(result);
                         return;
                     }
                 }
                 
-                // Данные на основе тарифа
-                console.log('🔄 Используем данные использования на основе тарифа');
-                const tariff = currentUser.tariff || { 
-                    includedMinutes: 300,
-                    internetGB: 15,
-                    smsCount: 100
-                };
-                
-                // Определяем лимиты в зависимости от тарифа
-                let internetLimit, smsLimit;
-                
-                switch(tariff.id) {
-                    case 'standard':
-                        internetLimit = 15;  // 15 ГБ
-                        smsLimit = 100;      // 100 SMS
-                        break;
-                    case 'plus+':
-                        internetLimit = 50;  // 50 ГБ
-                        smsLimit = 300;      // 300 SMS
-                        break;
-                    case 'Super plus':
-                        internetLimit = 100; // 100 ГБ
-                        smsLimit = 600;      // 600 SMS
-                        break;
-                    default:
-                        internetLimit = 15;
-                        smsLimit = 100;
-                }
-                
-                const fallbackData = {
-                    internet: { 
-                        used: Math.floor(Math.random() * internetLimit * 0.7), // 0-70% от лимита
-                        total: internetLimit 
-                    },
-                    calls: { 
-                        used: Math.floor(Math.random() * tariff.includedMinutes * 0.8), 
-                        total: tariff.includedMinutes || 300,
-                        international: Math.floor(Math.random() * 20),
-                        totalMinutes: 0
-                    },
-                    sms: { 
-                        used: Math.floor(Math.random() * smsLimit * 0.6), 
-                        total: smsLimit 
-                    }
-                };
-                
-                updateUsageData(fallbackData);
+                throw new Error('Ошибка загрузки данных использования');
                 
             } catch (error) {
                 console.error('❌ Ошибка загрузки данных использования:', error);
                 
-                // Fallback данные на основе тарифа
-                const tariff = currentUser.tariff || { 
-                    includedMinutes: 300,
-                    internetGB: 15,
-                    smsCount: 100
-                };
-                
-                let internetLimit, smsLimit;
-                
-                switch(tariff.id) {
-                    case 'standard':
-                        internetLimit = 15;
-                        smsLimit = 100;
-                        break;
-                    case 'plus+':
-                        internetLimit = 50;
-                        smsLimit = 300;
-                        break;
-                    case 'Super plus':
-                        internetLimit = 100;
-                        smsLimit = 600;
-                        break;
-                    default:
-                        internetLimit = 15;
-                        smsLimit = 100;
-                }
-                
+                // Fallback данные
                 const fallbackData = {
                     internet: { 
                         used: 8.5, 
-                        total: internetLimit 
+                        total: 15,
+                        overLimit: 0,
+                        overCost: 0
                     },
                     calls: { 
                         used: 120, 
-                        total: tariff.includedMinutes || 300,
+                        total: 300,
                         international: 12,
-                        totalMinutes: 132
+                        totalMinutes: 132,
+                        overLimit: 0,
+                        overCost: 0
                     },
                     sms: { 
                         used: 45, 
-                        total: smsLimit 
-                    }
+                        total: 100,
+                        overLimit: 0,
+                        overCost: 0
+                    },
+                    totalOverCost: 0
                 };
                 
                 updateUsageData(fallbackData);
@@ -1463,7 +1643,6 @@
                 }
                 
                 // Fallback новости
-                console.log('🔄 Используем fallback новости');
                 displayNews([
                     {
                         title: 'Обновление системы',
@@ -1474,17 +1653,11 @@
                         title: 'Новые тарифы',
                         date: new Date(Date.now() - 86400000).toLocaleDateString('ru-RU'),
                         content: 'Доступны новые тарифные планы с улучшенными условиями'
-                    },
-                    {
-                        title: 'Бонусная программа',
-                        date: new Date(Date.now() - 172800000).toLocaleDateString('ru-RU'),
-                        content: 'Новая бонусная программа для постоянных клиентов'
                     }
                 ]);
                 
             } catch (error) {
                 console.error('❌ Ошибка загрузки новостей:', error);
-                // Fallback новости при ошибке
                 displayNews([
                     {
                         title: 'Технические работы',
@@ -1493,6 +1666,103 @@
                     }
                 ]);
             }
+        }
+
+        // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
+        function updateUserData(data) {
+            if (data.tariff) {
+                document.getElementById('tariffName').textContent = data.tariff.name;
+                document.getElementById('tariffPriceDisplay').textContent = `${data.tariff.price} BYN/месяц`;
+                document.getElementById('currentTariffName').textContent = data.tariff.name;
+                document.getElementById('currentTariffPrice').textContent = `${data.tariff.price} BYN/мес`;
+                
+                const featuresList = document.getElementById('tariffFeatures');
+                if (data.tariff.features) {
+                    featuresList.innerHTML = data.tariff.features.map(feature => 
+                        `<li>${feature}</li>`
+                    ).join('');
+                }
+            }
+            
+            if (data.balance !== undefined) {
+                document.getElementById('balanceAmount').textContent = `${data.balance.toFixed(2)} BYN`;
+            }
+            
+            document.getElementById('userStatus').textContent = data.status === 'active' ? 'Активен' : 'Неактивен';
+            
+            if (data.debt > 0) {
+                document.getElementById('debtInfo').textContent = `Задолженность: ${data.debt.toFixed(2)} BYN`;
+                document.getElementById('debtInfo').style.color = '#e74c3c';
+            } else {
+                document.getElementById('debtInfo').textContent = 'Нет задолженности';
+                document.getElementById('debtInfo').style.color = '';
+            }
+        }
+
+        function updateUsageData(data) {
+            if (!data) return;
+            
+            // Интернет
+            const internetPercent = (data.internet.used / data.internet.total) * 100;
+            document.getElementById('internetUsage').textContent = 
+                `${data.internet.used.toFixed(1)} ГБ / ${data.internet.total} ГБ`;
+            document.getElementById('internetProgress').style.width = `${Math.min(internetPercent, 100)}%`;
+            document.getElementById('internetCost').textContent = `${data.internet.overCost.toFixed(2)} BYN`;
+            
+            if (data.internet.overLimit > 0) {
+                document.getElementById('internetOverLimit').style.display = 'block';
+                document.getElementById('internetOverLimitValue').textContent = `${data.internet.overLimit.toFixed(2)} ГБ`;
+            } else {
+                document.getElementById('internetOverLimit').style.display = 'none';
+            }
+
+            // Звонки
+            const callsPercent = (data.calls.used / data.calls.total) * 100;
+            document.getElementById('callsUsage').textContent = 
+                `${data.calls.used} мин / ${data.calls.total} мин`;
+            document.getElementById('callsProgress').style.width = `${Math.min(callsPercent, 100)}%`;
+            document.getElementById('internationalCalls').textContent = `${data.calls.international} мин`;
+            
+            if (data.calls.overLimit > 0) {
+                document.getElementById('callsOverLimit').style.display = 'block';
+                document.getElementById('callsOverLimitValue').textContent = `${data.calls.overLimit} мин`;
+            } else {
+                document.getElementById('callsOverLimit').style.display = 'none';
+            }
+
+            // SMS
+            const smsPercent = (data.sms.used / data.sms.total) * 100;
+            document.getElementById('smsUsage').textContent = 
+                `${data.sms.used} / ${data.sms.total}`;
+            document.getElementById('smsProgress').style.width = `${Math.min(smsPercent, 100)}%`;
+            document.getElementById('smsCost').textContent = `${data.sms.overCost.toFixed(2)} BYN`;
+            
+            if (data.sms.overLimit > 0) {
+                document.getElementById('smsOverLimit').style.display = 'block';
+                document.getElementById('smsOverLimitValue').textContent = `${data.sms.overLimit} SMS`;
+            } else {
+                document.getElementById('smsOverLimit').style.display = 'none';
+            }
+
+            // Общая стоимость
+            document.getElementById('totalOverCost').textContent = `${data.totalOverCost.toFixed(2)} BYN`;
+            
+            // Расчет месячных расходов
+            const monthlyCost = data.totalOverCost + (currentUser.tariff?.price || 0);
+            document.getElementById('monthlyCost').textContent = `${monthlyCost.toFixed(2)} BYN`;
+            
+            let breakdown = `Тариф: ${currentUser.tariff?.price || 0} BYN`;
+            if (data.totalOverCost > 0) {
+                breakdown += ` + Превышения: ${data.totalOverCost.toFixed(2)} BYN`;
+            }
+            document.getElementById('costBreakdown').textContent = breakdown;
+            
+            console.log('📊 Обновлены данные использования:', {
+                internet: `${data.internet.used.toFixed(1)}/${data.internet.total} ГБ`,
+                calls: `${data.calls.used}/${data.calls.total} мин`,
+                sms: `${data.sms.used}/${data.sms.total}`,
+                overCost: data.totalOverCost
+            });
         }
 
         function displayNews(news) {
@@ -1512,89 +1782,159 @@
             `).join('');
         }
 
-        // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
-        function updateUserData(data) {
-            if (data.tariff) {
-                document.getElementById('tariffName').textContent = data.tariff.name;
-                document.getElementById('tariffPriceDisplay').textContent = `${data.tariff.price} BYN/месяц`;
-                document.getElementById('currentTariffName').textContent = data.tariff.name;
-                document.getElementById('currentTariffPrice').textContent = `${data.tariff.price} BYN/мес`;
+        // ========== ИСТОРИЯ ИСПОЛЬЗОВАНИЯ ==========
+        async function loadUsageHistory(page = 1) {
+            try {
+                currentHistoryPage = page;
+                const type = document.getElementById('historyTypeFilter').value;
+                const startDate = document.getElementById('historyStartDate').value;
+                const endDate = document.getElementById('historyEndDate').value;
                 
-                const featuresList = document.getElementById('tariffFeatures');
-                if (data.tariff.features) {
-                    featuresList.innerHTML = data.tariff.features.map(feature => 
-                        `<li>${feature}</li>`
-                    ).join('');
+                let url = `/api/user/usage/detailed?phone=${encodeURIComponent(currentUser.phone)}&page=${page}&limit=${historyPerPage}`;
+                
+                if (type) url += `&type=${type}`;
+                if (startDate) url += `&startDate=${startDate}`;
+                if (endDate) url += `&endDate=${endDate}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Ошибка сервера');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayUsageHistory(result);
+                } else {
+                    throw new Error(result.error || 'Ошибка загрузки истории');
                 }
                 
-                // Обновляем использование услуг при смене тарифа
-                setTimeout(() => {
-                    loadUsageData();
-                }, 500);
+            } catch (error) {
+                console.error('❌ Ошибка загрузки истории использования:', error);
+                showNotification('Ошибка загрузки истории использования', 'error');
+                
+                // Fallback данные
+                const fallbackData = {
+                    data: [
+                        {
+                            type: 'call',
+                            date: new Date().toLocaleString('ru-RU'),
+                            details: 'Местный звонок',
+                            number: '+375291111111',
+                            duration: '5:30',
+                            cost: '0.00 BYN'
+                        },
+                        {
+                            type: 'internet',
+                            date: new Date().toLocaleString('ru-RU'),
+                            details: 'Интернет трафик (мобильный)',
+                            volume: '125.50 МБ',
+                            duration: '1ч 15м',
+                            cost: '0.00 BYN'
+                        },
+                        {
+                            type: 'sms',
+                            date: new Date().toLocaleString('ru-RU'),
+                            details: 'Исходящее SMS',
+                            recipient: '+375291111111',
+                            length: '45 символов',
+                            cost: '0.00 BYN'
+                        }
+                    ],
+                    total: 3,
+                    page: 1,
+                    totalPages: 1
+                };
+                
+                displayUsageHistory(fallbackData);
             }
+        }
+
+        function displayUsageHistory(result) {
+            const tableBody = document.getElementById('historyTableBody');
+            totalHistoryItems = result.total;
             
-            if (data.balance !== undefined) {
-                document.getElementById('balanceAmount').textContent = `${data.balance.toFixed(2)} BYN`;
-            }
-            
-            document.getElementById('userStatus').textContent = data.status === 'active' ? 'Активен' : 'Неактивен';
-            
-            if (data.debt > 0) {
-                document.getElementById('debtInfo').textContent = `Задолженность: ${data.debt.toFixed(2)} BYN`;
-                document.getElementById('debtInfo').style.color = '#e74c3c';
+            if (!result.data || result.data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px;">
+                            <div style="color: var(--text-light);">
+                                <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
+                                <p>Нет данных за выбранный период</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             } else {
-                document.getElementById('debtInfo').textContent = 'Нет задолженности';
-                document.getElementById('debtInfo').style.color = '';
+                tableBody.innerHTML = result.data.map(item => `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td>
+                            <span class="type-badge type-${item.type}">
+                                ${item.type === 'call' ? '📞 Звонок' : 
+                                  item.type === 'internet' ? '🌐 Интернет' : '💬 SMS'}
+                            </span>
+                        </td>
+                        <td>
+                            <div>${item.details}</div>
+                            ${item.number ? `<div style="font-size: 12px; color: var(--text-light);">${item.number}</div>` : ''}
+                            ${item.volume ? `<div style="font-size: 12px; color: var(--text-light);">${item.volume}</div>` : ''}
+                            ${item.recipient ? `<div style="font-size: 12px; color: var(--text-light);">${item.recipient}</div>` : ''}
+                            ${item.duration ? `<div style="font-size: 12px; color: var(--text-light);">${item.duration}</div>` : ''}
+                            ${item.length ? `<div style="font-size: 12px; color: var(--text-light);">${item.length}</div>` : ''}
+                        </td>
+                        <td class="${item.cost !== '0.00 BYN' ? 'text-danger fw-bold' : 'text-success'}">
+                            ${item.cost}
+                        </td>
+                    </tr>
+                `).join('');
             }
+            
+            // Обновляем статистику
+            const startIndex = (result.page - 1) * historyPerPage + 1;
+            const endIndex = Math.min(startIndex + result.data.length - 1, result.total);
+            document.getElementById('historyStats').textContent = 
+                `Показано ${startIndex}-${endIndex} из ${result.total} записей`;
+            
+            // Обновляем пагинацию
+            updateHistoryPagination(result.totalPages, result.page);
         }
 
-        function updateUsageData(data) {
-            // Интернет
-            const internetPercent = (data.internet.used / data.internet.total) * 100;
-            document.getElementById('internetUsage').textContent = `${data.internet.used.toFixed(1)} ГБ / ${data.internet.total} ГБ`;
-            document.getElementById('internetProgress').style.width = `${Math.min(internetPercent, 100)}%`;
-
-            // Звонки
-            const callsPercent = (data.calls.used / data.calls.total) * 100;
-            document.getElementById('callsUsage').textContent = `${data.calls.used} мин / ${data.calls.total} мин`;
-            document.getElementById('callsProgress').style.width = `${Math.min(callsPercent, 100)}%`;
-
-            // SMS
-            const smsPercent = (data.sms.used / data.sms.total) * 100;
-            document.getElementById('smsUsage').textContent = `${data.sms.used} / ${data.sms.total}`;
-            document.getElementById('smsProgress').style.width = `${Math.min(smsPercent, 100)}%`;
+        function updateHistoryPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('historyPagination');
+            pagination.innerHTML = '';
             
-            console.log('📊 Обновлены данные использования:', {
-                internet: `${data.internet.used.toFixed(1)}/${data.internet.total} ГБ`,
-                calls: `${data.calls.used}/${data.calls.total} мин`,
-                sms: `${data.sms.used}/${data.sms.total}`
-            });
+            if (totalPages <= 1) return;
+            
+            // Кнопка "Назад"
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadUsageHistory(${currentPage - 1})">Назад</a>`;
+            pagination.appendChild(prevLi);
+            
+            // Номера страниц
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="loadUsageHistory(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+            
+            // Кнопка "Вперед"
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadUsageHistory(${currentPage + 1})">Вперед</a>`;
+            pagination.appendChild(nextLi);
         }
 
-        // ========== УПРАВЛЕНИЕ СЕКЦИЯМИ ==========
-        function showSection(sectionName) {
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
+        function clearHistoryFilters() {
+            document.getElementById('historyTypeFilter').value = '';
             
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             
-            document.getElementById(sectionName + '-section').classList.add('active');
-            event.target.classList.add('active');
+            document.getElementById('historyStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
             
-            switch(sectionName) {
-                case 'tariffs':
-                    loadTariffs();
-                    break;
-                case 'services':
-                    loadServices();
-                    break;
-                case 'calls':
-                    loadCallsHistory();
-                    break;
-            }
+            loadUsageHistory(1);
         }
 
         // ========== ЗАГРУЗКА ТАРИФОВ ==========
@@ -1617,18 +1957,27 @@
                         id: 'standard',
                         name: 'Стандарт',
                         price: '19.99 BYN',
+                        minutePrice: '0.10 BYN',
+                        internetPricePerMB: '0.01 BYN',
+                        smsPrice: '0.05 BYN',
                         features: ['300 минут местных звонков', '15 ГБ интернета', '100 SMS сообщений']
                     },
                     {
                         id: 'plus+',
                         name: 'Плюс+',
                         price: '29.99 BYN',
+                        minutePrice: '0.15 BYN',
+                        internetPricePerMB: '0.008 BYN',
+                        smsPrice: '0.04 BYN',
                         features: ['300 минут местных звонков', '50 ГБ интернета', '300 SMS сообщений']
                     },
                     {
                         id: 'Super plus',
                         name: 'Супер плюс',
                         price: '35.99 BYN',
+                        minutePrice: '0.20 BYN',
+                        internetPricePerMB: '0.005 BYN',
+                        smsPrice: '0.03 BYN',
                         features: ['600 минут местных звонков', '100 ГБ интернета', '600 SMS сообщений']
                     }
                 ];
@@ -1651,6 +2000,9 @@
                     <div class="tariff-price">${tariff.price}</div>
                     <ul class="tariff-features">
                         ${tariff.features.map(feature => `<li>${feature}</li>`).join('')}
+                        <li>Местные звонки сверх лимита: ${tariff.minutePrice}/мин</li>
+                        <li>Интернет сверх лимита: ${tariff.internetPricePerMB}/МБ</li>
+                        <li>SMS сверх лимита: ${tariff.smsPrice}</li>
                     </ul>
                     <button class="btn ${tariff.id === (currentUser.tariff?.id || 'standard') ? 'btn-outline' : 'btn-primary'}" 
                             style="margin-top: 15px; width: 100%;" 
@@ -1701,22 +2053,6 @@
                         category: 'хранилище',
                         price: '1.99 BYN',
                         description: '50 ГБ облачного хранилища для файлов',
-                        active: false
-                    },
-                    {
-                        id: 'tv',
-                        name: 'МТС TV',
-                        category: 'развлечения',
-                        price: '7.99 BYN',
-                        description: 'Доступ к 100+ телеканалам',
-                        active: true
-                    },
-                    {
-                        id: 'games',
-                        name: 'Игровая подписка',
-                        category: 'развлечения',
-                        price: '3.99 BYN',
-                        description: 'Доступ к каталогу игр',
                         active: false
                     }
                 ];
@@ -1776,13 +2112,11 @@
                 if (result.success) {
                     showNotification(result.message || 'Тариф успешно изменен!');
                     
-                    // Обновляем данные пользователя
                     currentUser.tariff = result.newTariff;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
-                    // Автообновление страницы
                     setTimeout(() => {
-                        refreshPageData();
+                        loadDashboardData();
                     }, 1500);
                 } else {
                     showNotification(result.error || 'Ошибка смены тарифа', 'error');
@@ -1817,9 +2151,9 @@
                 
                 if (result.success) {
                     showNotification(result.message || `Услуга ${activate ? 'подключена' : 'отключена'}`);
-                    // Автообновление страницы
                     setTimeout(() => {
-                        refreshPageData();
+                        loadServices();
+                        loadUserData();
                     }, 1500);
                 } else {
                     showNotification(result.error || 'Ошибка изменения услуги', 'error');
@@ -1859,9 +2193,8 @@
                 if (result.success) {
                     showNotification(result.message || 'Баланс успешно пополнен!');
                     closeTopUpModal();
-                    // Автообновление страницы
                     setTimeout(() => {
-                        refreshPageData();
+                        loadUserData();
                     }, 1500);
                 } else {
                     showNotification(result.error || 'Ошибка пополнения баланса', 'error');
@@ -1870,71 +2203,6 @@
                 console.error('Ошибка пополнения баланса:', error);
                 showNotification('Ошибка соединения с сервером', 'error');
             }
-        }
-
-        // ========== ИСТОРИЯ ЗВОНКОВ ==========
-        async function loadCallsHistory() {
-            try {
-                const response = await fetch(`/api/user/calls?phone=${encodeURIComponent(currentUser.phone)}`);
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        displayCallsHistory(result.calls);
-                        return;
-                    }
-                }
-                
-                // Fallback данные
-                const fallbackCalls = [
-                    {
-                        date: new Date().toLocaleString('ru-RU'),
-                        number: '+375291234567',
-                        type: 'Местный',
-                        duration: '5:30',
-                        cost: '0.00 BYN'
-                    },
-                    {
-                        date: new Date(Date.now() - 86400000).toLocaleString('ru-RU'),
-                        number: '+375331234567',
-                        type: 'Местный',
-                        duration: '2:15',
-                        cost: '0.00 BYN'
-                    },
-                    {
-                        date: new Date(Date.now() - 172800000).toLocaleString('ru-RU'),
-                        number: '+74951234567',
-                        type: 'Международный',
-                        duration: '3:45',
-                        cost: '5.63 BYN'
-                    }
-                ];
-                
-                displayCallsHistory(fallbackCalls);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки истории звонков:', error);
-                document.getElementById('callsTableBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">Ошибка загрузки данных</td></tr>';
-                showNotification('Ошибка загрузки истории звонков', 'error');
-            }
-        }
-
-        function displayCallsHistory(calls) {
-            const callsTableBody = document.getElementById('callsTableBody');
-            
-            if (calls.length === 0) {
-                callsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">Нет данных о звонках</td></tr>';
-                return;
-            }
-            
-            callsTableBody.innerHTML = calls.map(call => `
-                <tr>
-                    <td>${call.date}</td>
-                    <td>${call.number}</td>
-                    <td>${call.type}</td>
-                    <td>${call.duration}</td>
-                    <td>${call.cost}</td>
-                </tr>
-            `).join('');
         }
 
         // ========== СОХРАНЕНИЕ ПРОФИЛЯ ==========
@@ -1968,10 +2236,6 @@
                     updateUserInterface();
                     closeEditProfileModal();
                     showNotification('Профиль успешно сохранен!');
-                    // Автообновление страницы
-                    setTimeout(() => {
-                        refreshPageData();
-                    }, 1000);
                 } else {
                     showNotification('Ошибка сохранения: ' + result.error, 'error');
                 }

@@ -620,6 +620,12 @@
                         <span>История звонков</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('messages')">
+                        <i class="fas fa-comments"></i>
+                        <span>История сообщений</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="user-menu">
@@ -738,8 +744,8 @@
                             </button>
                         </div>
                         <div class="col-md-3">
-                            <button class="btn btn-info w-100" onclick="chargeSubscription()">
-                                <i class="fas fa-credit-card me-2"></i>Списать абонплату
+                            <button class="btn btn-info w-100" onclick="showMessageModal()">
+                                <i class="fas fa-comment me-2"></i>Отправить сообщение
                             </button>
                         </div>
                         <div class="col-md-3">
@@ -921,6 +927,137 @@
                         </div>
                         <nav>
                             <ul class="pagination" id="callsPagination">
+                                <!-- Пагинация будет сгенерирована здесь -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages History Section -->
+        <div id="messages-section" class="content-section">
+            <div class="welcome-section">
+                <h2 class="welcome-title">История сообщений</h2>
+                <p class="welcome-subtitle">Просмотр и управление историей SMS сообщений всех пользователей</p>
+            </div>
+
+            <!-- Фильтры истории сообщений -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Фильтры</h3>
+                </div>
+                <div class="section-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Телефон клиента</label>
+                            <input type="text" class="form-control" id="messagesPhoneFilter" placeholder="+375...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Направление</label>
+                            <select class="form-control" id="messagesDirectionFilter">
+                                <option value="">Все</option>
+                                <option value="outgoing">Исходящие</option>
+                                <option value="incoming">Входящие</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Дата с</label>
+                            <input type="date" class="form-control" id="messagesStartDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Дата по</label>
+                            <input type="date" class="form-control" id="messagesEndDate">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="loadMessagesHistory()">
+                            <i class="fas fa-search me-2"></i>Поиск
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearMessagesFilters()">
+                            <i class="fas fa-times me-2"></i>Очистить
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика сообщений -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Всего сообщений</div>
+                            <div class="stat-value" id="totalMessages">0</div>
+                        </div>
+                        <div class="stat-icon">📨</div>
+                    </div>
+                    <div class="stat-description">За выбранный период</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Исходящие</div>
+                            <div class="stat-value" id="outgoingMessages">0</div>
+                        </div>
+                        <div class="stat-icon">↗️</div>
+                    </div>
+                    <div class="stat-description">Отправленные сообщения</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Входящие</div>
+                            <div class="stat-value" id="incomingMessages">0</div>
+                        </div>
+                        <div class="stat-icon">↙️</div>
+                    </div>
+                    <div class="stat-description">Полученные сообщения</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Общая стоимость</div>
+                            <div class="stat-value" id="totalMessagesCost">0 BYN</div>
+                        </div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-description">Сумма всех сообщений</div>
+                </div>
+            </div>
+
+            <!-- Таблица истории сообщений -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">История сообщений</h3>
+                </div>
+                <div class="section-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Дата и время</th>
+                                    <th>Клиент</th>
+                                    <th>Телефон</th>
+                                    <th>Получатель</th>
+                                    <th>Направление</th>
+                                    <th>Длина</th>
+                                    <th>Стоимость</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messagesHistoryTable">
+                                <!-- История сообщений будет загружена здесь -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted" id="messagesPaginationInfo">
+                            Показано 0 из 0 записей
+                        </div>
+                        <nav>
+                            <ul class="pagination" id="messagesPagination">
                                 <!-- Пагинация будет сгенерирована здесь -->
                             </ul>
                         </nav>
@@ -1187,6 +1324,48 @@
         </div>
     </div>
 
+    <!-- Модальное окно отправки сообщения -->
+    <div class="modal fade" id="messageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Отправить сообщение</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="messageForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="messageClientPhone" required placeholder="+375291234567">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Номер получателя *</label>
+                            <input type="tel" class="form-control" id="messageRecipient" required placeholder="+375291111111">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Текст сообщения *</label>
+                            <textarea class="form-control" id="messageText" rows="3" required placeholder="Введите текст сообщения..." maxlength="500"></textarea>
+                            <div class="form-text text-end">
+                                <span id="messageCharCount">0</span>/500 символов
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Направление *</label>
+                            <select class="form-control" id="messageDirection" required>
+                                <option value="outgoing">Исходящее (от клиента)</option>
+                                <option value="incoming">Входящее (клиенту)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="sendMessage()">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Модальное окно пополнения баланса -->
     <div class="modal fade" id="addPaymentModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1232,7 +1411,9 @@
         let allClients = [];
         let currentEditingUser = null;
         let currentCallsPage = 1;
+        let currentMessagesPage = 1;
         const callsPerPage = 10;
+        const messagesPerPage = 10;
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
@@ -1254,6 +1435,14 @@
             
             document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
             document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
+            document.getElementById('messagesStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('messagesEndDate').value = today.toISOString().split('T')[0];
+            
+            // Счетчик символов для сообщения
+            document.getElementById('messageText').addEventListener('input', function() {
+                const count = this.value.length;
+                document.getElementById('messageCharCount').textContent = count;
+            });
             
             console.log('Админ-панель инициализирована');
         });
@@ -1289,6 +1478,8 @@
                 loadDebtorsReport();
             } else if (sectionName === 'calls') {
                 loadCallsHistory();
+            } else if (sectionName === 'messages') {
+                loadMessagesHistory();
             } else if (sectionName === 'dashboard') {
                 loadDashboardData();
             }
@@ -1759,6 +1950,55 @@
             }
         }
 
+        // Показать модальное окно отправки сообщения
+        function showMessageModal() {
+            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+            modal.show();
+        }
+
+        // Отправка сообщения
+        async function sendMessage() {
+            try {
+                const phone = document.getElementById('messageClientPhone').value;
+                const recipient = document.getElementById('messageRecipient').value;
+                const messageText = document.getElementById('messageText').value;
+                const direction = document.getElementById('messageDirection').value;
+
+                if (!phone || !recipient || !messageText || !direction) {
+                    showNotification('Заполните все поля', 'error');
+                    return;
+                }
+
+                const response = await fetch('/api/usage/sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone,
+                        recipientNumber: recipient,
+                        messageLength: messageText.length,
+                        direction
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Сообщение успешно отправлено');
+                    bootstrap.Modal.getInstance(document.getElementById('messageModal')).hide();
+                    document.getElementById('messageForm').reset();
+                    document.getElementById('messageCharCount').textContent = '0';
+                    loadMessagesHistory();
+                } else {
+                    showNotification(result.error || 'Ошибка отправки сообщения', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                showNotification('Ошибка отправки сообщения', 'error');
+            }
+        }
+
         // Показать модальное окно пополнения баланса
         function showAddPaymentModal() {
             const modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
@@ -1918,6 +2158,101 @@
             document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
             
             loadCallsHistory(1);
+        }
+
+        // Загрузка истории сообщений
+        async function loadMessagesHistory(page = 1) {
+            try {
+                currentMessagesPage = page;
+                const phone = document.getElementById('messagesPhoneFilter').value;
+                const direction = document.getElementById('messagesDirectionFilter').value;
+                const startDate = document.getElementById('messagesStartDate').value;
+                const endDate = document.getElementById('messagesEndDate').value;
+
+                let url = `/api/admin/sms?page=${page}&limit=${messagesPerPage}`;
+                
+                if (phone) url += `&phone=${encodeURIComponent(phone)}`;
+                if (direction) url += `&direction=${direction}`;
+                if (startDate) url += `&startDate=${startDate}`;
+                if (endDate) url += `&endDate=${endDate}`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    // Обновляем статистику
+                    document.getElementById('totalMessages').textContent = result.total;
+                    document.getElementById('outgoingMessages').textContent = result.stats.outgoing || 0;
+                    document.getElementById('incomingMessages').textContent = result.stats.incoming || 0;
+                    document.getElementById('totalMessagesCost').textContent = result.stats.totalCost.toFixed(2) + ' BYN';
+
+                    // Заполняем таблицу
+                    const tbody = document.getElementById('messagesHistoryTable');
+                    tbody.innerHTML = result.data.map(sms => `
+                        <tr>
+                            <td>${sms.date}</td>
+                            <td>${sms.userFio}</td>
+                            <td>${sms.phone}</td>
+                            <td>${sms.recipient}</td>
+                            <td>
+                                <span class="badge ${sms.direction === 'Исходящее' ? 'bg-primary' : 'bg-success'}">
+                                    ${sms.direction}
+                                </span>
+                            </td>
+                            <td>${sms.length}</td>
+                            <td class="fw-bold">${sms.cost.toFixed(2)} BYN</td>
+                        </tr>
+                    `).join('');
+
+                    // Обновляем пагинацию
+                    updateMessagesPagination(result.totalPages, page);
+                    document.getElementById('messagesPaginationInfo').textContent = 
+                        `Показано ${result.data.length} из ${result.total} записей`;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории сообщений:', error);
+                showNotification('Ошибка загрузки истории сообщений', 'error');
+            }
+        }
+
+        // Обновление пагинации для истории сообщений
+        function updateMessagesPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('messagesPagination');
+            pagination.innerHTML = '';
+
+            // Кнопка "Назад"
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${currentPage - 1})">Назад</a>`;
+            pagination.appendChild(prevLi);
+
+            // Номера страниц
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // Кнопка "Вперед"
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${currentPage + 1})">Вперед</a>`;
+            pagination.appendChild(nextLi);
+        }
+
+        // Очистка фильтров истории сообщений
+        function clearMessagesFilters() {
+            document.getElementById('messagesPhoneFilter').value = '';
+            document.getElementById('messagesDirectionFilter').value = '';
+            
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('messagesStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('messagesEndDate').value = today.toISOString().split('T')[0];
+            
+            loadMessagesHistory(1);
         }
 
         // Экспорт отчетов
