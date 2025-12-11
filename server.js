@@ -111,7 +111,7 @@ const paymentSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     type: { 
         type: String, 
-        enum: ['topup', 'subscription', 'call_payment', 'internet_payment', 'sms_payment', 'tariff_change', 'withdrawal'], 
+        enum: ['topup', 'subscription', 'call_payment', 'internet_payment', 'sms_payment', 'tariff_change', 'withdrawal', 'traffic_adjustment'], 
         default: 'topup' 
     }
 });
@@ -1545,6 +1545,138 @@ app.post('/api/admin/usage/register', checkDatabaseConnection, async (req, res) 
     }
 });
 
+// ========== API ДЛЯ РЕДАКТИРОВАНИЯ ТРАФИКА КЛИЕНТА ==========
+
+app.post('/api/admin/traffic/edit', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { phone, trafficChange, month } = req.body;
+        
+        if (!phone || !trafficChange) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указаны телефон или изменение трафика' 
+            });
+        }
+
+        const user = await User.findOne({ phone });
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        // Определяем текущий месяц, если не указан
+        const currentMonth = month || new Date().toISOString().slice(0, 7);
+        
+        // Определяем изменение (плюс или минус)
+        const changeValue = parseFloat(trafficChange);
+        if (isNaN(changeValue)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Некорректное значение изменения трафика' 
+            });
+        }
+
+        // Получаем текущий использованный трафик за месяц
+        const monthlyInternet = await InternetUsage.find({ 
+            phone: user.phone,
+            month: currentMonth 
+        });
+        const currentTotalMB = monthlyInternet.reduce((sum, usage) => sum + usage.mbUsed, 0);
+        
+        // Рассчитываем новый трафик
+        const newTotalMB = currentTotalMB + changeValue;
+        if (newTotalMB < 0) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Невозможно уменьшить трафик ниже 0' 
+            });
+        }
+
+        // Рассчитываем лимит
+        const internetLimitMB = (user.tariff.internetGB || 15) * 1024;
+        
+        // Рассчитываем стоимость за превышение (если есть)
+        let cost = 0;
+        let overLimitMB = 0;
+        
+        if (newTotalMB > internetLimitMB) {
+            overLimitMB = newTotalMB - internetLimitMB;
+            cost = overLimitMB * (user.tariff.internetPricePerMB || 0.01);
+        }
+
+        // Создаем запись об изменении трафика
+        const internetUsage = new InternetUsage({
+            userId: user._id,
+            phone: user.phone,
+            mbUsed: changeValue,
+            sessionDuration: 0, // Административное изменение
+            cost: cost,
+            type: 'mobile',
+            month: currentMonth,
+            date: new Date()
+        });
+
+        await internetUsage.save();
+
+        // Если есть стоимость за превышение, списываем средства
+        if (cost > 0) {
+            user.balance -= cost;
+            if (user.balance < 0) {
+                user.debt = Math.abs(user.balance);
+            }
+            await user.save();
+
+            // Запись о платеже за превышение
+            const payment = new Payment({
+                userId: user._id,
+                phone: user.phone,
+                amount: -cost,
+                method: 'Административная корректировка трафика',
+                type: 'internet_payment',
+                date: new Date()
+            });
+            await payment.save();
+        }
+
+        // Получаем обновленные данные о трафике
+        const updatedMonthlyInternet = await InternetUsage.find({ 
+            phone: user.phone,
+            month: currentMonth 
+        });
+        const updatedTotalMB = updatedMonthlyInternet.reduce((sum, usage) => sum + usage.mbUsed, 0);
+        const updatedTotalGB = updatedTotalMB / 1024;
+
+        res.json({
+            success: true,
+            message: `Трафик успешно изменен на ${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(2)} МБ`,
+            details: {
+                phone: user.phone,
+                fio: user.fio,
+                month: currentMonth,
+                change: changeValue,
+                oldTotalMB: currentTotalMB,
+                newTotalMB: updatedTotalMB,
+                newTotalGB: updatedTotalGB.toFixed(2),
+                limitMB: internetLimitMB,
+                limitGB: (internetLimitMB / 1024).toFixed(2),
+                overLimitMB: Math.max(0, updatedTotalMB - internetLimitMB),
+                cost: cost,
+                newBalance: user.balance,
+                debt: user.debt
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка редактирования трафика:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка редактирования трафика: ' + error.message 
+        });
+    }
+});
+
 // ========== ОСТАЛЬНЫЕ API (оставляем без изменений) ==========
 
 // Получение истории звонков
@@ -2834,6 +2966,7 @@ async function initializeApp() {
             console.log(`   - Детальная статистика использования`);
             console.log(`   - Админ-панель с фильтрацией`);
             console.log(`   - Клиентский личный кабинет`);
+            console.log(`   - Редактирование трафика клиентов`);
         });
     } catch (error) {
         console.error('❌ Ошибка инициализации приложения:', error);

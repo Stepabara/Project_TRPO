@@ -753,6 +753,11 @@
                                 <i class="fas fa-plus me-2"></i>Пополнить баланс
                             </button>
                         </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" onclick="showTrafficEditModal()">
+                                <i class="fas fa-network-wired me-2"></i>Изменить трафик
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1402,6 +1407,79 @@
         </div>
     </div>
 
+    <!-- Модальное окно изменения трафика -->
+    <div class="modal fade" id="trafficEditModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Изменение трафика клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="trafficEditForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="trafficClientPhone" required placeholder="+375291234567">
+                            <div class="form-text" id="trafficClientInfo"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Изменение трафика (МБ) *</label>
+                            <input type="text" class="form-control" id="trafficChange" required placeholder="+500 или -300">
+                            <div class="form-text">
+                                <ul class="mb-0 mt-1 ps-3">
+                                    <li>Используйте знак "+" для добавления трафика</li>
+                                    <li>Используйте знак "-" для уменьшения трафика</li>
+                                    <li>Пример: +500 добавит 500 МБ</li>
+                                    <li>Пример: -300 уменьшит на 300 МБ</li>
+                                    <li>Если новый трафик превысит лимит тарифа, будет начислена дополнительная плата</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Месяц изменения</label>
+                            <input type="month" class="form-control" id="trafficMonth" value="">
+                            <div class="form-text">Оставьте пустым для текущего месяца</div>
+                        </div>
+                        
+                        <div class="alert alert-info" id="trafficInfo">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small>Текущий трафик:</small>
+                                    <div id="currentTraffic">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small>Лимит тарифа:</small>
+                                    <div id="tariffLimit">-</div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <small>Оставшийся трафик:</small>
+                                    <div id="remainingTraffic">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small>Стоимость превышения:</small>
+                                    <div id="overLimitCost">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning d-none" id="trafficWarning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="warningText"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="applyTrafficChange()">Применить изменение</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Уведомление -->
     <div class="notification" id="notification"></div>
 
@@ -1438,10 +1516,25 @@
             document.getElementById('messagesStartDate').value = firstDay.toISOString().split('T')[0];
             document.getElementById('messagesEndDate').value = today.toISOString().split('T')[0];
             
+            // Установка текущего месяца для изменения трафика
+            const currentMonth = today.toISOString().slice(0, 7);
+            document.getElementById('trafficMonth').value = currentMonth;
+            
             // Счетчик символов для сообщения
             document.getElementById('messageText').addEventListener('input', function() {
                 const count = this.value.length;
                 document.getElementById('messageCharCount').textContent = count;
+            });
+            
+            // Обработка ввода изменения трафика
+            document.getElementById('trafficClientPhone').addEventListener('input', function() {
+                if (this.value.length >= 10) {
+                    loadClientTrafficInfo(this.value);
+                }
+            });
+            
+            document.getElementById('trafficChange').addEventListener('input', function() {
+                calculateTrafficChange();
             });
             
             console.log('Админ-панель инициализирована');
@@ -2042,6 +2135,204 @@
             } catch (error) {
                 console.error('Ошибка пополнения баланса:', error);
                 showNotification('Ошибка пополнения баланса', 'error');
+            }
+        }
+
+        // Показать модальное окно изменения трафика
+        function showTrafficEditModal() {
+            const modal = new bootstrap.Modal(document.getElementById('trafficEditModal'));
+            modal.show();
+            
+            // Сбросить форму
+            document.getElementById('trafficEditForm').reset();
+            document.getElementById('trafficClientInfo').textContent = '';
+            document.getElementById('currentTraffic').textContent = '-';
+            document.getElementById('tariffLimit').textContent = '-';
+            document.getElementById('remainingTraffic').textContent = '-';
+            document.getElementById('overLimitCost').textContent = '-';
+            document.getElementById('trafficWarning').classList.add('d-none');
+            
+            // Установить текущий месяц
+            const today = new Date();
+            const currentMonth = today.toISOString().slice(0, 7);
+            document.getElementById('trafficMonth').value = currentMonth;
+        }
+
+        // Загрузка информации о трафике клиента
+        async function loadClientTrafficInfo(phone) {
+            try {
+                // Загружаем данные пользователя
+                const userResponse = await fetch(`/api/user/data?phone=${encodeURIComponent(phone)}`);
+                const userResult = await userResponse.json();
+                
+                if (!userResult.success) {
+                    document.getElementById('trafficClientInfo').innerHTML = 
+                        `<span class="text-danger">Клиент не найден</span>`;
+                    return;
+                }
+
+                // Загружаем данные использования
+                const usageResponse = await fetch(`/api/user/usage?phone=${encodeURIComponent(phone)}`);
+                const usageResult = await usageResponse.json();
+                
+                if (!usageResult.success) {
+                    document.getElementById('trafficClientInfo').innerHTML = 
+                        `<span class="text-danger">Ошибка загрузки данных трафика</span>`;
+                    return;
+                }
+
+                const user = userResult;
+                const usage = usageResult;
+                
+                // Отображаем информацию о клиенте
+                document.getElementById('trafficClientInfo').innerHTML = 
+                    `<strong>${user.fio}</strong>, тариф: ${user.tariff.name}`;
+                
+                // Рассчитываем значения в МБ
+                const currentGB = usage.internet.used;
+                const currentMB = currentGB * 1024;
+                const limitGB = usage.internet.total;
+                const limitMB = limitGB * 1024;
+                const remainingGB = Math.max(0, limitGB - currentGB);
+                const remainingMB = remainingGB * 1024;
+                const overCost = usage.internet.overCost;
+                
+                // Отображаем информацию о трафике
+                document.getElementById('currentTraffic').innerHTML = 
+                    `<strong>${currentGB.toFixed(2)} ГБ</strong> (${currentMB.toFixed(0)} МБ)`;
+                document.getElementById('tariffLimit').innerHTML = 
+                    `<strong>${limitGB} ГБ</strong> (${limitMB.toFixed(0)} МБ)`;
+                document.getElementById('remainingTraffic').innerHTML = 
+                    `<strong>${remainingGB.toFixed(2)} ГБ</strong> (${remainingMB.toFixed(0)} МБ)`;
+                document.getElementById('overLimitCost').innerHTML = 
+                    `<strong>${overCost.toFixed(2)} BYN/МБ</strong> за превышение`;
+                
+                // Сохраняем данные для расчетов
+                document.getElementById('trafficEditForm').dataset.currentMB = currentMB;
+                document.getElementById('trafficEditForm').dataset.limitMB = limitMB;
+                document.getElementById('trafficEditForm').dataset.overCost = user.tariff.internetPricePerMB || 0.01;
+
+            } catch (error) {
+                console.error('Ошибка загрузки информации о трафике:', error);
+                document.getElementById('trafficClientInfo').innerHTML = 
+                    `<span class="text-danger">Ошибка загрузки данных</span>`;
+            }
+        }
+
+        // Расчет изменения трафика
+        function calculateTrafficChange() {
+            const changeInput = document.getElementById('trafficChange').value.trim();
+            const form = document.getElementById('trafficEditForm');
+            
+            if (!changeInput) {
+                document.getElementById('trafficWarning').classList.add('d-none');
+                return;
+            }
+            
+            // Проверяем формат ввода
+            if (!/^[+-]?\d+(\.\d+)?$/.test(changeInput)) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    'Неверный формат. Используйте числа со знаком "+" или "-" (например: +500 или -300)';
+                return;
+            }
+            
+            const changeValue = parseFloat(changeInput);
+            const currentMB = parseFloat(form.dataset.currentMB) || 0;
+            const limitMB = parseFloat(form.dataset.limitMB) || 0;
+            const overCost = parseFloat(form.dataset.overCost) || 0.01;
+            
+            if (isNaN(currentMB) || isNaN(limitMB)) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    'Сначала введите номер телефона клиента';
+                return;
+            }
+            
+            // Рассчитываем новый трафик
+            const newMB = currentMB + changeValue;
+            
+            if (newMB < 0) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    `Невозможно уменьшить трафик ниже 0. Текущий трафик: ${currentMB.toFixed(0)} МБ`;
+                return;
+            }
+            
+            // Проверяем превышение лимита
+            const overMB = Math.max(0, newMB - limitMB);
+            const cost = overMB * overCost;
+            
+            if (overMB > 0) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    `Внимание! После изменения трафик превысит лимит на ${overMB.toFixed(0)} МБ. ` +
+                    `Будет начислена дополнительная плата: ${cost.toFixed(2)} BYN`;
+            } else {
+                document.getElementById('trafficWarning').classList.add('d-none');
+            }
+        }
+
+        // Применение изменения трафика
+        async function applyTrafficChange() {
+            try {
+                const phone = document.getElementById('trafficClientPhone').value;
+                const trafficChange = document.getElementById('trafficChange').value.trim();
+                const month = document.getElementById('trafficMonth').value;
+                
+                if (!phone || !trafficChange) {
+                    showNotification('Заполните все обязательные поля', 'error');
+                    return;
+                }
+                
+                // Проверяем формат ввода
+                if (!/^[+-]?\d+(\.\d+)?$/.test(trafficChange)) {
+                    showNotification('Неверный формат изменения трафика. Используйте числа со знаком "+" или "-"', 'error');
+                    return;
+                }
+                
+                showNotification('Применение изменений...', 'warning');
+                
+                const response = await fetch('/api/admin/traffic/edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        phone,
+                        trafficChange,
+                        month: month || undefined
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message);
+                    
+                    // Сбросить форму
+                    document.getElementById('trafficEditForm').reset();
+                    document.getElementById('trafficClientInfo').textContent = '';
+                    document.getElementById('currentTraffic').textContent = '-';
+                    document.getElementById('tariffLimit').textContent = '-';
+                    document.getElementById('remainingTraffic').textContent = '-';
+                    document.getElementById('overLimitCost').textContent = '-';
+                    document.getElementById('trafficWarning').classList.add('d-none');
+                    
+                    // Закрыть модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('trafficEditModal'));
+                    modal.hide();
+                    
+                    // Обновить данные дашборда
+                    loadDashboardData();
+                    
+                } else {
+                    showNotification(result.error, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка изменения трафика:', error);
+                showNotification('Ошибка изменения трафика', 'error');
             }
         }
 

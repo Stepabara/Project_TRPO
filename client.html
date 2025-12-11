@@ -991,6 +991,177 @@
             margin-bottom: 20px;
             line-height: 1.5;
         }
+        
+        /* Стили для предупреждений о трафике */
+        .traffic-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+
+        .traffic-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+            animation: danger-pulse 1.5s infinite;
+        }
+
+        @keyframes danger-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+
+        .traffic-info {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .traffic-icon {
+            font-size: 24px;
+        }
+
+        .traffic-message {
+            flex: 1;
+        }
+
+        .traffic-message h4 {
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .traffic-message p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        /* Индикаторы использования */
+        .usage-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .usage-indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .usage-indicator-dot.safe {
+            background-color: var(--success);
+        }
+
+        .usage-indicator-dot.warning {
+            background-color: var(--warning);
+        }
+
+        .usage-indicator-dot.danger {
+            background-color: var(--danger);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Карточка трафика */
+        .traffic-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .traffic-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .traffic-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .traffic-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .traffic-card-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .traffic-card-value.safe {
+            color: var(--success);
+        }
+
+        .traffic-card-value.warning {
+            color: var(--warning);
+        }
+
+        .traffic-card-value.danger {
+            color: var(--danger);
+        }
+
+        .traffic-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .traffic-stat {
+            text-align: center;
+        }
+
+        .traffic-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -1046,6 +1217,11 @@
             <div class="welcome-section">
                 <h2 class="welcome-title">Добро пожаловать, <span id="welcomeName">Иван</span>!</h2>
                 <p class="welcome-subtitle">Управляйте своими услугами и следите за расходованием ресурсов</p>
+            </div>
+
+            <!-- Предупреждения о трафике -->
+            <div id="trafficAlerts">
+                <!-- Предупреждения будут добавляться здесь динамически -->
             </div>
 
             <!-- Статистика -->
@@ -1114,20 +1290,46 @@
                             </button>
                         </div>
                         <div class="section-body">
-                            <div class="usage-item">
-                                <div class="usage-header">
-                                    <span class="usage-label">
+                            <!-- Карточка интернет трафика -->
+                            <div class="traffic-card">
+                                <div class="traffic-card-header">
+                                    <div class="traffic-card-title">
                                         <span class="usage-icon">🌐</span>
                                         Интернет трафик
-                                    </span>
-                                    <span class="usage-value" id="internetUsage">0 ГБ / 0 ГБ</span>
+                                    </div>
+                                    <div class="traffic-card-value safe" id="internetUsageValue">0 ГБ</div>
                                 </div>
-                                <div class="usage-bar">
-                                    <div class="usage-progress internet-progress" id="internetProgress" style="width: 0%"></div>
+                                
+                                <div class="usage-item">
+                                    <div class="usage-header">
+                                        <span class="usage-value" id="internetUsage">0 ГБ / 0 ГБ</span>
+                                    </div>
+                                    <div class="usage-bar">
+                                        <div class="usage-progress internet-progress" id="internetProgress" style="width: 0%"></div>
+                                    </div>
+                                    <div class="usage-details" id="internetDetails">
+                                        <span>Стоимость: <span id="internetCost">0.00 BYN</span></span>
+                                        <span id="internetOverLimit" class="over-limit" style="display: none;">Превышение: <span id="internetOverLimitValue">0 ГБ</span></span>
+                                    </div>
+                                    <div class="usage-indicator" id="internetIndicator">
+                                        <span class="usage-indicator-dot safe"></span>
+                                        <span>В пределах лимита</span>
+                                    </div>
                                 </div>
-                                <div class="usage-details" id="internetDetails">
-                                    <span>Стоимость: <span id="internetCost">0.00 BYN</span></span>
-                                    <span id="internetOverLimit" class="over-limit" style="display: none;">Превышение: <span id="internetOverLimitValue">0 ГБ</span></span>
+                                
+                                <div class="traffic-stats">
+                                    <div class="traffic-stat">
+                                        <div>Использовано</div>
+                                        <div class="traffic-stat-value" id="internetUsedStat">0 ГБ</div>
+                                    </div>
+                                    <div class="traffic-stat">
+                                        <div>Доступно</div>
+                                        <div class="traffic-stat-value" id="internetAvailableStat">0 ГБ</div>
+                                    </div>
+                                    <div class="traffic-stat">
+                                        <div>Лимит</div>
+                                        <div class="traffic-stat-value" id="internetLimitStat">0 ГБ</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1146,6 +1348,10 @@
                                     <span>Международные: <span id="internationalCalls">0 мин</span></span>
                                     <span id="callsOverLimit" class="over-limit" style="display: none;">Превышение: <span id="callsOverLimitValue">0 мин</span></span>
                                 </div>
+                                <div class="usage-indicator" id="callsIndicator">
+                                    <span class="usage-indicator-dot safe"></span>
+                                    <span>В пределах лимита</span>
+                                </div>
                             </div>
 
                             <div class="usage-item">
@@ -1162,6 +1368,10 @@
                                 <div class="usage-details" id="smsDetails">
                                     <span>Стоимость: <span id="smsCost">0.00 BYN</span></span>
                                     <span id="smsOverLimit" class="over-limit" style="display: none;">Превышение: <span id="smsOverLimitValue">0 SMS</span></span>
+                                </div>
+                                <div class="usage-indicator" id="smsIndicator">
+                                    <span class="usage-indicator-dot safe"></span>
+                                    <span>В пределах лимита</span>
                                 </div>
                             </div>
 
@@ -1435,6 +1645,7 @@
         let currentHistoryPage = 1;
         const historyPerPage = 20;
         let totalHistoryItems = 0;
+        let usageUpdateInterval = null;
 
         // ========== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -1462,6 +1673,9 @@
                 document.getElementById('historyStartDate').value = firstDay.toISOString().split('T')[0];
                 document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
                 
+                // Запуск периодического обновления данных трафика
+                startPeriodicUsageUpdate();
+                
             } catch (error) {
                 console.error('Ошибка инициализации:', error);
                 showNotification('Ошибка загрузки приложения', 'error');
@@ -1480,6 +1694,24 @@
             
             document.getElementById('fio').value = currentUser.fio;
             document.getElementById('phone').value = currentUser.phone;
+        }
+
+        // ========== ПЕРИОДИЧЕСКОЕ ОБНОВЛЕНИЕ ДАННЫХ ==========
+        function startPeriodicUsageUpdate() {
+            // Остановить предыдущий интервал, если он существует
+            if (usageUpdateInterval) {
+                clearInterval(usageUpdateInterval);
+            }
+            
+            // Обновлять данные каждые 2 минуты
+            usageUpdateInterval = setInterval(async () => {
+                try {
+                    await loadUsageData();
+                    console.log('📡 Автообновление данных трафика выполнено');
+                } catch (error) {
+                    console.error('Ошибка автообновления данных:', error);
+                }
+            }, 120000); // 2 минуты
         }
 
         // ========== УТИЛИТЫ ==========
@@ -1592,6 +1824,7 @@
                     if (result.success) {
                         currentUsageData = result;
                         updateUsageData(result);
+                        updateTrafficAlerts(result);
                         return;
                     }
                 }
@@ -1627,6 +1860,7 @@
                 };
                 
                 updateUsageData(fallbackData);
+                updateTrafficAlerts(fallbackData);
             }
         }
 
@@ -1702,12 +1936,35 @@
         function updateUsageData(data) {
             if (!data) return;
             
-            // Интернет
+            // Интернет трафик
             const internetPercent = (data.internet.used / data.internet.total) * 100;
+            const internetUsed = data.internet.used.toFixed(1);
+            const internetTotal = data.internet.total;
+            const internetAvailable = Math.max(0, internetTotal - internetUsed).toFixed(1);
+            
             document.getElementById('internetUsage').textContent = 
-                `${data.internet.used.toFixed(1)} ГБ / ${data.internet.total} ГБ`;
+                `${internetUsed} ГБ / ${internetTotal} ГБ`;
+            document.getElementById('internetUsageValue').textContent = `${internetUsed} ГБ`;
             document.getElementById('internetProgress').style.width = `${Math.min(internetPercent, 100)}%`;
             document.getElementById('internetCost').textContent = `${data.internet.overCost.toFixed(2)} BYN`;
+            
+            // Обновляем статистику интернета
+            document.getElementById('internetUsedStat').textContent = `${internetUsed} ГБ`;
+            document.getElementById('internetAvailableStat').textContent = `${internetAvailable} ГБ`;
+            document.getElementById('internetLimitStat').textContent = `${internetTotal} ГБ`;
+            
+            // Обновляем индикатор интернета
+            updateUsageIndicator('internet', internetPercent, data.internet.overLimit);
+            
+            // Определяем цвет для значения интернета
+            const internetValue = document.getElementById('internetUsageValue');
+            if (internetPercent > 90) {
+                internetValue.className = 'traffic-card-value danger';
+            } else if (internetPercent > 70) {
+                internetValue.className = 'traffic-card-value warning';
+            } else {
+                internetValue.className = 'traffic-card-value safe';
+            }
             
             if (data.internet.overLimit > 0) {
                 document.getElementById('internetOverLimit').style.display = 'block';
@@ -1723,6 +1980,9 @@
             document.getElementById('callsProgress').style.width = `${Math.min(callsPercent, 100)}%`;
             document.getElementById('internationalCalls').textContent = `${data.calls.international} мин`;
             
+            // Обновляем индикатор звонков
+            updateUsageIndicator('calls', callsPercent, data.calls.overLimit);
+            
             if (data.calls.overLimit > 0) {
                 document.getElementById('callsOverLimit').style.display = 'block';
                 document.getElementById('callsOverLimitValue').textContent = `${data.calls.overLimit} мин`;
@@ -1736,6 +1996,9 @@
                 `${data.sms.used} / ${data.sms.total}`;
             document.getElementById('smsProgress').style.width = `${Math.min(smsPercent, 100)}%`;
             document.getElementById('smsCost').textContent = `${data.sms.overCost.toFixed(2)} BYN`;
+            
+            // Обновляем индикатор SMS
+            updateUsageIndicator('sms', smsPercent, data.sms.overLimit);
             
             if (data.sms.overLimit > 0) {
                 document.getElementById('smsOverLimit').style.display = 'block';
@@ -1758,11 +2021,132 @@
             document.getElementById('costBreakdown').textContent = breakdown;
             
             console.log('📊 Обновлены данные использования:', {
-                internet: `${data.internet.used.toFixed(1)}/${data.internet.total} ГБ`,
-                calls: `${data.calls.used}/${data.calls.total} мин`,
-                sms: `${data.sms.used}/${data.sms.total}`,
+                internet: `${internetUsed}/${internetTotal} ГБ (${internetPercent.toFixed(1)}%)`,
+                calls: `${data.calls.used}/${data.calls.total} мин (${callsPercent.toFixed(1)}%)`,
+                sms: `${data.sms.used}/${data.sms.total} (${smsPercent.toFixed(1)}%)`,
                 overCost: data.totalOverCost
             });
+        }
+
+        function updateUsageIndicator(type, percent, overLimit) {
+            const indicator = document.getElementById(`${type}Indicator`);
+            const dot = indicator.querySelector('.usage-indicator-dot');
+            const text = indicator.querySelector('span:last-child');
+            
+            if (overLimit > 0) {
+                dot.className = 'usage-indicator-dot danger';
+                text.textContent = `Превышение: ${overLimit} ${type === 'calls' ? 'мин' : 'SMS'}`;
+            } else if (percent > 90) {
+                dot.className = 'usage-indicator-dot danger';
+                text.textContent = 'Почти превышен лимит';
+            } else if (percent > 70) {
+                dot.className = 'usage-indicator-dot warning';
+                text.textContent = 'Высокое использование';
+            } else {
+                dot.className = 'usage-indicator-dot safe';
+                text.textContent = 'В пределах лимита';
+            }
+        }
+
+        function updateTrafficAlerts(data) {
+            const alertsContainer = document.getElementById('trafficAlerts');
+            alertsContainer.innerHTML = '';
+            
+            const internetPercent = (data.internet.used / data.internet.total) * 100;
+            const callsPercent = (data.calls.used / data.calls.total) * 100;
+            const smsPercent = (data.sms.used / data.sms.total) * 100;
+            
+            // Проверяем интернет трафик
+            if (data.internet.overLimit > 0) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-danger">
+                        <div class="traffic-icon">⚠️</div>
+                        <div class="traffic-message">
+                            <h4>Превышен лимит интернет трафика!</h4>
+                            <p>Вы использовали ${data.internet.overLimit.toFixed(2)} ГБ сверх лимита. Дополнительная плата: ${data.internet.overCost.toFixed(2)} BYN</p>
+                        </div>
+                    </div>
+                `;
+            } else if (internetPercent > 90) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-danger">
+                        <div class="traffic-icon">⚠️</div>
+                        <div class="traffic-message">
+                            <h4>Интернет трафик почти закончился!</h4>
+                            <p>Использовано ${internetPercent.toFixed(1)}% от доступного трафика. Осталось: ${(data.internet.total - data.internet.used).toFixed(1)} ГБ</p>
+                        </div>
+                    </div>
+                `;
+            } else if (internetPercent > 70) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-warning">
+                        <div class="traffic-icon">📊</div>
+                        <div class="traffic-message">
+                            <h4>Высокое использование интернета</h4>
+                            <p>Использовано ${internetPercent.toFixed(1)}% от доступного трафика. Осталось: ${(data.internet.total - data.internet.used).toFixed(1)} ГБ</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Проверяем звонки
+            if (data.calls.overLimit > 0) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-danger">
+                        <div class="traffic-icon">⚠️</div>
+                        <div class="traffic-message">
+                            <h4>Превышен лимит звонков!</h4>
+                            <p>Вы использовали ${data.calls.overLimit} минут сверх лимита. Дополнительная плата: ${data.calls.overCost.toFixed(2)} BYN</p>
+                        </div>
+                    </div>
+                `;
+            } else if (callsPercent > 90) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-warning">
+                        <div class="traffic-icon">📞</div>
+                        <div class="traffic-message">
+                            <h4>Лимит звонков почти исчерпан</h4>
+                            <p>Использовано ${callsPercent.toFixed(1)}% от доступных минут. Осталось: ${data.calls.total - data.calls.used} минут</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Проверяем SMS
+            if (data.sms.overLimit > 0) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-danger">
+                        <div class="traffic-icon">⚠️</div>
+                        <div class="traffic-message">
+                            <h4>Превышен лимит SMS!</h4>
+                            <p>Вы использовали ${data.sms.overLimit} SMS сверх лимита. Дополнительная плата: ${data.sms.overCost.toFixed(2)} BYN</p>
+                        </div>
+                    </div>
+                `;
+            } else if (smsPercent > 90) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-warning">
+                        <div class="traffic-icon">💬</div>
+                        <div class="traffic-message">
+                            <h4>Лимит SMS почти исчерпан</h4>
+                            <p>Использовано ${smsPercent.toFixed(1)}% от доступных SMS. Осталось: ${data.sms.total - data.sms.used} SMS</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Информация о доступном трафике
+            if (internetPercent < 50 && callsPercent < 50 && smsPercent < 50) {
+                alertsContainer.innerHTML += `
+                    <div class="traffic-info">
+                        <div class="traffic-icon">✅</div>
+                        <div class="traffic-message">
+                            <h4>Все услуги в пределах нормы</h4>
+                            <p>Вы эффективно используете свои тарифные ресурсы. При необходимости можно увеличить использование.</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function displayNews(news) {
@@ -2271,4 +2655,3 @@
         }
     </script>
 </body>
-</html>
