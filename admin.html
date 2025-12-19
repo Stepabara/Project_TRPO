@@ -1,2653 +1,526 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель управления - Мобильный оператор</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #1976d2;
-            --primary-dark: #1565c0;
-            --secondary: #ff6b35;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #2c3e50;
-            --text-light: #7f8c8d;
-            --border-color: #e1e8ed;
-            --radius: 12px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --shadow-hover: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        /* Верхнее меню */
-        .top-menu {
-            background: white;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .menu-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            padding: 20px 0;
-        }
-
-        .nav-menu {
-            display: flex;
-            list-style: none;
-            gap: 5px;
-        }
-
-        .nav-item {
-            position: relative;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 15px 20px;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .user-info:hover {
-            background: #f8f9fa;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        /* Основной контент */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
-
-        /* Секции контента */
-        .content-section {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Приветственная секция */
-        .welcome-section {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 40px;
-            border-radius: var(--radius);
-            margin-bottom: 30px;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        .welcome-title {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .welcome-subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        /* Статистика */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary);
-            border-radius: var(--radius) 0 0 var(--radius);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .stat-title {
-            font-size: 14px;
-            color: var(--text-light);
-            font-weight: 500;
-        }
-
-        .stat-icon {
-            font-size: 20px;
-            color: var(--primary);
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-description {
-            font-size: 14px;
-            color: var(--text-light);
-        }
-
-        /* Основные секции */
-        .main-section {
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            margin-bottom: 25px;
-        }
-
-        .section-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid var(--border-color);
-            background: #f8f9fa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .section-body {
-            padding: 25px;
-        }
-
-        /* Таблицы */
-        .table {
-            margin-bottom: 0;
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-
-        .table th {
-            font-weight: 600;
-            color: var(--text-color);
-            border-bottom: 2px solid var(--border-color);
-            padding: 15px;
-            background: rgba(25, 118, 210, 0.05);
-        }
-
-        .table td {
-            padding: 15px;
-            vertical-align: middle;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        /* Кликабельные строки таблицы */
-        .clickable-row {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .clickable-row:hover {
-            background-color: rgba(25, 118, 210, 0.05) !important;
-            transform: translateX(5px);
-        }
-
-        /* Кнопки */
-        .btn {
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 14px;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Поиск и фильтры */
-        .search-box {
-            position: relative;
-        }
-
-        .search-box .form-control {
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 12px 15px 12px 45px;
-            transition: all 0.3s ease;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-        }
-
-        .filters-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        /* Модальные окна */
-        .modal-content {
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-        }
-
-        .modal-header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 20px 25px;
-            background: #f8f9fa;
-        }
-
-        .modal-body {
-            padding: 25px;
-        }
-
-        /* Уведомления */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--success);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-hover);
-            z-index: 3000;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background: var(--danger);
-        }
-
-        .notification.warning {
-            background: var(--warning);
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .menu-container {
-                flex-direction: column;
-                padding: 10px 20px;
-            }
-
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
-                margin: 10px 0;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .welcome-section {
-                padding: 30px 20px;
-            }
-
-            .filters-row {
-                flex-direction: column;
-            }
-
-            .filter-group {
-                min-width: 100%;
-            }
-        }
-
-        /* Бейджи статусов */
-        .badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        /* Информация о пользователе в модальном окне */
-        .user-details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .user-detail-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: var(--radius);
-            border-left: 4px solid var(--primary);
-        }
-
-        .user-detail-label {
-            font-size: 12px;
-            color: var(--text-light);
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .user-detail-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        /* Вкладки в модальном окне */
-        .modal-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-
-        .modal-tab {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            color: var(--text-light);
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .modal-tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .modal-tab-content {
-            display: none;
-        }
-
-        .modal-tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Кнопка удаления в строке */
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            opacity: 0.7;
-        }
-
-        .delete-btn:hover {
-            background: var(--danger);
-            color: white;
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        /* Отчеты */
-        .report-card {
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-        }
-
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .report-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .report-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .chart-container {
-            background: white;
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-
-        /* Прогресс-бар */
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-            background: #e9ecef;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-    </style>
-</head>
-<body>
-    <!-- Верхнее меню -->
-    <nav class="top-menu">
-        <div class="menu-container">
-            <a href="#" class="logo">📱 BryTech Admin</a>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a class="nav-link active" onclick="showSection('dashboard')">
-                        <i class="fas fa-home"></i>
-                        <span>Главная</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('reports')">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Отчеты</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('calls')">
-                        <i class="fas fa-phone"></i>
-                        <span>История звонков</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" onclick="showSection('messages')">
-                        <i class="fas fa-comments"></i>
-                        <span>История сообщений</span>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="user-menu">
-                <div class="user-info">
-                    <div class="user-avatar">A</div>
-                    <div class="user-name">Администратор</div>
-                </div>
-                <button class="btn btn-sm btn-outline-danger" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Основной контент -->
-    <div class="container">
-        <!-- Dashboard Section -->
-        <div id="dashboard-section" class="content-section active">
-            <!-- Приветственная секция -->
-            <div class="welcome-section">
-                <h2 class="welcome-title">Панель управления оператором</h2>
-                <p class="welcome-subtitle">Управление клиентами, платежами и статистикой</p>
-            </div>
-
-            <!-- Статистика -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Всего клиентов</div>
-                            <div class="stat-value" id="totalClients">0</div>
-                        </div>
-                        <div class="stat-icon">👥</div>
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Панель управления - Мобильный оператор</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="admin.css">
+    </head>
+    <body>
+        <!-- Верхнее меню -->
+        <nav class="top-menu">
+            <div class="menu-container">
+                <a href="#" class="logo">📱 BryTech Admin</a>
+                
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="showSection('dashboard')">
+                            <i class="fas fa-home"></i>
+                            <span>Главная</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="showSection('reports')">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Отчеты</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="showSection('calls')">
+                            <i class="fas fa-phone"></i>
+                            <span>История звонков</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="showSection('messages')">
+                            <i class="fas fa-comments"></i>
+                            <span>История сообщений</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="user-menu">
+                    <div class="user-info">
+                        <div class="user-avatar">A</div>
+                        <div class="user-name">Администратор</div>
                     </div>
-                    <div class="stat-description">Зарегистрировано в системе</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Активных клиентов</div>
-                            <div class="stat-value" id="activeClients">0</div>
-                        </div>
-                        <div class="stat-icon">✅</div>
-                    </div>
-                    <div class="stat-description">С положительным балансом</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Общая задолженность</div>
-                            <div class="stat-value" id="totalDebt">0 BYN</div>
-                        </div>
-                        <div class="stat-icon">⚠️</div>
-                    </div>
-                    <div class="stat-description">Сумма всех долгов</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Количество должников</div>
-                            <div class="stat-value" id="debtorsCount">0</div>
-                        </div>
-                        <div class="stat-icon">💸</div>
-                    </div>
-                    <div class="stat-description">Клиентов с долгами</div>
-                </div>
-            </div>
-
-            <!-- Последние клиенты -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Последние клиенты</h3>
-                    <button class="btn btn-primary" onclick="showAllClientsModal()">
-                        <i class="fas fa-list me-2"></i>Показать всех клиентов
+                    <button class="btn btn-sm btn-outline-danger" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
-                <div class="section-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ФИО</th>
-                                    <th>Телефон</th>
-                                    <th>Баланс</th>
-                                    <th>Тариф</th>
-                                    <th>Статус</th>
-                                    <th style="width: 60px;">Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recentClientsTable">
-                                <!-- Клиенты будут загружены здесь -->
-                            </tbody>
-                        </table>
+            </div>
+        </nav>
+
+        <!-- Основной контент -->
+        <div class="container">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section active">
+                <!-- Приветственная секция -->
+                <div class="welcome-section">
+                    <h2 class="welcome-title">Панель управления оператором</h2>
+                    <p class="welcome-subtitle">Управление клиентами, платежами и статистикой</p>
+                </div>
+
+                <!-- Статистика -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Всего клиентов</div>
+                                <div class="stat-value" id="totalClients">0</div>
+                            </div>
+                            <div class="stat-icon">👥</div>
+                        </div>
+                        <div class="stat-description">Зарегистрировано в системе</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Активных клиентов</div>
+                                <div class="stat-value" id="activeClients">0</div>
+                            </div>
+                            <div class="stat-icon">✅</div>
+                        </div>
+                        <div class="stat-description">С положительным балансом</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Общая задолженность</div>
+                                <div class="stat-value" id="totalDebt">0 BYN</div>
+                            </div>
+                            <div class="stat-icon">⚠️</div>
+                        </div>
+                        <div class="stat-description">Сумма всех долгов</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Количество должников</div>
+                                <div class="stat-value" id="debtorsCount">0</div>
+                            </div>
+                            <div class="stat-icon">💸</div>
+                        </div>
+                        <div class="stat-description">Клиентов с долгами</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Быстрые действия -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Быстрые действия</h3>
-                </div>
-                <div class="section-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <button class="btn btn-primary w-100" onclick="showAddClientModal()">
-                                <i class="fas fa-user-plus me-2"></i>Добавить клиента
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-warning w-100" onclick="showCallModal()">
-                                <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-info w-100" onclick="showMessageModal()">
-                                <i class="fas fa-comment me-2"></i>Отправить сообщение
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
-                                <i class="fas fa-plus me-2"></i>Пополнить баланс
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-secondary w-100" onclick="showTrafficEditModal()">
-                                <i class="fas fa-network-wired me-2"></i>Изменить трафик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reports Section -->
-        <div id="reports-section" class="content-section">
-            <div class="welcome-section">
-                <h2 class="welcome-title">Отчеты и аналитика</h2>
-                <p class="welcome-subtitle">Детальная статистика и финансовые отчеты</p>
-            </div>
-
-            <!-- Экспорт отчетов -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Экспорт отчетов</h3>
-                </div>
-                <div class="section-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-primary w-100" onclick="exportUsersReport()">
-                                <i class="fas fa-file-word me-2"></i>Отчет по всем пользователям
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-success w-100" onclick="exportCallsReport()">
-                                <i class="fas fa-file-word me-2"></i>Отчет по всем звонкам
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-danger w-100" onclick="exportDebtorsReport()">
-                                <i class="fas fa-file-word me-2"></i>Отчет по должникам
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Статистика по должникам -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Статистика по должникам</h3>
-                </div>
-                <div class="section-body">
-                    <div id="debtorsReport">
-                        <!-- Отчет будет загружен здесь -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Calls History Section -->
-        <div id="calls-section" class="content-section">
-            <div class="welcome-section">
-                <h2 class="welcome-title">История звонков</h2>
-                <p class="welcome-subtitle">Просмотр и управление историей звонков всех пользователей</p>
-            </div>
-
-            <!-- Фильтры истории звонков -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Фильтры</h3>
-                </div>
-                <div class="section-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Телефон клиента</label>
-                            <input type="text" class="form-control" id="callsPhoneFilter" placeholder="+375...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Тип звонка</label>
-                            <select class="form-control" id="callsTypeFilter">
-                                <option value="">Все типы</option>
-                                <option value="local">Местные</option>
-                                <option value="international">Международные</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Дата с</label>
-                            <input type="date" class="form-control" id="callsStartDate">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Дата по</label>
-                            <input type="date" class="form-control" id="callsEndDate">
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <button class="btn btn-primary" onclick="loadCallsHistory()">
-                            <i class="fas fa-search me-2"></i>Поиск
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="clearCallsFilters()">
-                            <i class="fas fa-times me-2"></i>Очистить
+                <!-- Последние клиенты -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Последние клиенты</h3>
+                        <button class="btn btn-primary" onclick="showAllClientsModal()">
+                            <i class="fas fa-list me-2"></i>Показать всех клиентов
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Статистика звонков -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Всего звонков</div>
-                            <div class="stat-value" id="totalCalls">0</div>
-                        </div>
-                        <div class="stat-icon">📞</div>
-                    </div>
-                    <div class="stat-description">За выбранный период</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Местные звонки</div>
-                            <div class="stat-value" id="localCalls">0</div>
-                        </div>
-                        <div class="stat-icon">🏠</div>
-                    </div>
-                    <div class="stat-description">Внутренние звонки</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Международные</div>
-                            <div class="stat-value" id="internationalCalls">0</div>
-                        </div>
-                        <div class="stat-icon">🌍</div>
-                    </div>
-                    <div class="stat-description">Звонки за границу</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Общая стоимость</div>
-                            <div class="stat-value" id="totalCallsCost">0 BYN</div>
-                        </div>
-                        <div class="stat-icon">💰</div>
-                    </div>
-                    <div class="stat-description">Сумма всех звонков</div>
-                </div>
-            </div>
-
-            <!-- Таблица истории звонков -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">История звонков</h3>
-                </div>
-                <div class="section-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Дата и время</th>
-                                    <th>Клиент</th>
-                                    <th>Телефон</th>
-                                    <th>Номер назначения</th>
-                                    <th>Тип</th>
-                                    <th>Длительность</th>
-                                    <th>Стоимость</th>
-                                </tr>
-                            </thead>
-                            <tbody id="callsHistoryTable">
-                                <!-- История звонков будет загружена здесь -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div class="text-muted" id="callsPaginationInfo">
-                            Показано 0 из 0 записей
-                        </div>
-                        <nav>
-                            <ul class="pagination" id="callsPagination">
-                                <!-- Пагинация будет сгенерирована здесь -->
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Messages History Section -->
-        <div id="messages-section" class="content-section">
-            <div class="welcome-section">
-                <h2 class="welcome-title">История сообщений</h2>
-                <p class="welcome-subtitle">Просмотр и управление историей SMS сообщений всех пользователей</p>
-            </div>
-
-            <!-- Фильтры истории сообщений -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">Фильтры</h3>
-                </div>
-                <div class="section-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Телефон клиента</label>
-                            <input type="text" class="form-control" id="messagesPhoneFilter" placeholder="+375...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Направление</label>
-                            <select class="form-control" id="messagesDirectionFilter">
-                                <option value="">Все</option>
-                                <option value="outgoing">Исходящие</option>
-                                <option value="incoming">Входящие</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Дата с</label>
-                            <input type="date" class="form-control" id="messagesStartDate">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Дата по</label>
-                            <input type="date" class="form-control" id="messagesEndDate">
+                    <div class="section-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ФИО</th>
+                                        <th>Телефон</th>
+                                        <th>Баланс</th>
+                                        <th>Тариф</th>
+                                        <th>Статус</th>
+                                        <th style="width: 60px;">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentClientsTable">
+                                    <!-- Клиенты будут загружены здесь -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <button class="btn btn-primary" onclick="loadMessagesHistory()">
-                            <i class="fas fa-search me-2"></i>Поиск
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="clearMessagesFilters()">
-                            <i class="fas fa-times me-2"></i>Очистить
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Статистика сообщений -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Всего сообщений</div>
-                            <div class="stat-value" id="totalMessages">0</div>
-                        </div>
-                        <div class="stat-icon">📨</div>
-                    </div>
-                    <div class="stat-description">За выбранный период</div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Исходящие</div>
-                            <div class="stat-value" id="outgoingMessages">0</div>
-                        </div>
-                        <div class="stat-icon">↗️</div>
+                <!-- Быстрые действия -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Быстрые действия</h3>
                     </div>
-                    <div class="stat-description">Отправленные сообщения</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Входящие</div>
-                            <div class="stat-value" id="incomingMessages">0</div>
-                        </div>
-                        <div class="stat-icon">↙️</div>
-                    </div>
-                    <div class="stat-description">Полученные сообщения</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Общая стоимость</div>
-                            <div class="stat-value" id="totalMessagesCost">0 BYN</div>
-                        </div>
-                        <div class="stat-icon">💰</div>
-                    </div>
-                    <div class="stat-description">Сумма всех сообщений</div>
-                </div>
-            </div>
-
-            <!-- Таблица истории сообщений -->
-            <div class="main-section">
-                <div class="section-header">
-                    <h3 class="section-title">История сообщений</h3>
-                </div>
-                <div class="section-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Дата и время</th>
-                                    <th>Клиент</th>
-                                    <th>Телефон</th>
-                                    <th>Получатель</th>
-                                    <th>Направление</th>
-                                    <th>Длина</th>
-                                    <th>Стоимость</th>
-                                </tr>
-                            </thead>
-                            <tbody id="messagesHistoryTable">
-                                <!-- История сообщений будет загружена здесь -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div class="text-muted" id="messagesPaginationInfo">
-                            Показано 0 из 0 записей
-                        </div>
-                        <nav>
-                            <ul class="pagination" id="messagesPagination">
-                                <!-- Пагинация будет сгенерирована здесь -->
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно всех клиентов -->
-    <div class="modal fade" id="allClientsModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Все клиенты</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="filters-row">
-                        <div class="filter-group">
-                            <div class="search-box">
-                                <i class="fas fa-search search-icon"></i>
-                                <input type="text" id="searchAllClients" class="form-control" placeholder="Поиск по ФИО или телефону...">
-                            </div>
-                        </div>
-                        <div class="filter-group">
-                            <select class="form-control" id="statusFilter">
-                                <option value="">Все статусы</option>
-                                <option value="active">Активные</option>
-                                <option value="debtor">Должники</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <select class="form-control" id="tariffFilter">
-                                <option value="">Все тарифы</option>
-                                <option value="standard">Стандарт</option>
-                                <option value="plus+">Плюс+</option>
-                                <option value="Super plus">Супер плюс</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ФИО</th>
-                                    <th>Телефон</th>
-                                    <th>Баланс</th>
-                                    <th>Долг</th>
-                                    <th>Тариф</th>
-                                    <th>Статус</th>
-                                    <th>Дата регистрации</th>
-                                    <th style="width: 60px;">Удалить</th>
-                                </tr>
-                            </thead>
-                            <tbody id="allClientsTable">
-                                <!-- Все клиенты будут загружены здесь -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно редактирования пользователя -->
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Редактирование пользователя</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="modal-tabs">
-                        <button class="modal-tab active" onclick="showUserTab('info')">Основная информация</button>
-                        <button class="modal-tab" onclick="showUserTab('finance')">Финансы</button>
-                    </div>
-
-                    <!-- Основная информация -->
-                    <div id="userInfoTab" class="modal-tab-content active">
-                        <div class="user-details-grid">
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">ФИО</div>
-                                <div class="user-detail-value" id="modalUserFio"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Телефон</div>
-                                <div class="user-detail-value" id="modalUserPhone"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Дата регистрации</div>
-                                <div class="user-detail-value" id="modalUserRegDate"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Статус</div>
-                                <div class="user-detail-value" id="modalUserStatus"></div>
-                            </div>
-                        </div>
-
-                        <form id="editUserForm">
-                            <input type="hidden" id="editUserId">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">ФИО</label>
-                                        <input type="text" class="form-control" id="editUserFio" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Статус</label>
-                                        <select class="form-control" id="editUserStatus">
-                                            <option value="active">Активный</option>
-                                            <option value="blocked">Заблокирован</option>
-                                            <option value="suspended">Приостановлен</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Кредитный лимит (BYN)</label>
-                                <input type="number" class="form-control" id="editUserCreditLimit" step="0.01" min="0">
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Финансы -->
-                    <div id="userFinanceTab" class="modal-tab-content">
-                        <div class="user-details-grid">
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Текущий баланс</div>
-                                <div class="user-detail-value" id="modalUserBalance"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Задолженность</div>
-                                <div class="user-detail-value" id="modalUserDebt"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Кредитный лимит</div>
-                                <div class="user-detail-value" id="modalUserCreditLimit"></div>
-                            </div>
-                            <div class="user-detail-card">
-                                <div class="user-detail-label">Доступный кредит</div>
-                                <div class="user-detail-value" id="modalUserAvailableCredit"></div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Пополнить баланс (BYN)</label>
-                                    <input type="number" class="form-control" id="addBalanceAmount" step="0.01" min="0">
-                                </div>
-                                <button class="btn btn-success w-100" onclick="addBalanceToUser()">
-                                    <i class="fas fa-plus me-2"></i>Пополнить
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <button class="btn btn-primary w-100" onclick="showAddClientModal()">
+                                    <i class="fas fa-user-plus me-2"></i>Добавить клиента
                                 </button>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Списать сумму (BYN)</label>
-                                    <input type="number" class="form-control" id="withdrawBalanceAmount" step="0.01" min="0">
-                                </div>
-                                <button class="btn btn-warning w-100" onclick="withdrawBalanceFromUser()">
-                                    <i class="fas fa-minus me-2"></i>Списать
+                            <div class="col-md-3">
+                                <button class="btn btn-warning w-100" onclick="showCallModal()">
+                                    <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-info w-100" onclick="showMessageModal()">
+                                    <i class="fas fa-comment me-2"></i>Отправить сообщение
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
+                                    <i class="fas fa-plus me-2"></i>Пополнить баланс
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-secondary w-100" onclick="showTrafficEditModal()">
+                                    <i class="fas fa-network-wired me-2"></i>Изменить трафик
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" onclick="deleteCurrentUser()">
-                        <i class="fas fa-trash me-2"></i>Удалить пользователя
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUserChanges()">
-                        <i class="fas fa-save me-2"></i>Сохранить изменения
-                    </button>
-                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Модальное окно добавления клиента -->
-    <div class="modal fade" id="addClientModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Добавить клиента</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <!-- Reports Section -->
+            <div id="reports-section" class="content-section">
+                <div class="welcome-section">
+                    <h2 class="welcome-title">Отчеты и аналитика</h2>
+                    <p class="welcome-subtitle">Детальная статистика и финансовые отчеты</p>
                 </div>
-                <div class="modal-body">
-                    <form id="addClientForm">
-                        <div class="mb-3">
-                            <label class="form-label">ФИО *</label>
-                            <input type="text" class="form-control" id="clientFio" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Номер телефона *</label>
-                            <input type="tel" class="form-control" id="clientPhone" required placeholder="+375291234567">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Пароль *</label>
-                            <input type="password" class="form-control" id="clientPassword" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Начальный баланс</label>
-                            <input type="number" class="form-control" id="clientBalance" value="0" step="0.01">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Тариф</label>
-                            <select class="form-control" id="clientTariff">
-                                <option value="standard">Стандарт (19.99 BYN)</option>
-                                <option value="plus+">Плюс+ (29.99 BYN)</option>
-                                <option value="Super plus">Супер плюс (35.99 BYN)</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="addClient()">Добавить</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Модальное окно регистрации звонка -->
-    <div class="modal fade" id="callModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Зарегистрировать звонок</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="callForm">
-                        <div class="mb-3">
-                            <label class="form-label">Телефон клиента *</label>
-                            <input type="tel" class="form-control" id="callClientPhone" required placeholder="+375291234567">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Номер назначения *</label>
-                            <input type="tel" class="form-control" id="callNumber" required placeholder="+375291111111">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Тип звонка *</label>
-                            <select class="form-control" id="callType" required>
-                                <option value="local">Местный</option>
-                                <option value="international">Международный</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Длительность (секунды) *</label>
-                            <input type="number" class="form-control" id="callDuration" required min="1" value="60">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="registerCall()">Зарегистрировать</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно отправки сообщения -->
-    <div class="modal fade" id="messageModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Отправить сообщение</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="messageForm">
-                        <div class="mb-3">
-                            <label class="form-label">Телефон клиента *</label>
-                            <input type="tel" class="form-control" id="messageClientPhone" required placeholder="+375291234567">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Номер получателя *</label>
-                            <input type="tel" class="form-control" id="messageRecipient" required placeholder="+375291111111">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Текст сообщения *</label>
-                            <textarea class="form-control" id="messageText" rows="3" required placeholder="Введите текст сообщения..." maxlength="500"></textarea>
-                            <div class="form-text text-end">
-                                <span id="messageCharCount">0</span>/500 символов
+                <!-- Экспорт отчетов -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Экспорт отчетов</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-primary w-100" onclick="exportUsersReport()">
+                                    <i class="fas fa-file-word me-2"></i>Отчет по всем пользователям
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-success w-100" onclick="exportCallsReport()">
+                                    <i class="fas fa-file-word me-2"></i>Отчет по всем звонкам
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-danger w-100" onclick="exportDebtorsReport()">
+                                    <i class="fas fa-file-word me-2"></i>Отчет по должникам
+                                </button>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Направление *</label>
-                            <select class="form-control" id="messageDirection" required>
-                                <option value="outgoing">Исходящее (от клиента)</option>
-                                <option value="incoming">Входящее (клиенту)</option>
-                            </select>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="sendMessage()">Отправить</button>
+
+                <!-- Статистика по должникам -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Статистика по должникам</h3>
+                    </div>
+                    <div class="section-body">
+                        <div id="debtorsReport">
+                            <!-- Отчет будет загружен здесь -->
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Модальное окно пополнения баланса -->
-    <div class="modal fade" id="addPaymentModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Пополнить баланс</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <!-- Calls History Section -->
+            <div id="calls-section" class="content-section">
+                <div class="welcome-section">
+                    <h2 class="welcome-title">История звонков</h2>
+                    <p class="welcome-subtitle">Просмотр и управление историей звонков всех пользователей</p>
                 </div>
-                <div class="modal-body">
-                    <form id="addPaymentForm">
-                        <div class="mb-3">
-                            <label class="form-label">Телефон клиента *</label>
-                            <input type="tel" class="form-control" id="paymentClientPhone" required placeholder="+375291234567">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Сумма пополнения (BYN) *</label>
-                            <input type="number" class="form-control" id="paymentAmount" required step="0.01" min="0.01">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Метод оплаты</label>
-                            <select class="form-control" id="paymentMethod">
-                                <option value="Банковская карта">Банковская карта</option>
-                                <option value="Наличные">Наличные</option>
-                                <option value="Электронный кошелек">Электронный кошелек</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-success" onclick="processPayment()">Пополнить</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Модальное окно изменения трафика -->
-    <div class="modal fade" id="trafficEditModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Изменение трафика клиента</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="trafficEditForm">
-                        <div class="mb-3">
-                            <label class="form-label">Телефон клиента *</label>
-                            <input type="tel" class="form-control" id="trafficClientPhone" required placeholder="+375291234567">
-                            <div class="form-text" id="trafficClientInfo"></div>
+                <!-- Фильтры истории звонков -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Фильтры</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Телефон клиента</label>
+                                <input type="text" class="form-control" id="callsPhoneFilter" placeholder="+375...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Тип звонка</label>
+                                <select class="form-control" id="callsTypeFilter">
+                                    <option value="">Все типы</option>
+                                    <option value="local">Местные</option>
+                                    <option value="international">Международные</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Дата с</label>
+                                <input type="date" class="form-control" id="callsStartDate">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Дата по</label>
+                                <input type="date" class="form-control" id="callsEndDate">
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Изменение трафика (МБ) *</label>
-                            <input type="text" class="form-control" id="trafficChange" required placeholder="+500 или -300">
-                            <div class="form-text">
-                                <ul class="mb-0 mt-1 ps-3">
-                                    <li>Используйте знак "+" для добавления трафика</li>
-                                    <li>Используйте знак "-" для уменьшения трафика</li>
-                                    <li>Пример: +500 добавит 500 МБ</li>
-                                    <li>Пример: -300 уменьшит на 300 МБ</li>
-                                    <li>Если новый трафик превысит лимит тарифа, будет начислена дополнительная плата</li>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" onclick="loadCallsHistory()">
+                                <i class="fas fa-search me-2"></i>Поиск
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearCallsFilters()">
+                                <i class="fas fa-times me-2"></i>Очистить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика звонков -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Всего звонков</div>
+                                <div class="stat-value" id="totalCalls">0</div>
+                            </div>
+                            <div class="stat-icon">📞</div>
+                        </div>
+                        <div class="stat-description">За выбранный период</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Местные звонки</div>
+                                <div class="stat-value" id="localCalls">0</div>
+                            </div>
+                            <div class="stat-icon">🏠</div>
+                        </div>
+                        <div class="stat-description">Внутренние звонки</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Международные</div>
+                                <div class="stat-value" id="internationalCalls">0</div>
+                            </div>
+                            <div class="stat-icon">🌍</div>
+                        </div>
+                        <div class="stat-description">Звонки за границу</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Общая стоимость</div>
+                                <div class="stat-value" id="totalCallsCost">0 BYN</div>
+                            </div>
+                            <div class="stat-icon">💰</div>
+                        </div>
+                        <div class="stat-description">Сумма всех звонков</div>
+                    </div>
+                </div>
+
+                <!-- Таблица истории звонков -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">История звонков</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Дата и время</th>
+                                        <th>Клиент</th>
+                                        <th>Телефон</th>
+                                        <th>Номер назначения</th>
+                                        <th>Тип</th>
+                                        <th>Длительность</th>
+                                        <th>Стоимость</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="callsHistoryTable">
+                                    <!-- История звонков будет загружена здесь -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted" id="callsPaginationInfo">
+                                Показано 0 из 0 записей
+                            </div>
+                            <nav>
+                                <ul class="pagination" id="callsPagination">
+                                    <!-- Пагинация будет сгенерирована здесь -->
                                 </ul>
-                            </div>
+                            </nav>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Месяц изменения</label>
-                            <input type="month" class="form-control" id="trafficMonth" value="">
-                            <div class="form-text">Оставьте пустым для текущего месяца</div>
-                        </div>
-                        
-                        <div class="alert alert-info" id="trafficInfo">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <small>Текущий трафик:</small>
-                                    <div id="currentTraffic">-</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <small>Лимит тарифа:</small>
-                                    <div id="tariffLimit">-</div>
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-md-6">
-                                    <small>Оставшийся трафик:</small>
-                                    <div id="remainingTraffic">-</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <small>Стоимость превышения:</small>
-                                    <div id="overLimitCost">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-warning d-none" id="trafficWarning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <span id="warningText"></span>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="applyTrafficChange()">Применить изменение</button>
+            </div>
+
+            <!-- Messages History Section -->
+            <div id="messages-section" class="content-section">
+                <div class="welcome-section">
+                    <h2 class="welcome-title">История сообщений</h2>
+                    <p class="welcome-subtitle">Просмотр и управление историей SMS сообщений всех пользователей</p>
+                </div>
+
+                <!-- Фильтры истории сообщений -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Фильтры</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Телефон клиента</label>
+                                <input type="text" class="form-control" id="messagesPhoneFilter" placeholder="+375...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Направление</label>
+                                <select class="form-control" id="messagesDirectionFilter">
+                                    <option value="">Все</option>
+                                    <option value="outgoing">Исходящие</option>
+                                    <option value="incoming">Входящие</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Дата с</label>
+                                <input type="date" class="form-control" id="messagesStartDate">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Дата по</label>
+                                <input type="date" class="form-control" id="messagesEndDate">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" onclick="loadMessagesHistory()">
+                                <i class="fas fa-search me-2"></i>Поиск
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearMessagesFilters()">
+                                <i class="fas fa-times me-2"></i>Очистить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика сообщений -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Всего сообщений</div>
+                                <div class="stat-value" id="totalMessages">0</div>
+                            </div>
+                            <div class="stat-icon">📨</div>
+                        </div>
+                        <div class="stat-description">За выбранный период</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Исходящие</div>
+                                <div class="stat-value" id="outgoingMessages">0</div>
+                            </div>
+                            <div class="stat-icon">↗️</div>
+                        </div>
+                        <div class="stat-description">Отправленные сообщения</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Входящие</div>
+                                <div class="stat-value" id="incomingMessages">0</div>
+                            </div>
+                            <div class="stat-icon">↙️</div>
+                        </div>
+                        <div class="stat-description">Полученные сообщения</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-title">Общая стоимость</div>
+                                <div class="stat-value" id="totalMessagesCost">0 BYN</div>
+                            </div>
+                            <div class="stat-icon">💰</div>
+                        </div>
+                        <div class="stat-description">Сумма всех сообщений</div>
+                    </div>
+                </div>
+
+                <!-- Таблица истории сообщений -->
+                <div class="main-section">
+                    <div class="section-header">
+                        <h3 class="section-title">История сообщений</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Дата и время</th>
+                                        <th>Клиент</th>
+                                        <th>Телефон</th>
+                                        <th>Получатель</th>
+                                        <th>Направление</th>
+                                        <th>Длина</th>
+                                        <th>Стоимость</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="messagesHistoryTable">
+                                    <!-- История сообщений будет загружена здесь -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted" id="messagesPaginationInfo">
+                                Показано 0 из 0 записей
+                            </div>
+                            <nav>
+                                <ul class="pagination" id="messagesPagination">
+                                    <!-- Пагинация будет сгенерирована здесь -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Уведомление -->
-    <div class="notification" id="notification"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Глобальные переменные
-        let allClients = [];
-        let currentEditingUser = null;
-        let currentCallsPage = 1;
-        let currentMessagesPage = 1;
-        const callsPerPage = 10;
-        const messagesPerPage = 10;
-
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Инициализация админ-панели...');
-            
-            // Убедимся, что только dashboard активен
-            document.querySelectorAll('.content-section').forEach(section => {
-                if (section.id !== 'dashboard-section') {
-                    section.classList.remove('active');
-                }
-            });
-            
-            loadDashboardData();
-            setInterval(loadDashboardData, 30000); // Автообновление каждые 30 секунд
-            
-            // Установка дат по умолчанию для фильтров
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
-            document.getElementById('messagesStartDate').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('messagesEndDate').value = today.toISOString().split('T')[0];
-            
-            // Установка текущего месяца для изменения трафика
-            const currentMonth = today.toISOString().slice(0, 7);
-            document.getElementById('trafficMonth').value = currentMonth;
-            
-            // Счетчик символов для сообщения
-            document.getElementById('messageText').addEventListener('input', function() {
-                const count = this.value.length;
-                document.getElementById('messageCharCount').textContent = count;
-            });
-            
-            // Обработка ввода изменения трафика
-            document.getElementById('trafficClientPhone').addEventListener('input', function() {
-                if (this.value.length >= 10) {
-                    loadClientTrafficInfo(this.value);
-                }
-            });
-            
-            document.getElementById('trafficChange').addEventListener('input', function() {
-                calculateTrafficChange();
-            });
-            
-            console.log('Админ-панель инициализирована');
-        });
-
-        // Показать/скрыть секции (ИСПРАВЛЕННАЯ ВЕРСИЯ)
-        function showSection(sectionName) {
-            console.log('Переключение на секцию:', sectionName);
-            
-            // Скрыть все секции
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Убрать активный класс со всех ссылок меню
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Показать выбранную секцию
-            const targetSection = document.getElementById(sectionName + '-section');
-            if (targetSection) {
-                targetSection.classList.add('active');
-                console.log('Секция активирована:', targetSection.id);
-            } else {
-                console.error('Секция не найдена:', sectionName + '-section');
-            }
-            
-            // Добавить активный класс к текущей ссылке
-            event.target.classList.add('active');
-            
-            // Загрузить данные для секции
-            if (sectionName === 'reports') {
-                loadDebtorsReport();
-            } else if (sectionName === 'calls') {
-                loadCallsHistory();
-            } else if (sectionName === 'messages') {
-                loadMessagesHistory();
-            } else if (sectionName === 'dashboard') {
-                loadDashboardData();
-            }
-        }
-
-        // Загрузка данных дашборда
-        async function loadDashboardData() {
-            try {
-                await loadStatistics();
-                await loadRecentClients();
-            } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-                showNotification('Ошибка загрузки данных', 'error');
-            }
-        }
-
-        // Загрузка статистики
-        async function loadStatistics() {
-            try {
-                const response = await fetch('/api/admin/clients');
-                const result = await response.json();
-                
-                if (result.success) {
-                    allClients = result.clients;
-                    
-                    const totalClients = allClients.length;
-                    const activeClients = allClients.filter(c => parseFloat(c.balance) >= 0).length;
-                    const debtors = allClients.filter(c => parseFloat(c.debt) > 0);
-                    const totalDebt = debtors.reduce((sum, d) => sum + parseFloat(d.debt), 0);
-                    
-                    document.getElementById('totalClients').textContent = totalClients;
-                    document.getElementById('activeClients').textContent = activeClients;
-                    document.getElementById('debtorsCount').textContent = debtors.length;
-                    document.getElementById('totalDebt').textContent = totalDebt.toFixed(2) + ' BYN';
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки статистики:', error);
-            }
-        }
-
-        // Загрузка последних клиентов
-        async function loadRecentClients() {
-            try {
-                const response = await fetch('/api/admin/clients');
-                const result = await response.json();
-                
-                if (result.success) {
-                    const recentClients = result.clients.slice(0, 5);
-                    const tbody = document.getElementById('recentClientsTable');
-                    
-                    tbody.innerHTML = recentClients.map(client => `
-                        <tr class="clickable-row" onclick="editUser('${client._id}')">
-                            <td>${client.fio}</td>
-                            <td>${client.phone}</td>
-                            <td class="${parseFloat(client.balance) < 0 ? 'text-danger' : 'text-success'} fw-bold">
-                                ${client.balance}
-                            </td>
-                            <td>${client.tariff.name}</td>
-                            <td>
-                                <span class="badge ${parseFloat(client.balance) < 0 ? 'bg-danger' : 'bg-success'}">
-                                    ${parseFloat(client.balance) < 0 ? 'Должник' : 'Активный'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки клиентов:', error);
-            }
-        }
-
-        // Показать всех клиентов
-        async function showAllClientsModal() {
-            await loadAllClientsTable();
-            const modal = new bootstrap.Modal(document.getElementById('allClientsModal'));
-            modal.show();
-        }
-
-        // Загрузка всех клиентов в таблицу
-        async function loadAllClientsTable(search = '', statusFilter = '', tariffFilter = '') {
-            try {
-                let filteredClients = allClients;
-                
-                if (search) {
-                    const searchLower = search.toLowerCase();
-                    filteredClients = filteredClients.filter(client => 
-                        client.fio.toLowerCase().includes(searchLower) || 
-                        client.phone.includes(search)
-                    );
-                }
-                
-                if (statusFilter === 'debtor') {
-                    filteredClients = filteredClients.filter(client => parseFloat(client.debt) > 0);
-                } else if (statusFilter === 'active') {
-                    filteredClients = filteredClients.filter(client => parseFloat(client.balance) >= 0);
-                }
-                
-                if (tariffFilter) {
-                    filteredClients = filteredClients.filter(client => client.tariff.id === tariffFilter);
-                }
-                
-                const tbody = document.getElementById('allClientsTable');
-                tbody.innerHTML = filteredClients.map(client => `
-                    <tr class="clickable-row" onclick="editUser('${client._id}')">
-                        <td>${client.fio}</td>
-                        <td>${client.phone}</td>
-                        <td class="${parseFloat(client.balance) < 0 ? 'text-danger' : 'text-success'} fw-bold">
-                            ${client.balance}
-                        </td>
-                        <td class="text-danger fw-bold">${client.debt}</td>
-                        <td>${client.tariff.name}</td>
-                        <td>
-                            <span class="badge ${parseFloat(client.balance) < 0 ? 'bg-danger' : 'bg-success'}">
-                                ${parseFloat(client.balance) < 0 ? 'Должник' : 'Активный'}
-                            </span>
-                        </td>
-                        <td>${client.registrationDate}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Ошибка загрузки клиентов:', error);
-            }
-        }
-
-        // Редактирование пользователя
-        async function editUser(userId) {
-            try {
-                const user = allClients.find(c => c._id === userId);
-                if (!user) {
-                    showNotification('Пользователь не найден', 'error');
-                    return;
-                }
-
-                currentEditingUser = user;
-
-                // Заполняем основную информацию
-                document.getElementById('modalUserFio').textContent = user.fio;
-                document.getElementById('modalUserPhone').textContent = user.phone;
-                document.getElementById('modalUserRegDate').textContent = user.registrationDate;
-                document.getElementById('modalUserStatus').textContent = user.status || 'Активный';
-                
-                // Извлекаем числовые значения из строк
-                const balanceValue = parseFloat(user.balance.replace(' BYN', '')) || 0;
-                const debtValue = parseFloat(user.debt.replace(' BYN', '')) || 0;
-                const creditLimit = 50; // Стандартный кредитный лимит
-                
-                document.getElementById('modalUserBalance').textContent = user.balance;
-                document.getElementById('modalUserDebt').textContent = user.debt;
-                document.getElementById('modalUserCreditLimit').textContent = creditLimit + ' BYN';
-                
-                const availableCredit = Math.max(0, creditLimit + balanceValue);
-                document.getElementById('modalUserAvailableCredit').textContent = availableCredit.toFixed(2) + ' BYN';
-
-                // Заполняем форму редактирования
-                document.getElementById('editUserId').value = user._id;
-                document.getElementById('editUserFio').value = user.fio;
-                document.getElementById('editUserStatus').value = user.status || 'active';
-                document.getElementById('editUserCreditLimit').value = creditLimit;
-
-                // Показываем модальное окно
-                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
-                modal.show();
-
-            } catch (error) {
-                console.error('Ошибка загрузки данных пользователя:', error);
-                showNotification('Ошибка загрузки данных пользователя', 'error');
-            }
-        }
-
-        // Сохранение изменений пользователя
-        async function saveUserChanges() {
-            if (!currentEditingUser) return;
-
-            try {
-                const userId = document.getElementById('editUserId').value;
-                const fio = document.getElementById('editUserFio').value;
-                const status = document.getElementById('editUserStatus').value;
-                const creditLimit = document.getElementById('editUserCreditLimit').value;
-
-                // Обновление основных данных
-                const response = await fetch(`/api/user/settings`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone: currentEditingUser.phone,
-                        fio: fio,
-                        status: status,
-                        creditLimit: parseFloat(creditLimit)
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Изменения сохранены');
-                    loadDashboardData();
-                    
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-                    modal.hide();
-                } else {
-                    showNotification(result.error || 'Ошибка сохранения', 'error');
-                }
-
-            } catch (error) {
-                console.error('Ошибка сохранения изменений:', error);
-                showNotification('Ошибка сохранения изменений', 'error');
-            }
-        }
-
-        // Удаление текущего пользователя
-        async function deleteCurrentUser() {
-            if (!currentEditingUser) return;
-
-            if (!confirm(`Вы уверены, что хотите удалить пользователя "${currentEditingUser.fio}"? Это действие нельзя отменить.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/admin/clients/${currentEditingUser._id}`, {
-                    method: 'DELETE'
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Пользователь ${currentEditingUser.fio} удален`);
-                    loadDashboardData();
-                    
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-                    modal.hide();
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка удаления пользователя:', error);
-                showNotification('Ошибка удаления пользователя', 'error');
-            }
-        }
-
-        // Удаление клиента
-        async function deleteClient(userId, userName) {
-            if (!confirm(`Вы уверены, что хотите удалить пользователя "${userName}"? Это действие нельзя отменить.`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/admin/clients/${userId}`, {
-                    method: 'DELETE'
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Пользователь ${userName} удален`);
-                    loadDashboardData();
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка удаления пользователя:', error);
-                showNotification('Ошибка удаления пользователя', 'error');
-            }
-        }
-
-        // Пополнение баланса пользователя
-        async function addBalanceToUser() {
-            if (!currentEditingUser) return;
-
-            const amount = document.getElementById('addBalanceAmount').value;
-            if (!amount || amount <= 0) {
-                showNotification('Введите корректную сумму', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/payment/topup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone: currentEditingUser.phone,
-                        amount: parseFloat(amount)
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Баланс пополнен на ${amount} BYN`);
-                    document.getElementById('addBalanceAmount').value = '';
-                    // Обновляем данные пользователя
-                    editUser(currentEditingUser._id);
-                    loadDashboardData();
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка пополнения баланса:', error);
-                showNotification('Ошибка пополнения баланса', 'error');
-            }
-        }
-
-        // Списание средств с пользователя
-        async function withdrawBalanceFromUser() {
-            if (!currentEditingUser) return;
-
-            const amount = document.getElementById('withdrawBalanceAmount').value;
-            if (!amount || amount <= 0) {
-                showNotification('Введите корректную сумму', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/payment/withdraw', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone: currentEditingUser.phone,
-                        amount: parseFloat(amount)
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Списано ${amount} BYN`);
-                    document.getElementById('withdrawBalanceAmount').value = '';
-                    // Обновляем данные пользователя
-                    editUser(currentEditingUser._id);
-                    loadDashboardData();
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка списания средств:', error);
-                showNotification('Ошибка списания средств', 'error');
-            }
-        }
-
-        // Переключение вкладок в модальном окне
-        function showUserTab(tabName) {
-            // Скрыть все вкладки
-            document.querySelectorAll('.modal-tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Показать выбранную вкладку
-            document.getElementById('user' + tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab').classList.add('active');
-            
-            // Обновить активную кнопку
-            document.querySelectorAll('.modal-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-        }
-
-        // Показать модальное окно добавления клиента
-        function showAddClientModal() {
-            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
-            modal.show();
-        }
-
-        // Добавление клиента
-        async function addClient() {
-            try {
-                const fio = document.getElementById('clientFio').value;
-                const phone = document.getElementById('clientPhone').value;
-                const password = document.getElementById('clientPassword').value;
-                const balance = parseFloat(document.getElementById('clientBalance').value) || 0;
-                const tariff = document.getElementById('clientTariff').value;
-
-                if (!fio || !phone || !password) {
-                    showNotification('Заполните обязательные поля', 'error');
-                    return;
-                }
-
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        fio,
-                        phone,
-                        password,
-                        balance,
-                        tariff
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Клиент успешно добавлен');
-                    bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
-                    document.getElementById('addClientForm').reset();
-                    loadDashboardData();
-                } else {
-                    showNotification(result.message || 'Ошибка добавления клиента', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка добавления клиента:', error);
-                showNotification('Ошибка добавления клиента', 'error');
-            }
-        }
-
-        // Показать модальное окно регистрации звонка
-        function showCallModal() {
-            const modal = new bootstrap.Modal(document.getElementById('callModal'));
-            modal.show();
-        }
-
-        // Регистрация звонка
-        async function registerCall() {
-            try {
-                const phone = document.getElementById('callClientPhone').value;
-                const number = document.getElementById('callNumber').value;
-                const callType = document.getElementById('callType').value;
-                const duration = parseInt(document.getElementById('callDuration').value);
-
-                if (!phone || !number || !duration || !callType) {
-                    showNotification('Заполните все поля', 'error');
-                    return;
-                }
-
-                const response = await fetch('/api/calls/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone,
-                        number,
-                        duration,
-                        callType
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Звонок успешно зарегистрирован');
-                    bootstrap.Modal.getInstance(document.getElementById('callModal')).hide();
-                    document.getElementById('callForm').reset();
-                    loadCallsHistory();
-                } else {
-                    showNotification(result.error || 'Ошибка регистрации звонка', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка регистрации звонка:', error);
-                showNotification('Ошибка регистрации звонка', 'error');
-            }
-        }
-
-        // Показать модальное окно отправки сообщения
-        function showMessageModal() {
-            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
-            modal.show();
-        }
-
-        // Отправка сообщения
-        async function sendMessage() {
-            try {
-                const phone = document.getElementById('messageClientPhone').value;
-                const recipient = document.getElementById('messageRecipient').value;
-                const messageText = document.getElementById('messageText').value;
-                const direction = document.getElementById('messageDirection').value;
-
-                if (!phone || !recipient || !messageText || !direction) {
-                    showNotification('Заполните все поля', 'error');
-                    return;
-                }
-
-                const response = await fetch('/api/usage/sms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone,
-                        recipientNumber: recipient,
-                        messageLength: messageText.length,
-                        direction
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification('Сообщение успешно отправлено');
-                    bootstrap.Modal.getInstance(document.getElementById('messageModal')).hide();
-                    document.getElementById('messageForm').reset();
-                    document.getElementById('messageCharCount').textContent = '0';
-                    loadMessagesHistory();
-                } else {
-                    showNotification(result.error || 'Ошибка отправки сообщения', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-                showNotification('Ошибка отправки сообщения', 'error');
-            }
-        }
-
-        // Показать модальное окно пополнения баланса
-        function showAddPaymentModal() {
-            const modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
-            modal.show();
-        }
-
-        // Обработка платежа
-        async function processPayment() {
-            try {
-                const phone = document.getElementById('paymentClientPhone').value;
-                const amount = parseFloat(document.getElementById('paymentAmount').value);
-                const method = document.getElementById('paymentMethod').value;
-
-                if (!phone || !amount || amount <= 0) {
-                    showNotification('Заполните все поля корректно', 'error');
-                    return;
-                }
-
-                const response = await fetch('/api/payment/topup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone,
-                        amount,
-                        method
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(`Баланс пополнен на ${amount} BYN`);
-                    bootstrap.Modal.getInstance(document.getElementById('addPaymentModal')).hide();
-                    document.getElementById('addPaymentForm').reset();
-                    loadDashboardData();
-                } else {
-                    showNotification(result.error || 'Ошибка пополнения баланса', 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка пополнения баланса:', error);
-                showNotification('Ошибка пополнения баланса', 'error');
-            }
-        }
-
-        // Показать модальное окно изменения трафика
-        function showTrafficEditModal() {
-            const modal = new bootstrap.Modal(document.getElementById('trafficEditModal'));
-            modal.show();
-            
-            // Сбросить форму
-            document.getElementById('trafficEditForm').reset();
-            document.getElementById('trafficClientInfo').textContent = '';
-            document.getElementById('currentTraffic').textContent = '-';
-            document.getElementById('tariffLimit').textContent = '-';
-            document.getElementById('remainingTraffic').textContent = '-';
-            document.getElementById('overLimitCost').textContent = '-';
-            document.getElementById('trafficWarning').classList.add('d-none');
-            
-            // Установить текущий месяц
-            const today = new Date();
-            const currentMonth = today.toISOString().slice(0, 7);
-            document.getElementById('trafficMonth').value = currentMonth;
-        }
-
-        // Загрузка информации о трафике клиента
-        async function loadClientTrafficInfo(phone) {
-            try {
-                // Загружаем данные пользователя
-                const userResponse = await fetch(`/api/user/data?phone=${encodeURIComponent(phone)}`);
-                const userResult = await userResponse.json();
-                
-                if (!userResult.success) {
-                    document.getElementById('trafficClientInfo').innerHTML = 
-                        `<span class="text-danger">Клиент не найден</span>`;
-                    return;
-                }
-
-                // Загружаем данные использования
-                const usageResponse = await fetch(`/api/user/usage?phone=${encodeURIComponent(phone)}`);
-                const usageResult = await usageResponse.json();
-                
-                if (!usageResult.success) {
-                    document.getElementById('trafficClientInfo').innerHTML = 
-                        `<span class="text-danger">Ошибка загрузки данных трафика</span>`;
-                    return;
-                }
-
-                const user = userResult;
-                const usage = usageResult;
-                
-                // Отображаем информацию о клиенте
-                document.getElementById('trafficClientInfo').innerHTML = 
-                    `<strong>${user.fio}</strong>, тариф: ${user.tariff.name}`;
-                
-                // Рассчитываем значения в МБ
-                const currentGB = usage.internet.used;
-                const currentMB = currentGB * 1024;
-                const limitGB = usage.internet.total;
-                const limitMB = limitGB * 1024;
-                const remainingGB = Math.max(0, limitGB - currentGB);
-                const remainingMB = remainingGB * 1024;
-                const overCost = usage.internet.overCost;
-                
-                // Отображаем информацию о трафике
-                document.getElementById('currentTraffic').innerHTML = 
-                    `<strong>${currentGB.toFixed(2)} ГБ</strong> (${currentMB.toFixed(0)} МБ)`;
-                document.getElementById('tariffLimit').innerHTML = 
-                    `<strong>${limitGB} ГБ</strong> (${limitMB.toFixed(0)} МБ)`;
-                document.getElementById('remainingTraffic').innerHTML = 
-                    `<strong>${remainingGB.toFixed(2)} ГБ</strong> (${remainingMB.toFixed(0)} МБ)`;
-                document.getElementById('overLimitCost').innerHTML = 
-                    `<strong>${overCost.toFixed(2)} BYN/МБ</strong> за превышение`;
-                
-                // Сохраняем данные для расчетов
-                document.getElementById('trafficEditForm').dataset.currentMB = currentMB;
-                document.getElementById('trafficEditForm').dataset.limitMB = limitMB;
-                document.getElementById('trafficEditForm').dataset.overCost = user.tariff.internetPricePerMB || 0.01;
-
-            } catch (error) {
-                console.error('Ошибка загрузки информации о трафике:', error);
-                document.getElementById('trafficClientInfo').innerHTML = 
-                    `<span class="text-danger">Ошибка загрузки данных</span>`;
-            }
-        }
-
-        // Расчет изменения трафика
-        function calculateTrafficChange() {
-            const changeInput = document.getElementById('trafficChange').value.trim();
-            const form = document.getElementById('trafficEditForm');
-            
-            if (!changeInput) {
-                document.getElementById('trafficWarning').classList.add('d-none');
-                return;
-            }
-            
-            // Проверяем формат ввода
-            if (!/^[+-]?\d+(\.\d+)?$/.test(changeInput)) {
-                document.getElementById('trafficWarning').classList.remove('d-none');
-                document.getElementById('warningText').textContent = 
-                    'Неверный формат. Используйте числа со знаком "+" или "-" (например: +500 или -300)';
-                return;
-            }
-            
-            const changeValue = parseFloat(changeInput);
-            const currentMB = parseFloat(form.dataset.currentMB) || 0;
-            const limitMB = parseFloat(form.dataset.limitMB) || 0;
-            const overCost = parseFloat(form.dataset.overCost) || 0.01;
-            
-            if (isNaN(currentMB) || isNaN(limitMB)) {
-                document.getElementById('trafficWarning').classList.remove('d-none');
-                document.getElementById('warningText').textContent = 
-                    'Сначала введите номер телефона клиента';
-                return;
-            }
-            
-            // Рассчитываем новый трафик
-            const newMB = currentMB + changeValue;
-            
-            if (newMB < 0) {
-                document.getElementById('trafficWarning').classList.remove('d-none');
-                document.getElementById('warningText').textContent = 
-                    `Невозможно уменьшить трафик ниже 0. Текущий трафик: ${currentMB.toFixed(0)} МБ`;
-                return;
-            }
-            
-            // Проверяем превышение лимита
-            const overMB = Math.max(0, newMB - limitMB);
-            const cost = overMB * overCost;
-            
-            if (overMB > 0) {
-                document.getElementById('trafficWarning').classList.remove('d-none');
-                document.getElementById('warningText').textContent = 
-                    `Внимание! После изменения трафик превысит лимит на ${overMB.toFixed(0)} МБ. ` +
-                    `Будет начислена дополнительная плата: ${cost.toFixed(2)} BYN`;
-            } else {
-                document.getElementById('trafficWarning').classList.add('d-none');
-            }
-        }
-
-        // Применение изменения трафика
-        async function applyTrafficChange() {
-            try {
-                const phone = document.getElementById('trafficClientPhone').value;
-                const trafficChange = document.getElementById('trafficChange').value.trim();
-                const month = document.getElementById('trafficMonth').value;
-                
-                if (!phone || !trafficChange) {
-                    showNotification('Заполните все обязательные поля', 'error');
-                    return;
-                }
-                
-                // Проверяем формат ввода
-                if (!/^[+-]?\d+(\.\d+)?$/.test(trafficChange)) {
-                    showNotification('Неверный формат изменения трафика. Используйте числа со знаком "+" или "-"', 'error');
-                    return;
-                }
-                
-                showNotification('Применение изменений...', 'warning');
-                
-                const response = await fetch('/api/admin/traffic/edit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        phone,
-                        trafficChange,
-                        month: month || undefined
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(result.message);
-                    
-                    // Сбросить форму
-                    document.getElementById('trafficEditForm').reset();
-                    document.getElementById('trafficClientInfo').textContent = '';
-                    document.getElementById('currentTraffic').textContent = '-';
-                    document.getElementById('tariffLimit').textContent = '-';
-                    document.getElementById('remainingTraffic').textContent = '-';
-                    document.getElementById('overLimitCost').textContent = '-';
-                    document.getElementById('trafficWarning').classList.add('d-none');
-                    
-                    // Закрыть модальное окно
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('trafficEditModal'));
-                    modal.hide();
-                    
-                    // Обновить данные дашборда
-                    loadDashboardData();
-                    
-                } else {
-                    showNotification(result.error, 'error');
-                }
-                
-            } catch (error) {
-                console.error('Ошибка изменения трафика:', error);
-                showNotification('Ошибка изменения трафика', 'error');
-            }
-        }
-
-        // Списание абонентской платы
-        async function chargeSubscription() {
-            try {
-                const response = await fetch('/api/admin/charge-subscription', {
-                    method: 'POST'
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(result.message);
-                    loadDashboardData();
-                } else {
-                    showNotification(result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка списания абонентской платы:', error);
-                showNotification('Ошибка списания абонентской платы', 'error');
-            }
-        }
-
-        // Загрузка истории звонков
-        async function loadCallsHistory(page = 1) {
-            try {
-                currentCallsPage = page;
-                const phone = document.getElementById('callsPhoneFilter').value;
-                const callType = document.getElementById('callsTypeFilter').value;
-                const startDate = document.getElementById('callsStartDate').value;
-                const endDate = document.getElementById('callsEndDate').value;
-
-                let url = `/api/admin/calls?page=${page}&limit=${callsPerPage}`;
-                
-                if (phone) url += `&phone=${encodeURIComponent(phone)}`;
-                if (callType) url += `&callType=${callType}`;
-                if (startDate) url += `&startDate=${startDate}`;
-                if (endDate) url += `&endDate=${endDate}`;
-
-                const response = await fetch(url);
-                const result = await response.json();
-
-                if (result.success) {
-                    // Обновляем статистику
-                    document.getElementById('totalCalls').textContent = result.totalCalls;
-                    document.getElementById('localCalls').textContent = result.localCalls;
-                    document.getElementById('internationalCalls').textContent = result.internationalCalls;
-                    document.getElementById('totalCallsCost').textContent = result.totalCost.toFixed(2) + ' BYN';
-
-                    // Заполняем таблицу
-                    const tbody = document.getElementById('callsHistoryTable');
-                    tbody.innerHTML = result.calls.map(call => `
-                        <tr>
-                            <td>${call.date}</td>
-                            <td>${call.userFio}</td>
-                            <td>${call.phone}</td>
-                            <td>${call.number}</td>
-                            <td>
-                                <span class="badge ${call.callType === 'local' ? 'bg-primary' : 'bg-warning'}">
-                                    ${call.callType === 'local' ? 'Местный' : 'Международный'}
-                                </span>
-                            </td>
-                            <td>${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}</td>
-                            <td class="fw-bold">${call.cost.toFixed(2)} BYN</td>
-                        </tr>
-                    `).join('');
-
-                    // Обновляем пагинацию
-                    updateCallsPagination(result.totalPages, page);
-                    document.getElementById('callsPaginationInfo').textContent = 
-                        `Показано ${result.calls.length} из ${result.totalCalls} записей`;
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки истории звонков:', error);
-                showNotification('Ошибка загрузки истории звонков', 'error');
-            }
-        }
-
-        // Обновление пагинации для истории звонков
-        function updateCallsPagination(totalPages, currentPage) {
-            const pagination = document.getElementById('callsPagination');
-            pagination.innerHTML = '';
-
-            // Кнопка "Назад"
-            const prevLi = document.createElement('li');
-            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${currentPage - 1})">Назад</a>`;
-            pagination.appendChild(prevLi);
-
-            // Номера страниц
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                li.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${i})">${i}</a>`;
-                pagination.appendChild(li);
-            }
-
-            // Кнопка "Вперед"
-            const nextLi = document.createElement('li');
-            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadCallsHistory(${currentPage + 1})">Вперед</a>`;
-            pagination.appendChild(nextLi);
-        }
-
-        // Очистка фильтров истории звонков
-        function clearCallsFilters() {
-            document.getElementById('callsPhoneFilter').value = '';
-            document.getElementById('callsTypeFilter').value = '';
-            
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            document.getElementById('callsStartDate').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('callsEndDate').value = today.toISOString().split('T')[0];
-            
-            loadCallsHistory(1);
-        }
-
-        // Загрузка истории сообщений
-        async function loadMessagesHistory(page = 1) {
-            try {
-                currentMessagesPage = page;
-                const phone = document.getElementById('messagesPhoneFilter').value;
-                const direction = document.getElementById('messagesDirectionFilter').value;
-                const startDate = document.getElementById('messagesStartDate').value;
-                const endDate = document.getElementById('messagesEndDate').value;
-
-                let url = `/api/admin/sms?page=${page}&limit=${messagesPerPage}`;
-                
-                if (phone) url += `&phone=${encodeURIComponent(phone)}`;
-                if (direction) url += `&direction=${direction}`;
-                if (startDate) url += `&startDate=${startDate}`;
-                if (endDate) url += `&endDate=${endDate}`;
-
-                const response = await fetch(url);
-                const result = await response.json();
-
-                if (result.success) {
-                    // Обновляем статистику
-                    document.getElementById('totalMessages').textContent = result.total;
-                    document.getElementById('outgoingMessages').textContent = result.stats.outgoing || 0;
-                    document.getElementById('incomingMessages').textContent = result.stats.incoming || 0;
-                    document.getElementById('totalMessagesCost').textContent = result.stats.totalCost.toFixed(2) + ' BYN';
-
-                    // Заполняем таблицу
-                    const tbody = document.getElementById('messagesHistoryTable');
-                    tbody.innerHTML = result.data.map(sms => `
-                        <tr>
-                            <td>${sms.date}</td>
-                            <td>${sms.userFio}</td>
-                            <td>${sms.phone}</td>
-                            <td>${sms.recipient}</td>
-                            <td>
-                                <span class="badge ${sms.direction === 'Исходящее' ? 'bg-primary' : 'bg-success'}">
-                                    ${sms.direction}
-                                </span>
-                            </td>
-                            <td>${sms.length}</td>
-                            <td class="fw-bold">${sms.cost.toFixed(2)} BYN</td>
-                        </tr>
-                    `).join('');
-
-                    // Обновляем пагинацию
-                    updateMessagesPagination(result.totalPages, page);
-                    document.getElementById('messagesPaginationInfo').textContent = 
-                        `Показано ${result.data.length} из ${result.total} записей`;
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки истории сообщений:', error);
-                showNotification('Ошибка загрузки истории сообщений', 'error');
-            }
-        }
-
-        // Обновление пагинации для истории сообщений
-        function updateMessagesPagination(totalPages, currentPage) {
-            const pagination = document.getElementById('messagesPagination');
-            pagination.innerHTML = '';
-
-            // Кнопка "Назад"
-            const prevLi = document.createElement('li');
-            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${currentPage - 1})">Назад</a>`;
-            pagination.appendChild(prevLi);
-
-            // Номера страниц
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                li.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${i})">${i}</a>`;
-                pagination.appendChild(li);
-            }
-
-            // Кнопка "Вперед"
-            const nextLi = document.createElement('li');
-            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadMessagesHistory(${currentPage + 1})">Вперед</a>`;
-            pagination.appendChild(nextLi);
-        }
-
-        // Очистка фильтров истории сообщений
-        function clearMessagesFilters() {
-            document.getElementById('messagesPhoneFilter').value = '';
-            document.getElementById('messagesDirectionFilter').value = '';
-            
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            document.getElementById('messagesStartDate').value = firstDay.toISOString().split('T')[0];
-            document.getElementById('messagesEndDate').value = today.toISOString().split('T')[0];
-            
-            loadMessagesHistory(1);
-        }
-
-        // Экспорт отчетов
-        async function exportUsersReport() {
-            try {
-                showNotification('Формирование отчета...', 'warning');
-                
-                const response = await fetch('/api/reports/users/word');
-                if (!response.ok) {
-                    throw new Error('Ошибка сервера');
-                }
-                
-                const blob = await response.blob();
-                
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = `users_report_${new Date().toISOString().split('T')[0]}.doc`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                showNotification('Отчет по пользователям успешно сформирован');
-            } catch (error) {
-                console.error('Ошибка экспорта отчета:', error);
-                showNotification('Ошибка формирования отчета', 'error');
-            }
-        }
-
-        async function exportCallsReport() {
-            try {
-                showNotification('Формирование отчета...', 'warning');
-                
-                const response = await fetch('/api/reports/calls/word');
-                if (!response.ok) {
-                    throw new Error('Ошибка сервера');
-                }
-                
-                const blob = await response.blob();
-                
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = `calls_report_${new Date().toISOString().split('T')[0]}.doc`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                showNotification('Отчет по звонкам успешно сформирован');
-            } catch (error) {
-                console.error('Ошибка экспорта отчета:', error);
-                showNotification('Ошибка формирования отчета', 'error');
-            }
-        }
-
-        async function exportDebtorsReport() {
-            try {
-                showNotification('Формирование отчета...', 'warning');
-                
-                const response = await fetch('/api/reports/debtors/word');
-                if (!response.ok) {
-                    throw new Error('Ошибка сервера');
-                }
-                
-                const blob = await response.blob();
-                
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = `debtors_report_${new Date().toISOString().split('T')[0]}.doc`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(downloadUrl);
-                
-                showNotification('Отчет по должникам успешно сформирован');
-            } catch (error) {
-                console.error('Ошибка экспорта отчета:', error);
-                showNotification('Ошибка формирования отчета', 'error');
-            }
-        }
-
-        // Загрузка отчета по должникам
-        async function loadDebtorsReport() {
-            try {
-                const response = await fetch('/api/reports/debtors');
-                const result = await response.json();
-                
-                if (result.success) {
-                    const container = document.getElementById('debtorsReport');
-                    container.innerHTML = `
-                        <div class="report-card">
-                            <div class="report-header">
-                                <div class="report-title">Отчет по должникам</div>
-                                <div class="report-value">${result.totalDebtors} клиентов</div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Общая задолженность:</strong> ${result.totalDebt}</p>
+        <!-- Модальные окна -->
+        <div id="modals-container">
+            <!-- Модальное окно всех клиентов -->
+            <div class="modal fade" id="allClientsModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Все клиенты</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="filters-row">
+                                <div class="filter-group">
+                                    <div class="search-box">
+                                        <i class="fas fa-search search-icon"></i>
+                                        <input type="text" id="searchAllClients" class="form-control" placeholder="Поиск по ФИО или телефону...">
+                                    </div>
+                                </div>
+                                <div class="filter-group">
+                                    <select class="form-control" id="statusFilter">
+                                        <option value="">Все статусы</option>
+                                        <option value="active">Активные</option>
+                                        <option value="debtor">Должники</option>
+                                        <option value="blocked">Заблокированные</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <select class="form-control" id="tariffFilter">
+                                        <option value="">Все тарифы</option>
+                                        <option value="standard">Стандарт</option>
+                                        <option value="plus+">Плюс+</option>
+                                        <option value="Super plus">Супер плюс</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div class="table-responsive mt-3">
+                            <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
                                         <tr>
@@ -2657,69 +530,580 @@
                                             <th>Долг</th>
                                             <th>Тариф</th>
                                             <th>Статус</th>
+                                            <th>Дата регистрации</th>
+                                            <th style="width: 60px;">Действия</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        ${result.debtors.map(debtor => `
-                                            <tr>
-                                                <td>${debtor.fio}</td>
-                                                <td>${debtor.phone}</td>
-                                                <td class="text-danger">${debtor.balance}</td>
-                                                <td class="text-danger fw-bold">${debtor.debt}</td>
-                                                <td>${debtor.tariff}</td>
-                                                <td>${debtor.status}</td>
-                                            </tr>
-                                        `).join('')}
+                                    <tbody id="allClientsTable">
+                                        <!-- Все клиенты будут загружены здесь -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки отчета по должникам:', error);
-            }
-        }
+                    </div>
+                </div>
+            </div>
 
-        // Уведомления
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 4000);
-        }
+    <!-- Модальное окно редактирования пользователя (упрощенное) -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Редактирование пользователя
+                    <small id="modalUserPhoneTitle" class="text-muted ms-2"></small>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Вкладки -->
+                <div class="modal-tabs mb-4">
+                    <button class="modal-tab active" onclick="showUserTab('info')">
+                        <i class="fas fa-info-circle me-1"></i>Основная информация
+                    </button>
+                    <button class="modal-tab" onclick="showUserTab('finance')">
+                        <i class="fas fa-wallet me-1"></i>Финансы
+                    </button>
+                    <button class="modal-tab" onclick="showUserTab('tariff')">
+                        <i class="fas fa-tachometer-alt me-1"></i>Тариф
+                    </button>
+                    <button class="modal-tab" onclick="showUserTab('services')">
+                        <i class="fas fa-cogs me-1"></i>Услуги
+                    </button>
+                    <button class="modal-tab" onclick="showUserTab('usage')">
+                        <i class="fas fa-chart-pie me-1"></i>Использование
+                    </button>
+                </div>
 
-        // Выход
-        function logout() {
-            if (confirm('Вы уверены, что хотите выйти?')) {
-                window.location.href = '/';
-            }
-        }
+                <!-- Основная информация -->
+                <div id="userInfoTab" class="modal-tab-content active">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user me-1"></i>ФИО *
+                                    </label>
+                                    <input type="text" class="form-control" id="editUserFio" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-key me-1"></i>Новый пароль
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="editUserPassword" 
+                                               placeholder="Оставьте пустым, чтобы не менять">
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                onclick="togglePasswordVisibility('editUserPassword')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-shield me-1"></i>Статус
+                                    </label>
+                                    <select class="form-control" id="editUserStatus">
+                                        <option value="active">Активный</option>
+                                        <option value="blocked">Заблокирован</option>
+                                        <option value="suspended">Приостановлен</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
 
-        // Обработчики событий для фильтров
-        document.getElementById('searchAllClients').addEventListener('input', function(e) {
-            const search = e.target.value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const tariffFilter = document.getElementById('tariffFilter').value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
+                <!-- Финансы -->
+                <div id="userFinanceTab" class="modal-tab-content">
+                    <div class="user-details-grid mb-4">
+                        <div class="user-detail-card">
+                            <div class="user-detail-label">Текущий баланс</div>
+                            <div class="user-detail-value" id="modalUserBalance"></div>
+                        </div>
+                        <div class="user-detail-card">
+                            <div class="user-detail-label">Долг</div>
+                            <div class="user-detail-value" id="modalUserDebt"></div>
+                        </div>
+                        <div class="user-detail-card">
+                            <div class="user-detail-label">Кредитный лимит</div>
+                            <div class="user-detail-value" id="modalUserCreditLimit"></div>
+                        </div>
+                        <div class="user-detail-card">
+                            <div class="user-detail-label">Доступный кредит</div>
+                            <div class="user-detail-value" id="modalUserAvailableCredit"></div>
+                        </div>
+                    </div>
 
-        document.getElementById('statusFilter').addEventListener('change', function(e) {
-            const search = document.getElementById('searchAllClients').value;
-            const statusFilter = e.target.value;
-            const tariffFilter = document.getElementById('tariffFilter').value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-plus-circle me-1"></i>Пополнить баланс (BYN)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="addBalanceAmount" 
+                                           step="0.01" min="0.01" placeholder="Сумма">
+                                    <button class="btn btn-success" type="button" onclick="addBalanceToUser()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-minus-circle me-1"></i>Списать средства (BYN)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="withdrawBalanceAmount" 
+                                           step="0.01" min="0.01" placeholder="Сумма">
+                                    <button class="btn btn-danger" type="button" onclick="withdrawBalanceFromUser()">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="btn-group w-100">
+                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(10)">
+                                    +10 BYN
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(20)">
+                                    +20 BYN
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(50)">
+                                    +50 BYN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        document.getElementById('tariffFilter').addEventListener('change', function(e) {
-            const search = document.getElementById('searchAllClients').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const tariffFilter = e.target.value;
-            loadAllClientsTable(search, statusFilter, tariffFilter);
-        });
-    </script>
-</body>
-</html>
+                <!-- Тариф -->
+                <div id="userTariffTab" class="modal-tab-content">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle me-1"></i>Текущий тариф
+                        </div>
+                        <div class="card-body" id="currentTariffInfo">
+                            <!-- Информация о текущем тарифе будет загружена здесь -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-sync me-1"></i>Сменить тариф
+                        </label>
+                        <select class="form-control" id="editUserTariff">
+                            <option value="standard">Стандарт (19.99 BYN/мес)</option>
+                            <option value="plus+">Плюс+ (29.99 BYN/мес)</option>
+                            <option value="Super plus">Супер плюс (35.99 BYN/мес)</option>
+                            <option value="premium">Премиум (49.99 BYN/мес)</option>
+                        </select>
+                        <div class="form-text mt-2">
+                            Смена тарифа вступит в силу с начала следующего расчетного периода
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Что входит в тарифы:</strong><br>
+                        • <strong>Стандарт:</strong> 300 мин, 15 ГБ интернета, 100 SMS<br>
+                        • <strong>Плюс+:</strong> 500 мин, 25 ГБ интернета, 200 SMS<br>
+                        • <strong>Супер плюс:</strong> 1000 мин, 50 ГБ интернета, 500 SMS<br>
+                        • <strong>Премиум:</strong> 2000 мин, 100 ГБ интернета, 1000 SMS
+                    </div>
+                </div>
+
+                <!-- Услуги -->
+                <div id="userServicesTab" class="modal-tab-content">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-cogs me-1"></i>Подключенные услуги
+                        </div>
+                        <div class="card-body">
+                            <div id="userServicesList" class="row g-2">
+                                <!-- Список подключенных услуг будет загружен здесь -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-plus me-1"></i>Доступные услуги
+                        </div>
+                        <div class="card-body">
+                            <div id="availableServices" class="row g-3">
+                                <!-- Список доступных услуг -->
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service1" value="roaming">
+                                        <label class="form-check-label" for="service1">
+                                            <strong>Международный роуминг</strong><br>
+                                            <small class="text-muted">Возможность пользоваться связью за границей</small><br>
+                                            <small class="text-success">+5 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service2" value="callerId">
+                                        <label class="form-check-label" for="service2">
+                                            <strong>Определитель номера</strong><br>
+                                            <small class="text-muted">Показывает номер входящего вызова</small><br>
+                                            <small class="text-success">+2 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service3" value="antispam">
+                                        <label class="form-check-label" for="service3">
+                                            <strong>Антиспам</strong><br>
+                                            <small class="text-muted">Блокировка спам-звонков</small><br>
+                                            <small class="text-success">+3 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service4" value="music">
+                                        <label class="form-check-label" for="service4">
+                                            <strong>Музыкальный сервис</strong><br>
+                                            <small class="text-muted">Безлимитная музыка без трафика</small><br>
+                                            <small class="text-success">+7 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service5" value="games">
+                                        <label class="form-check-label" for="service5">
+                                            <strong>Игровая подписка</strong><br>
+                                            <small class="text-muted">Доступ к играм без трафика</small><br>
+                                            <small class="text-success">+10 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="service6" value="cloud">
+                                        <label class="form-check-label" for="service6">
+                                            <strong>Облачное хранилище</strong><br>
+                                            <small class="text-muted">50 ГБ облачного хранилища</small><br>
+                                            <small class="text-success">+4 BYN/мес</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-primary w-100" onclick="applyServicesChanges()">
+                                    <i class="fas fa-save me-1"></i>Применить изменения услуг
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Использование (простой вывод) -->
+                <div id="userUsageTab" class="modal-tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-chart-pie me-1"></i>Статистика использования за текущий месяц
+                        </div>
+                        <div class="card-body">
+                            <div id="usageStats" class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-card-sm">
+                                        <div class="stat-label">Минуты разговора</div>
+                                        <div class="stat-value" id="usageMinutes">0</div>
+                                        <small class="text-muted">из 300 включено</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-card-sm">
+                                        <div class="stat-label">Интернет трафик</div>
+                                        <div class="stat-value" id="usageInternet">0 МБ</div>
+                                        <small class="text-muted">из 15360 МБ включено</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-card-sm">
+                                        <div class="stat-label">SMS сообщения</div>
+                                        <div class="stat-value" id="usageSMS">0</div>
+                                        <small class="text-muted">из 100 включено</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Данные обновляются автоматически. Для изменения остатков используйте панель управления.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Отмена
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">
+                    <i class="fas fa-save me-2"></i>Сохранить изменения
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- Модальное окно добавления клиента -->
+            <div class="modal fade" id="addClientModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Добавить клиента</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addClientForm">
+                                <div class="mb-3">
+                                    <label class="form-label">ФИО *</label>
+                                    <input type="text" class="form-control" id="clientFio" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Номер телефона *</label>
+                                    <input type="tel" class="form-control" id="clientPhone" required placeholder="+375291234567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Пароль *</label>
+                                    <input type="password" class="form-control" id="clientPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Начальный баланс</label>
+                                    <input type="number" class="form-control" id="clientBalance" value="0" step="0.01">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Тариф</label>
+                                    <select class="form-control" id="clientTariff">
+                                        <option value="standard">Стандарт (19.99 BYN)</option>
+                                        <option value="plus+">Плюс+ (29.99 BYN)</option>
+                                        <option value="Super plus">Супер плюс (35.99 BYN)</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-primary" onclick="addClient()">Добавить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно регистрации звонка -->
+            <div class="modal fade" id="callModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Зарегистрировать звонок</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="callForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Телефон клиента *</label>
+                                    <input type="tel" class="form-control" id="callClientPhone" required placeholder="+375291234567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Номер назначения *</label>
+                                    <input type="tel" class="form-control" id="callNumber" required placeholder="+375291111111">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Тип звонка *</label>
+                                    <select class="form-control" id="callType" required>
+                                        <option value="local">Местный</option>
+                                        <option value="international">Международный</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Длительность (секунды) *</label>
+                                    <input type="number" class="form-control" id="callDuration" required min="1" value="60">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-primary" onclick="registerCall()">Зарегистрировать</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно отправки сообщения -->
+            <div class="modal fade" id="messageModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Отправить сообщение</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="messageForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Телефон клиента *</label>
+                                    <input type="tel" class="form-control" id="messageClientPhone" required placeholder="+375291234567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Номер получателя *</label>
+                                    <input type="tel" class="form-control" id="messageRecipient" required placeholder="+375291111111">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Текст сообщения *</label>
+                                    <textarea class="form-control" id="messageText" rows="3" required placeholder="Введите текст сообщения..." maxlength="500"></textarea>
+                                    <div class="form-text text-end">
+                                        <span id="messageCharCount">0</span>/500 символов
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Направление *</label>
+                                    <select class="form-control" id="messageDirection" required>
+                                        <option value="outgoing">Исходящее (от клиента)</option>
+                                        <option value="incoming">Входящее (клиенту)</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-primary" onclick="sendMessage()">Отправить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно пополнения баланса -->
+            <div class="modal fade" id="addPaymentModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Пополнить баланс</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addPaymentForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Телефон клиента *</label>
+                                    <input type="tel" class="form-control" id="paymentClientPhone" required placeholder="+375291234567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Сумма пополнения (BYN) *</label>
+                                    <input type="number" class="form-control" id="paymentAmount" required step="0.01" min="0.01">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Метод оплаты</label>
+                                    <select class="form-control" id="paymentMethod">
+                                        <option value="Банковская карта">Банковская карта</option>
+                                        <option value="Наличные">Наличные</option>
+                                        <option value="Электронный кошелек">Электронный кошелек</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-success" onclick="processPayment()">Пополнить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно изменения трафика -->
+            <div class="modal fade" id="trafficEditModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Изменение трафика клиента</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="trafficEditForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Телефон клиента *</label>
+                                    <input type="tel" class="form-control" id="trafficClientPhone" required placeholder="+375291234567">
+                                    <div class="form-text" id="trafficClientInfo"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Изменение трафика (МБ) *</label>
+                                    <input type="text" class="form-control" id="trafficChange" required placeholder="+500 или -300">
+                                    <div class="form-text">
+                                        <ul class="mb-0 mt-1 ps-3">
+                                            <li>Используйте знак "+" для добавления трафика</li>
+                                            <li>Используйте знак "-" для уменьшения трафика</li>
+                                            <li>Пример: +500 добавит 500 МБ</li>
+                                            <li>Пример: -300 уменьшит на 300 МБ</li>
+                                            <li>Если новый трафик превысит лимит тарифа, будет начислена дополнительная плата</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Месяц изменения</label>
+                                    <input type="month" class="form-control" id="trafficMonth" value="">
+                                    <div class="form-text">Оставьте пустым для текущего месяца</div>
+                                </div>
+                                
+                                <div class="alert alert-info" id="trafficInfo">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small>Текущий трафик:</small>
+                                            <div id="currentTraffic">-</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small>Лимит тарифа:</small>
+                                            <div id="tariffLimit">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-6">
+                                            <small>Оставшийся трафик:</small>
+                                            <div id="remainingTraffic">-</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small>Стоимость превышения:</small>
+                                            <div id="overLimitCost">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning d-none" id="trafficWarning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <span id="warningText"></span>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-primary" onclick="applyTrafficChange()">Применить изменение</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Уведомление -->
+        <div class="notification" id="notification"></div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="admin.js"></script>
+    </body>
+    </html>

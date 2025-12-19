@@ -7,18 +7,11 @@ const app = express();
 const PORT = 3000;
 
 // Подключение к MongoDB
-const mongoOptions = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-};
-
 let isConnected = false;
 
 async function connectToDatabase() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/mobile_operator', mongoOptions);
+        await mongoose.connect('mongodb://localhost:27017/mobile_operator');
         isConnected = true;
         console.log('✅ Успешное подключение к MongoDB');
         
@@ -55,54 +48,56 @@ const userSchema = new mongoose.Schema({
         internetGB: { type: Number, default: 15 },
         smsCount: { type: Number, default: 100 },
         minutePrice: { type: Number, default: 0.10 },
-        internetPricePerMB: { type: Number, default: 0.01 }, // Цена за 1 МБ сверх лимита
-        smsPrice: { type: Number, default: 0.05 }, // Цена за SMS сверх лимита
+        internetPricePerMB: { type: Number, default: 0.01 },
+        smsPrice: { type: Number, default: 0.05 },
         internationalMinutePrice: { type: Number, default: 1.50 }
     },
     creditLimit: { type: Number, default: 50 },
     status: { type: String, default: 'active' },
-    registrationDate: { type: Date, default: Date.now },
-    debt: { type: Number, default: 0 }
+    debt: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now }
+}, {
+    timestamps: true
 });
 
-// Схема звонков (уже есть, оставляем)
+// Схема звонков
 const callSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     userFio: { type: String, required: true },
     phone: { type: String, required: true },
     callType: { type: String, enum: ['local', 'international'], required: true },
     number: { type: String, required: true },
-    duration: { type: Number, required: true }, // в секундах
+    duration: { type: Number, required: true },
     cost: { type: Number, required: true },
     date: { type: Date, default: Date.now },
-    month: { type: String, required: true } // Формат: YYYY-MM
+    month: { type: String, required: true }
 });
 
-// Схема интернет трафика (НОВАЯ)
+// Схема интернет трафика
 const internetUsageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     phone: { type: String, required: true },
     date: { type: Date, default: Date.now },
-    month: { type: String, required: true }, // Формат: YYYY-MM
-    mbUsed: { type: Number, required: true, default: 0 }, // Использовано в МБ
-    sessionDuration: { type: Number, default: 0 }, // Длительность сессии в секундах
-    cost: { type: Number, default: 0 }, // Стоимость (если превышение)
+    month: { type: String, required: true },
+    mbUsed: { type: Number, required: true, default: 0 },
+    sessionDuration: { type: Number, default: 0 },
+    cost: { type: Number, default: 0 },
     type: { type: String, enum: ['mobile', 'wifi'], default: 'mobile' }
 });
 
-// Схема SMS сообщений (НОВАЯ)
+// Схема SMS сообщений
 const smsUsageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     phone: { type: String, required: true },
     date: { type: Date, default: Date.now },
-    month: { type: String, required: true }, // Формат: YYYY-MM
+    month: { type: String, required: true },
     recipientNumber: { type: String, required: true },
-    messageLength: { type: Number, required: true }, // Длина сообщения в символах
-    cost: { type: Number, default: 0 }, // Стоимость (если превышение)
+    messageLength: { type: Number, required: true },
+    cost: { type: Number, default: 0 },
     direction: { type: String, enum: ['outgoing', 'incoming'], default: 'outgoing' }
 });
 
-// Схема платежей (оставляем)
+// Схема платежей
 const paymentSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     phone: { type: String, required: true },
@@ -146,8 +141,8 @@ const TARIFFS = {
         internetGB: 15,
         smsCount: 100,
         minutePrice: 0.10,
-        internetPricePerMB: 0.01, // 0.01 BYN за 1 МБ сверх лимита
-        smsPrice: 0.05, // 0.05 BYN за SMS сверх лимита
+        internetPricePerMB: 0.01,
+        smsPrice: 0.05,
         internationalMinutePrice: 1.50,
         features: [
             '300 минут местных звонков', 
@@ -300,7 +295,6 @@ async function checkAdmin() {
                 role: 'admin',
                 tariff: TARIFFS.standard,
                 creditLimit: 100,
-                registrationDate: new Date()
             });
             console.log('✅ Администратор создан');
         }
@@ -353,7 +347,6 @@ async function createTestData() {
                     tariff: userData.tariff,
                     creditLimit: userData.creditLimit,
                     role: 'client',
-                    registrationDate: new Date()
                 });
                 
                 await user.save();
@@ -471,8 +464,8 @@ app.post('/api/login', checkDatabaseConnection, async (req, res) => {
             creditLimit: user.creditLimit || 50,
             status: user.status || 'active',
             tariff: tariffData,
-            registrationDate: user.registrationDate.toLocaleDateString('ru-RU'),
-            debt: user.debt || 0
+            debt: user.debt || 0,
+            createdAt: user.createdAt
         };
 
         const redirectUrl = user.role === 'admin' ? '/admin' : '/client';
@@ -523,7 +516,6 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
             tariff: selectedTariff,
             creditLimit: 50,
             role: 'client',
-            registrationDate: new Date()
         });
 
         await newUser.save();
@@ -548,7 +540,7 @@ app.post('/api/register', checkDatabaseConnection, async (req, res) => {
                 balance: newUser.balance,
                 tariff: newUser.tariff,
                 creditLimit: newUser.creditLimit,
-                registrationDate: newUser.registrationDate.toLocaleDateString('ru-RU')
+                createdAt: newUser.createdAt
             }
         });
 
@@ -605,8 +597,8 @@ app.get('/api/user/data', checkDatabaseConnection, async (req, res) => {
             creditLimit: user.creditLimit || 50,
             status: user.status || 'active',
             tariff: tariffData,
-            registrationDate: user.registrationDate.toLocaleDateString('ru-RU'),
-            debt: user.debt || 0
+            debt: user.debt || 0,
+            createdAt: user.createdAt
         };
 
         res.json(responseData);
@@ -1119,98 +1111,98 @@ app.get('/api/admin/usage/stats', checkDatabaseConnection, async (req, res) => {
                         },
                         internationalCalls: { 
                             $sum: { $cond: [{ $eq: ['$callType', 'international'] }, 1, 0] }
-                        }
                     }
                 }
-            ]),
-            InternetUsage.aggregate([
-                { $match: usageFilter },
-                { 
-                    $group: {
-                        _id: null,
-                        totalSessions: { $sum: 1 },
-                        totalMB: { $sum: '$mbUsed' },
-                        totalCost: { $sum: '$cost' },
-                        mobileSessions: { 
-                            $sum: { $cond: [{ $eq: ['$type', 'mobile'] }, 1, 0] }
-                        },
-                        wifiSessions: { 
-                            $sum: { $cond: [{ $eq: ['$type', 'wifi'] }, 1, 0] }
-                        }
+            }
+        ]),
+        InternetUsage.aggregate([
+            { $match: usageFilter },
+            { 
+                $group: {
+                    _id: null,
+                    totalSessions: { $sum: 1 },
+                    totalMB: { $sum: '$mbUsed' },
+                    totalCost: { $sum: '$cost' },
+                    mobileSessions: { 
+                        $sum: { $cond: [{ $eq: ['$type', 'mobile'] }, 1, 0] }
+                    },
+                    wifiSessions: { 
+                        $sum: { $cond: [{ $eq: ['$type', 'wifi'] }, 1, 0] }
                     }
                 }
-            ]),
-            SmsUsage.aggregate([
-                { $match: usageFilter },
-                { 
-                    $group: {
-                        _id: null,
-                        totalSMS: { $sum: 1 },
-                        totalCost: { $sum: '$cost' },
-                        outgoingSMS: { 
-                            $sum: { $cond: [{ $eq: ['$direction', 'outgoing'] }, 1, 0] }
-                        },
-                        incomingSMS: { 
-                            $sum: { $cond: [{ $eq: ['$direction', 'incoming'] }, 1, 0] }
-                        }
+            }
+        ]),
+        SmsUsage.aggregate([
+            { $match: usageFilter },
+            { 
+                $group: {
+                    _id: null,
+                    totalSMS: { $sum: 1 },
+                    totalCost: { $sum: '$cost' },
+                    outgoingSMS: { 
+                        $sum: { $cond: [{ $eq: ['$direction', 'outgoing'] }, 1, 0] }
+                    },
+                    incomingSMS: { 
+                        $sum: { $cond: [{ $eq: ['$direction', 'incoming'] }, 1, 0] }
                     }
                 }
-            ])
-        ]);
-        
-        // Статистика по пользователям
-        const userStats = await Promise.all(
-            users.map(async (user) => {
-                const [userCalls, userInternet, userSMS] = await Promise.all([
-                    Call.countDocuments({ userId: user._id, ...usageFilter }),
-                    InternetUsage.aggregate([
-                        { $match: { userId: user._id, ...usageFilter } },
-                        { $group: { _id: null, totalMB: { $sum: '$mbUsed' } } }
-                    ]),
-                    SmsUsage.countDocuments({ userId: user._id, ...usageFilter })
-                ]);
-                
-                return {
-                    fio: user.fio,
-                    phone: user.phone,
-                    tariff: user.tariff.name,
-                    callsCount: userCalls,
-                    internetMB: userInternet.length > 0 ? userInternet[0].totalMB : 0,
-                    smsCount: userSMS
-                };
-            })
-        );
-        
-        const result = {
-            success: true,
-            totals: {
-                calls: {
-                    total: callsStats[0]?.totalCalls || 0,
-                    duration: callsStats[0]?.totalDuration || 0,
-                    cost: callsStats[0]?.totalCost || 0,
-                    local: callsStats[0]?.localCalls || 0,
-                    international: callsStats[0]?.internationalCalls || 0
-                },
-                internet: {
-                    sessions: internetStats[0]?.totalSessions || 0,
-                    mb: internetStats[0]?.totalMB || 0,
-                    gb: (internetStats[0]?.totalMB || 0) / 1024,
-                    cost: internetStats[0]?.totalCost || 0,
-                    mobile: internetStats[0]?.mobileSessions || 0,
-                    wifi: internetStats[0]?.wifiSessions || 0
-                },
-                sms: {
-                    total: smsStats[0]?.totalSMS || 0,
-                    cost: smsStats[0]?.totalCost || 0,
-                    outgoing: smsStats[0]?.outgoingSMS || 0,
-                    incoming: smsStats[0]?.incomingSMS || 0
-                }
+            }
+        ])
+    ]);
+    
+    // Статистика по пользователям
+    const userStats = await Promise.all(
+        users.map(async (user) => {
+            const [userCalls, userInternet, userSMS] = await Promise.all([
+                Call.countDocuments({ userId: user._id, ...usageFilter }),
+                InternetUsage.aggregate([
+                    { $match: { userId: user._id, ...usageFilter } },
+                    { $group: { _id: null, totalMB: { $sum: '$mbUsed' } } }
+                ]),
+                SmsUsage.countDocuments({ userId: user._id, ...usageFilter })
+            ]);
+            
+            return {
+                fio: user.fio,
+                phone: user.phone,
+                tariff: user.tariff.name,
+                callsCount: userCalls,
+                internetMB: userInternet.length > 0 ? userInternet[0].totalMB : 0,
+                smsCount: userSMS
+            };
+        })
+    );
+    
+    const result = {
+        success: true,
+        totals: {
+            calls: {
+                total: callsStats[0]?.totalCalls || 0,
+                duration: callsStats[0]?.totalDuration || 0,
+                cost: callsStats[0]?.totalCost || 0,
+                local: callsStats[0]?.localCalls || 0,
+                international: callsStats[0]?.internationalCalls || 0
             },
-            users: userStats,
-            totalUsers: users.length
-        };
-        
-        res.json(result);
+            internet: {
+                sessions: internetStats[0]?.totalSessions || 0,
+                mb: internetStats[0]?.totalMB || 0,
+                gb: (internetStats[0]?.totalMB || 0) / 1024,
+                cost: internetStats[0]?.totalCost || 0,
+                mobile: internetStats[0]?.mobileSessions || 0,
+                wifi: internetStats[0]?.wifiSessions || 0
+            },
+            sms: {
+                total: smsStats[0]?.totalSMS || 0,
+                cost: smsStats[0]?.totalCost || 0,
+                outgoing: smsStats[0]?.outgoingSMS || 0,
+                incoming: smsStats[0]?.incomingSMS || 0
+            }
+        },
+        users: userStats,
+        totalUsers: users.length
+    };
+    
+    res.json(result);
     } catch (error) {
         console.error('❌ Ошибка получения статистики использования:', error);
         res.status(500).json({ 
@@ -1611,7 +1603,7 @@ app.post('/api/admin/traffic/edit', checkDatabaseConnection, async (req, res) =>
             userId: user._id,
             phone: user.phone,
             mbUsed: changeValue,
-            sessionDuration: 0, // Административное изменение
+            sessionDuration: 0,
             cost: cost,
             type: 'mobile',
             month: currentMonth,
@@ -1673,6 +1665,102 @@ app.post('/api/admin/traffic/edit', checkDatabaseConnection, async (req, res) =>
         res.status(500).json({ 
             success: false,
             error: 'Ошибка редактирования трафика: ' + error.message 
+        });
+    }
+});
+
+// Обновление тарифа клиента
+app.put('/api/admin/clients/:id/tariff', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tariff } = req.body;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        if (tariff) {
+            user.tariff = {
+                id: tariff.id || user.tariff.id,
+                name: tariff.name || user.tariff.name,
+                price: tariff.price || user.tariff.price,
+                includedMinutes: tariff.includedMinutes || user.tariff.includedMinutes,
+                internetGB: tariff.internetGB || user.tariff.internetGB,
+                smsCount: tariff.includedSMS || user.tariff.smsCount || 100,
+                minutePrice: user.tariff.minutePrice || 0.10,
+                internetPricePerMB: user.tariff.internetPricePerMB || 0.01,
+                smsPrice: user.tariff.smsPrice || 0.05,
+                internationalMinutePrice: user.tariff.internationalMinutePrice || 1.50
+            };
+        }
+
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            message: 'Тариф пользователя обновлен',
+            user: {
+                tariff: user.tariff
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка обновления тарифа:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка обновления тарифа' 
+        });
+    }
+});
+
+// Обновление данных клиента
+app.put('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { fio, phone, status, creditLimit, balance, debt } = req.body;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        // Обновляем только разрешенные поля
+        if (fio) user.fio = fio;
+        if (phone) user.phone = phone;
+        if (status) user.status = status;
+        if (creditLimit !== undefined) user.creditLimit = parseFloat(creditLimit);
+        if (balance !== undefined) user.balance = parseFloat(balance);
+        if (debt !== undefined) user.debt = parseFloat(debt);
+        
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            message: 'Данные пользователя обновлены',
+            user: {
+                fio: user.fio,
+                phone: user.phone,
+                balance: user.balance,
+                debt: user.debt,
+                creditLimit: user.creditLimit,
+                status: user.status,
+                tariff: user.tariff,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка обновления пользователя:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка обновления пользователя: ' + error.message 
         });
     }
 });
@@ -2011,7 +2099,7 @@ app.post('/api/user/tariff/change', checkDatabaseConnection, async (req, res) =>
             },
             oldTariff: oldTariff,
             amountCharged: tariffPrice,
-            newBalance: user.balance
+            newBalance: user.balance    
         });
 
     } catch (error) {
@@ -2394,27 +2482,45 @@ app.get('/api/admin/clients', checkDatabaseConnection, async (req, res) => {
         }
         
         const clients = await User.find(filter)
-            .select('fio phone balance debt status tariff creditLimit registrationDate')
-            .sort({ registrationDate: -1 })
+            .select('fio phone balance debt status tariff creditLimit createdAt')
+            .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .lean();
         
-        const clientsWithFormattedData = clients.map(client => ({
-            _id: client._id,
-            fio: client.fio,
-            phone: client.phone,
-            balance: client.balance?.toFixed(2) + ' BYN',
-            debt: (client.debt || 0).toFixed(2) + ' BYN',
-            status: client.status,
-            tariff: {
-                id: client.tariff?.id || 'standard',
-                name: client.tariff?.name || 'Стандарт',
-                price: client.tariff?.price || 19.99
-            },
-            creditLimit: client.creditLimit || 50,
-            registrationDate: client.registrationDate ? client.registrationDate.toLocaleDateString('ru-RU') : 'Не указана'
-        }));
+        const clientsWithFormattedData = clients.map(client => {
+            // Форматируем дату
+            let formattedDate = 'Не указана';
+            try {
+                if (client.createdAt) {
+                    const date = new Date(client.createdAt);
+                    if (!isNaN(date.getTime())) {
+                        formattedDate = date.toLocaleDateString('ru-RU');
+                    }
+                }
+            } catch (e) {
+                console.warn('Ошибка форматирования даты:', e);
+            }
+            
+            return {
+                _id: client._id,
+                fio: client.fio,
+                phone: client.phone,
+                balance: (client.balance || 0).toFixed(2) + ' BYN',
+                debt: (client.debt || 0).toFixed(2) + ' BYN',
+                status: client.status || 'active',
+                tariff: {
+                    id: client.tariff?.id || 'standard',
+                    name: client.tariff?.name || 'Стандарт',
+                    price: client.tariff?.price || 19.99,
+                    includedMinutes: client.tariff?.includedMinutes || 300,
+                    internetGB: client.tariff?.internetGB || 15
+                },
+                creditLimit: client.creditLimit || 50,
+                createdAt: client.createdAt,
+                formattedDate: formattedDate
+            };
+        });
         
         const total = await User.countDocuments(filter);
         
@@ -2570,10 +2676,10 @@ app.get('/api/admin/internet', checkDatabaseConnection, async (req, res) => {
                     },
                     wifiSessions: { 
                         $sum: { $cond: [{ $eq: ['$type', 'wifi'] }, 1, 0] }
-                    }
                 }
             }
-        ]);
+        }
+    ]);
 
         const formattedUsage = internetUsage.map(usage => ({
             _id: usage._id,
@@ -2665,10 +2771,10 @@ app.get('/api/admin/sms', checkDatabaseConnection, async (req, res) => {
                     },
                     incoming: { 
                         $sum: { $cond: [{ $eq: ['$direction', 'incoming'] }, 1, 0] }
-                    }
                 }
             }
-        ]);
+        }
+    ]);
 
         const formattedSMS = smsUsage.map(sms => ({
             _id: sms._id,
@@ -2708,19 +2814,19 @@ app.get('/api/reports/debtors', checkDatabaseConnection, async (req, res) => {
     try {
         const debtors = await User.find({ 
             debt: { $gt: 0 } 
-        }).select('fio phone balance debt tariff status');
+        }).select('fio phone balance debt tariff status createdAt').lean();
 
         const report = {
             success: true,
             totalDebtors: debtors.length,
-            totalDebt: debtors.reduce((sum, user) => sum + user.debt, 0).toFixed(2) + ' BYN',
+            totalDebt: debtors.reduce((sum, user) => sum + (user.debt || 0), 0).toFixed(2) + ' BYN',
             debtors: debtors.map(user => ({
                 fio: user.fio,
                 phone: user.phone,
-                balance: user.balance.toFixed(2) + ' BYN',
-                debt: user.debt.toFixed(2) + ' BYN',
-                tariff: user.tariff.name,
-                status: user.status
+                balance: (user.balance || 0).toFixed(2) + ' BYN',
+                debt: (user.debt || 0).toFixed(2) + ' BYN',
+                tariff: user.tariff?.name || 'Стандарт',
+                status: user.status || 'active'
             }))
         };
 
