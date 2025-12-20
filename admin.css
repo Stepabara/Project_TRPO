@@ -525,6 +525,7 @@ body {
     display: flex;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .modal-tab {
@@ -534,13 +535,22 @@ body {
     cursor: pointer;
     font-weight: 500;
     color: var(--text-light);
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.modal-tab:hover {
+    color: var(--primary);
+    background: rgba(25, 118, 210, 0.05);
 }
 
 .modal-tab.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
+    font-weight: 600;
 }
 
 .modal-tab-content {
@@ -679,48 +689,24 @@ body {
     text-align: center;
 }
 
-/* Вкладки модального окна */
-.modal-tabs {
-    display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+/* Стили для чекбоксов услуг */
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
 }
 
-.modal-tab {
-    padding: 12px 20px;
-    background: none;
-    border: none;
+.form-check-label {
     cursor: pointer;
-    font-weight: 500;
-    color: var(--text-light);
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
 }
 
-.modal-tab:hover {
-    color: var(--primary);
-    background: rgba(25, 118, 210, 0.05);
+.form-check-label small {
+    display: block;
+    line-height: 1.2;
 }
 
-.modal-tab.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    font-weight: 600;
-}
-
-/* Карточки в модальном окне */
-.card .card-header {
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-
-.card .card-header i {
-    margin-right: 8px;
+.alert.alert-info .form-check-input:checked {
+    background-color: #0c5460;
+    border-color: #0c5460;
 }
 
 /* Группы кнопок */
@@ -736,32 +722,6 @@ body {
 /* Информационные алерты */
 .alert i {
     margin-right: 10px;
-}
-
-/* Адаптивность модального окна */
-@media (max-width: 768px) {
-    .modal-tabs {
-        flex-direction: column;
-    }
-    
-    .modal-tab {
-        width: 100%;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .finance-stats .col-md-3 {
-        margin-bottom: 15px;
-    }
-    
-    .quick-actions .btn-group {
-        flex-direction: column;
-    }
-    
-    .quick-actions .btn {
-        width: 100%;
-        margin-bottom: 5px;
-    }
 }
 
 /* Анимация загрузки */
@@ -822,6 +782,265 @@ body {
     margin-bottom: 0.5rem;
 }
 
+/* Стили для отчетов */
+.report-card {
+    border: 1px solid #dee2e6;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.report-card .report-icon {
+    color: #0d6efd;
+}
+
+.report-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.report-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 15px;
+    min-height: 60px;
+}
+
+.report-history-type {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.report-type-users {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.report-type-calls {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.report-type-debtors {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.report-type-payments {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+.report-type-full {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+}
+/* Дополнительные стили для отчетов */
+.report-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    z-index: 9999;
+}
+
+.report-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #1976d2, #2196f3);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+.report-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 9998;
+    display: none;
+}
+
+.report-status.show {
+    display: block;
+}
+
+/* Стили для кнопок отчетов */
+.btn-report-pdf {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-report-pdf:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-report-pdf:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+/* Анимация загрузки отчетов */
+.report-loading {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.report-loading div {
+    position: absolute;
+    border: 4px solid #1976d2;
+    opacity: 1;
+    border-radius: 50%;
+    animation: report-loading 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.report-loading div:nth-child(2) {
+    animation-delay: -0.5s;
+}
+
+@keyframes report-loading {
+    0% {
+        top: 36px;
+        left: 36px;
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        top: 0px;
+        left: 0px;
+        width: 72px;
+        height: 72px;
+        opacity: 0;
+    }
+}
+
+/* Стили для предпросмотра отчетов */
+.report-preview {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.report-preview-header {
+    background: linear-gradient(135deg, #1976d2, #2196f3);
+    color: white;
+    padding: 15px;
+    border-radius: 6px 6px 0 0;
+    margin: -20px -20px 20px -20px;
+}
+
+.report-preview-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.report-preview-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.report-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.report-preview-table th {
+    background: #f8f9fa;
+    padding: 8px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.report-preview-table td {
+    padding: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.report-preview-table tr:hover {
+    background: #f8f9fa;
+}
+
+.report-preview-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.report-preview-stat {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #1976d2;
+}
+
+.report-preview-stat h6 {
+    margin: 0 0 5px 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.report-preview-stat p {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1976d2;
+}
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Исправляем адаптивность */
 @media (max-width: 768px) {
     .modal-dialog.modal-xl {
@@ -836,57 +1055,7 @@ body {
     .finance-stats .col-md-3 {
         margin-bottom: 10px;
     }
-}
-/* Дополнительные стили для модального окна редактирования */
-.form-check-input:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
-}
-
-.form-check-label {
-    cursor: pointer;
-}
-
-.form-check-label small {
-    display: block;
-    line-height: 1.2;
-}
-
-.alert.alert-info .form-check-input:checked {
-    background-color: #0c5460;
-    border-color: #0c5460;
-}
-
-.stat-card-sm {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.stat-card-sm:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow);
-}
-
-.stat-card-sm .stat-label {
-    font-size: 12px;
-    color: var(--text-light);
-    font-weight: 500;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-}
-
-.stat-card-sm .stat-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-color);
-}
-
-/* Адаптивность для вкладок услуг */
-@media (max-width: 768px) {
+    
     .modal-tabs {
         flex-direction: column;
     }

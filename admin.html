@@ -1,1109 +1,521 @@
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Панель управления - Мобильный оператор</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="admin.css">
-    </head>
-    <body>
-        <!-- Верхнее меню -->
-        <nav class="top-menu">
-            <div class="menu-container">
-                <a href="#" class="logo">📱 BryTech Admin</a>
-                
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a class="nav-link active" onclick="showSection('dashboard')">
-                            <i class="fas fa-home"></i>
-                            <span>Главная</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('reports')">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Отчеты</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('calls')">
-                            <i class="fas fa-phone"></i>
-                            <span>История звонков</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('messages')">
-                            <i class="fas fa-comments"></i>
-                            <span>История сообщений</span>
-                        </a>
-                    </li>
-                </ul>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления - Мобильный оператор</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<!-- Верхнее меню -->
+<nav class="top-menu">
+    <div class="menu-container">
+        <a href="#" class="logo">Admin</a>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link active" onclick="showSection('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="showReportsModal()">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Отчеты</span>
+                </a>
+            </li>
+            
+           
+        </ul>
 
-                <div class="user-menu">
-                    <div class="user-info">
-                        <div class="user-avatar">A</div>
-                        <div class="user-name">Администратор</div>
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <div class="user-name">Администратор</div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+    <!-- Основной контент -->
+    <div class="container">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="content-section active">
+            <!-- Приветственная секция -->
+            <div class="welcome-section">
+                <h2 class="welcome-title">Панель управления оператором</h2>
+                <p class="welcome-subtitle">Управление клиентами, платежами и статистикой</p>
+            </div>
+
+            <!-- Статистика -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Всего клиентов</div>
+                            <div class="stat-value" id="totalClients">0</div>
+                        </div>
+                        <div class="stat-icon">👥</div>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
+                    <div class="stat-description">Зарегистрировано в системе</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Активных клиентов</div>
+                            <div class="stat-value" id="activeClients">0</div>
+                        </div>
+                        <div class="stat-icon">✅</div>
+                    </div>
+                    <div class="stat-description">С положительным балансом</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Общая задолженность</div>
+                            <div class="stat-value" id="totalDebt">0 BYN</div>
+                        </div>
+                        <div class="stat-icon">⚠️</div>
+                    </div>
+                    <div class="stat-description">Сумма всех долгов</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Количество должников</div>
+                            <div class="stat-value" id="debtorsCount">0</div>
+                        </div>
+                        <div class="stat-icon">💸</div>
+                    </div>
+                    <div class="stat-description">Клиентов с долгами</div>
+                </div>
+            </div>
+
+            <!-- Последние клиенты -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Последние клиенты</h3>
+                    <button class="btn btn-primary" onclick="showAllClientsModal()">
+                        <i class="fas fa-list me-2"></i>Показать всех клиентов
                     </button>
                 </div>
-            </div>
-        </nav>
-
-        <!-- Основной контент -->
-        <div class="container">
-            <!-- Dashboard Section -->
-            <div id="dashboard-section" class="content-section active">
-                <!-- Приветственная секция -->
-                <div class="welcome-section">
-                    <h2 class="welcome-title">Панель управления оператором</h2>
-                    <p class="welcome-subtitle">Управление клиентами, платежами и статистикой</p>
-                </div>
-
-                <!-- Статистика -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Всего клиентов</div>
-                                <div class="stat-value" id="totalClients">0</div>
-                            </div>
-                            <div class="stat-icon">👥</div>
-                        </div>
-                        <div class="stat-description">Зарегистрировано в системе</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Активных клиентов</div>
-                                <div class="stat-value" id="activeClients">0</div>
-                            </div>
-                            <div class="stat-icon">✅</div>
-                        </div>
-                        <div class="stat-description">С положительным балансом</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Общая задолженность</div>
-                                <div class="stat-value" id="totalDebt">0 BYN</div>
-                            </div>
-                            <div class="stat-icon">⚠️</div>
-                        </div>
-                        <div class="stat-description">Сумма всех долгов</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Количество должников</div>
-                                <div class="stat-value" id="debtorsCount">0</div>
-                            </div>
-                            <div class="stat-icon">💸</div>
-                        </div>
-                        <div class="stat-description">Клиентов с долгами</div>
-                    </div>
-                </div>
-
-                <!-- Последние клиенты -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Последние клиенты</h3>
-                        <button class="btn btn-primary" onclick="showAllClientsModal()">
-                            <i class="fas fa-list me-2"></i>Показать всех клиентов
-                        </button>
-                    </div>
-                    <div class="section-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ФИО</th>
-                                        <th>Телефон</th>
-                                        <th>Баланс</th>
-                                        <th>Тариф</th>
-                                        <th>Статус</th>
-                                        <th style="width: 60px;">Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recentClientsTable">
-                                    <!-- Клиенты будут загружены здесь -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Быстрые действия -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Быстрые действия</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100" onclick="showAddClientModal()">
-                                    <i class="fas fa-user-plus me-2"></i>Добавить клиента
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-warning w-100" onclick="showCallModal()">
-                                    <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-info w-100" onclick="showMessageModal()">
-                                    <i class="fas fa-comment me-2"></i>Отправить сообщение
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
-                                    <i class="fas fa-plus me-2"></i>Пополнить баланс
-                                </button>
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-secondary w-100" onclick="showTrafficEditModal()">
-                                    <i class="fas fa-network-wired me-2"></i>Изменить трафик
-                                </button>
-                            </div>
-                        </div>
+                <div class="section-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ФИО</th>
+                                    <th>Телефон</th>
+                                    <th>Баланс</th>
+                                    <th>Тариф</th>
+                                    <th>Статус</th>
+                                    <th style="width: 60px;">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentClientsTable">
+                                <!-- Клиенты будут загружены здесь -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Reports Section -->
-            <div id="reports-section" class="content-section">
-                <div class="welcome-section">
-                    <h2 class="welcome-title">Отчеты и аналитика</h2>
-                    <p class="welcome-subtitle">Детальная статистика и финансовые отчеты</p>
+            <!-- Быстрые действия -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Быстрые действия</h3>
                 </div>
-
-                <!-- Экспорт отчетов -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Экспорт отчетов</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <button class="btn btn-outline-primary w-100" onclick="exportUsersReport()">
-                                    <i class="fas fa-file-word me-2"></i>Отчет по всем пользователям
-                                </button>
-                            </div>
-                            <div class="col-md-4">
-                                <button class="btn btn-outline-success w-100" onclick="exportCallsReport()">
-                                    <i class="fas fa-file-word me-2"></i>Отчет по всем звонкам
-                                </button>
-                            </div>
-                            <div class="col-md-4">
-                                <button class="btn btn-outline-danger w-100" onclick="exportDebtorsReport()">
-                                    <i class="fas fa-file-word me-2"></i>Отчет по должникам
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Статистика по должникам -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Статистика по должникам</h3>
-                    </div>
-                    <div class="section-body">
-                        <div id="debtorsReport">
-                            <!-- Отчет будет загружен здесь -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calls History Section -->
-            <div id="calls-section" class="content-section">
-                <div class="welcome-section">
-                    <h2 class="welcome-title">История звонков</h2>
-                    <p class="welcome-subtitle">Просмотр и управление историей звонков всех пользователей</p>
-                </div>
-
-                <!-- Фильтры истории звонков -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Фильтры</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Телефон клиента</label>
-                                <input type="text" class="form-control" id="callsPhoneFilter" placeholder="+375...">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Тип звонка</label>
-                                <select class="form-control" id="callsTypeFilter">
-                                    <option value="">Все типы</option>
-                                    <option value="local">Местные</option>
-                                    <option value="international">Международные</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Дата с</label>
-                                <input type="date" class="form-control" id="callsStartDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Дата по</label>
-                                <input type="date" class="form-control" id="callsEndDate">
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <button class="btn btn-primary" onclick="loadCallsHistory()">
-                                <i class="fas fa-search me-2"></i>Поиск
-                            </button>
-                            <button class="btn btn-outline-secondary" onclick="clearCallsFilters()">
-                                <i class="fas fa-times me-2"></i>Очистить
+                <div class="section-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" onclick="showAddClientModal()">
+                                <i class="fas fa-user-plus me-2"></i>Добавить клиента
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Статистика звонков -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Всего звонков</div>
-                                <div class="stat-value" id="totalCalls">0</div>
-                            </div>
-                            <div class="stat-icon">📞</div>
-                        </div>
-                        <div class="stat-description">За выбранный период</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Местные звонки</div>
-                                <div class="stat-value" id="localCalls">0</div>
-                            </div>
-                            <div class="stat-icon">🏠</div>
-                        </div>
-                        <div class="stat-description">Внутренние звонки</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Международные</div>
-                                <div class="stat-value" id="internationalCalls">0</div>
-                            </div>
-                            <div class="stat-icon">🌍</div>
-                        </div>
-                        <div class="stat-description">Звонки за границу</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Общая стоимость</div>
-                                <div class="stat-value" id="totalCallsCost">0 BYN</div>
-                            </div>
-                            <div class="stat-icon">💰</div>
-                        </div>
-                        <div class="stat-description">Сумма всех звонков</div>
-                    </div>
-                </div>
-
-                <!-- Таблица истории звонков -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">История звонков</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Дата и время</th>
-                                        <th>Клиент</th>
-                                        <th>Телефон</th>
-                                        <th>Номер назначения</th>
-                                        <th>Тип</th>
-                                        <th>Длительность</th>
-                                        <th>Стоимость</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="callsHistoryTable">
-                                    <!-- История звонков будет загружена здесь -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="text-muted" id="callsPaginationInfo">
-                                Показано 0 из 0 записей
-                            </div>
-                            <nav>
-                                <ul class="pagination" id="callsPagination">
-                                    <!-- Пагинация будет сгенерирована здесь -->
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Messages History Section -->
-            <div id="messages-section" class="content-section">
-                <div class="welcome-section">
-                    <h2 class="welcome-title">История сообщений</h2>
-                    <p class="welcome-subtitle">Просмотр и управление историей SMS сообщений всех пользователей</p>
-                </div>
-
-                <!-- Фильтры истории сообщений -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Фильтры</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Телефон клиента</label>
-                                <input type="text" class="form-control" id="messagesPhoneFilter" placeholder="+375...">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Направление</label>
-                                <select class="form-control" id="messagesDirectionFilter">
-                                    <option value="">Все</option>
-                                    <option value="outgoing">Исходящие</option>
-                                    <option value="incoming">Входящие</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Дата с</label>
-                                <input type="date" class="form-control" id="messagesStartDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Дата по</label>
-                                <input type="date" class="form-control" id="messagesEndDate">
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <button class="btn btn-primary" onclick="loadMessagesHistory()">
-                                <i class="fas fa-search me-2"></i>Поиск
-                            </button>
-                            <button class="btn btn-outline-secondary" onclick="clearMessagesFilters()">
-                                <i class="fas fa-times me-2"></i>Очистить
+                        <div class="col-md-3">
+                            <button class="btn btn-warning w-100" onclick="showCallModal()">
+                                <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Статистика сообщений -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Всего сообщений</div>
-                                <div class="stat-value" id="totalMessages">0</div>
-                            </div>
-                            <div class="stat-icon">📨</div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" onclick="showMessageModal()">
+                                <i class="fas fa-comment me-2"></i>Отправить сообщение
+                            </button>
                         </div>
-                        <div class="stat-description">За выбранный период</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Исходящие</div>
-                                <div class="stat-value" id="outgoingMessages">0</div>
-                            </div>
-                            <div class="stat-icon">↗️</div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" onclick="showAddPaymentModal()">
+                                <i class="fas fa-plus me-2"></i>Пополнить баланс
+                            </button>
                         </div>
-                        <div class="stat-description">Отправленные сообщения</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Входящие</div>
-                                <div class="stat-value" id="incomingMessages">0</div>
-                            </div>
-                            <div class="stat-icon">↙️</div>
-                        </div>
-                        <div class="stat-description">Полученные сообщения</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <div class="stat-title">Общая стоимость</div>
-                                <div class="stat-value" id="totalMessagesCost">0 BYN</div>
-                            </div>
-                            <div class="stat-icon">💰</div>
-                        </div>
-                        <div class="stat-description">Сумма всех сообщений</div>
-                    </div>
-                </div>
-
-                <!-- Таблица истории сообщений -->
-                <div class="main-section">
-                    <div class="section-header">
-                        <h3 class="section-title">История сообщений</h3>
-                    </div>
-                    <div class="section-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Дата и время</th>
-                                        <th>Клиент</th>
-                                        <th>Телефон</th>
-                                        <th>Получатель</th>
-                                        <th>Направление</th>
-                                        <th>Длина</th>
-                                        <th>Стоимость</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="messagesHistoryTable">
-                                    <!-- История сообщений будет загружена здесь -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="text-muted" id="messagesPaginationInfo">
-                                Показано 0 из 0 записей
-                            </div>
-                            <nav>
-                                <ul class="pagination" id="messagesPagination">
-                                    <!-- Пагинация будет сгенерирована здесь -->
-                                </ul>
-                            </nav>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" onclick="showTrafficEditModal()">
+                                <i class="fas fa-network-wired me-2"></i>Изменить трафик
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Модальные окна -->
-        <div id="modals-container">
-            <!-- Модальное окно всех клиентов -->
-            <div class="modal fade" id="allClientsModal" tabindex="-1">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Все клиенты</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="filters-row">
-                                <div class="filter-group">
-                                    <div class="search-box">
-                                        <i class="fas fa-search search-icon"></i>
-                                        <input type="text" id="searchAllClients" class="form-control" placeholder="Поиск по ФИО или телефону...">
-                                    </div>
-                                </div>
-                                <div class="filter-group">
-                                    <select class="form-control" id="statusFilter">
-                                        <option value="">Все статусы</option>
-                                        <option value="active">Активные</option>
-                                        <option value="debtor">Должники</option>
-                                        <option value="blocked">Заблокированные</option>
-                                    </select>
-                                </div>
-                                <div class="filter-group">
-                                    <select class="form-control" id="tariffFilter">
-                                        <option value="">Все тарифы</option>
-                                        <option value="standard">Стандарт</option>
-                                        <option value="plus+">Плюс+</option>
-                                        <option value="Super plus">Супер плюс</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>ФИО</th>
-                                            <th>Телефон</th>
-                                            <th>Баланс</th>
-                                            <th>Долг</th>
-                                            <th>Тариф</th>
-                                            <th>Статус</th>
-                                            <th>Дата регистрации</th>
-                                            <th style="width: 60px;">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="allClientsTable">
-                                        <!-- Все клиенты будут загружены здесь -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+        <!-- Reports Section -->
+        <div id="reports-section" class="content-section">
+            <div class="welcome-section">
+                <h2 class="welcome-title">Отчеты и аналитика</h2>
+                <p class="welcome-subtitle">Детальная статистика и финансовые отчеты</p>
+            </div>
+
+            <!-- Отчеты -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Генерация PDF отчетов</h3>
+                </div>
+                <div class="section-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Выберите тип отчета. Отчеты генерируются по текущим фильтрам или за весь период.
                     </div>
-                </div>
-            </div>
-
-    <!-- Модальное окно редактирования пользователя (упрощенное) -->
-<div class="modal fade" id="editUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-user-edit me-2"></i>
-                    Редактирование пользователя
-                    <small id="modalUserPhoneTitle" class="text-muted ms-2"></small>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Вкладки -->
-                <div class="modal-tabs mb-4">
-                    <button class="modal-tab active" onclick="showUserTab('info')">
-                        <i class="fas fa-info-circle me-1"></i>Основная информация
-                    </button>
-                    <button class="modal-tab" onclick="showUserTab('finance')">
-                        <i class="fas fa-wallet me-1"></i>Финансы
-                    </button>
-                    <button class="modal-tab" onclick="showUserTab('tariff')">
-                        <i class="fas fa-tachometer-alt me-1"></i>Тариф
-                    </button>
-                    <button class="modal-tab" onclick="showUserTab('services')">
-                        <i class="fas fa-cogs me-1"></i>Услуги
-                    </button>
-                    <button class="modal-tab" onclick="showUserTab('usage')">
-                        <i class="fas fa-chart-pie me-1"></i>Использование
-                    </button>
-                </div>
-
-                <!-- Основная информация -->
-                <div id="userInfoTab" class="modal-tab-content active">
-                    <form id="editUserForm">
-                        <input type="hidden" id="editUserId">
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-user me-1"></i>ФИО *
-                                    </label>
-                                    <input type="text" class="form-control" id="editUserFio" required>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-users me-2"></i>Отчеты по пользователям
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-key me-1"></i>Новый пароль
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="password" class="form-control" id="editUserPassword" 
-                                               placeholder="Оставьте пустым, чтобы не менять">
-                                        <button type="button" class="btn btn-outline-secondary" 
-                                                onclick="togglePasswordVisibility('editUserPassword')">
-                                            <i class="fas fa-eye"></i>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="exportUsersReport()">
+                                            <i class="fas fa-file-pdf me-2"></i>Все пользователи (PDF)
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="exportDebtorsReport()">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Должники (PDF)
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="exportActiveUsersReport()">
+                                            <i class="fas fa-check-circle me-2"></i>Активные пользователи (PDF)
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-user-shield me-1"></i>Статус
-                                    </label>
-                                    <select class="form-control" id="editUserStatus">
-                                        <option value="active">Активный</option>
-                                        <option value="blocked">Заблокирован</option>
-                                        <option value="suspended">Приостановлен</option>
-                                    </select>
-                                </div>
-                            </div>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Финансы -->
-                <div id="userFinanceTab" class="modal-tab-content">
-                    <div class="user-details-grid mb-4">
-                        <div class="user-detail-card">
-                            <div class="user-detail-label">Текущий баланс</div>
-                            <div class="user-detail-value" id="modalUserBalance"></div>
-                        </div>
-                        <div class="user-detail-card">
-                            <div class="user-detail-label">Долг</div>
-                            <div class="user-detail-value" id="modalUserDebt"></div>
-                        </div>
-                        <div class="user-detail-card">
-                            <div class="user-detail-label">Кредитный лимит</div>
-                            <div class="user-detail-value" id="modalUserCreditLimit"></div>
-                        </div>
-                        <div class="user-detail-card">
-                            <div class="user-detail-label">Доступный кредит</div>
-                            <div class="user-detail-value" id="modalUserAvailableCredit"></div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
+                        
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-plus-circle me-1"></i>Пополнить баланс (BYN)
-                                </label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="addBalanceAmount" 
-                                           step="0.01" min="0.01" placeholder="Сумма">
-                                    <button class="btn btn-success" type="button" onclick="addBalanceToUser()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-bar me-2"></i>Отчеты по использованию
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-info" onclick="exportCallsReport()">
+                                            <i class="fas fa-phone me-2"></i>Звонки (PDF)
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="exportInternetReport()">
+                                            <i class="fas fa-wifi me-2"></i>Интернет трафик (PDF)
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="exportSMSReport()">
+                                            <i class="fas fa-comment me-2"></i>SMS сообщения (PDF)
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="exportPaymentsReport()">
+                                            <i class="fas fa-credit-card me-2"></i>Платежи (PDF)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-minus-circle me-1"></i>Списать средства (BYN)
-                                </label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="withdrawBalanceAmount" 
-                                           step="0.01" min="0.01" placeholder="Сумма">
-                                    <button class="btn btn-danger" type="button" onclick="withdrawBalanceFromUser()">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <div class="col-md-12">
-                            <div class="btn-group w-100">
-                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(10)">
-                                    +10 BYN
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(20)">
-                                    +20 BYN
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" onclick="quickAddBalance(50)">
-                                    +50 BYN
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Тариф -->
-                <div id="userTariffTab" class="modal-tab-content">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-info-circle me-1"></i>Текущий тариф
-                        </div>
-                        <div class="card-body" id="currentTariffInfo">
-                            <!-- Информация о текущем тарифе будет загружена здесь -->
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-sync me-1"></i>Сменить тариф
-                        </label>
-                        <select class="form-control" id="editUserTariff">
-                            <option value="standard">Стандарт (19.99 BYN/мес)</option>
-                            <option value="plus+">Плюс+ (29.99 BYN/мес)</option>
-                            <option value="Super plus">Супер плюс (35.99 BYN/мес)</option>
-                            <option value="premium">Премиум (49.99 BYN/мес)</option>
-                        </select>
-                        <div class="form-text mt-2">
-                            Смена тарифа вступит в силу с начала следующего расчетного периода
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Что входит в тарифы:</strong><br>
-                        • <strong>Стандарт:</strong> 300 мин, 15 ГБ интернета, 100 SMS<br>
-                        • <strong>Плюс+:</strong> 500 мин, 25 ГБ интернета, 200 SMS<br>
-                        • <strong>Супер плюс:</strong> 1000 мин, 50 ГБ интернета, 500 SMS<br>
-                        • <strong>Премиум:</strong> 2000 мин, 100 ГБ интернета, 1000 SMS
-                    </div>
-                </div>
-
-                <!-- Услуги -->
-                <div id="userServicesTab" class="modal-tab-content">
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="fas fa-cogs me-1"></i>Подключенные услуги
-                        </div>
-                        <div class="card-body">
-                            <div id="userServicesList" class="row g-2">
-                                <!-- Список подключенных услуг будет загружен здесь -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-file-alt me-2"></i>Полный отчет
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid">
+                                        <button class="btn btn-primary" onclick="exportFullReport()">
+                                            <i class="fas fa-file-pdf me-2"></i>Полный отчет (все данные) PDF
+                                        </button>
+                                    </div>
+                                    <div class="form-text mt-2 text-center">
+                                        <small>Позволяет сгенерировать отчет по всем данным за указанный период</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-plus me-1"></i>Доступные услуги
-                        </div>
-                        <div class="card-body">
-                            <div id="availableServices" class="row g-3">
-                                <!-- Список доступных услуг -->
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service1" value="roaming">
-                                        <label class="form-check-label" for="service1">
-                                            <strong>Международный роуминг</strong><br>
-                                            <small class="text-muted">Возможность пользоваться связью за границей</small><br>
-                                            <small class="text-success">+5 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service2" value="callerId">
-                                        <label class="form-check-label" for="service2">
-                                            <strong>Определитель номера</strong><br>
-                                            <small class="text-muted">Показывает номер входящего вызова</small><br>
-                                            <small class="text-success">+2 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service3" value="antispam">
-                                        <label class="form-check-label" for="service3">
-                                            <strong>Антиспам</strong><br>
-                                            <small class="text-muted">Блокировка спам-звонков</small><br>
-                                            <small class="text-success">+3 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service4" value="music">
-                                        <label class="form-check-label" for="service4">
-                                            <strong>Музыкальный сервис</strong><br>
-                                            <small class="text-muted">Безлимитная музыка без трафика</small><br>
-                                            <small class="text-success">+7 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service5" value="games">
-                                        <label class="form-check-label" for="service5">
-                                            <strong>Игровая подписка</strong><br>
-                                            <small class="text-muted">Доступ к играм без трафика</small><br>
-                                            <small class="text-success">+10 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="service6" value="cloud">
-                                        <label class="form-check-label" for="service6">
-                                            <strong>Облачное хранилище</strong><br>
-                                            <small class="text-muted">50 ГБ облачного хранилища</small><br>
-                                            <small class="text-success">+4 BYN/мес</small>
-                                        </label>
-                                    </div>
-                                </div>
+                    <div class="mt-4">
+                        <h6><i class="fas fa-filter me-2"></i>Дополнительные параметры отчетов</h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Период с</label>
+                                <input type="date" class="form-control" id="startDateFilter">
                             </div>
-                            
-                            <div class="mt-3">
-                                <button class="btn btn-primary w-100" onclick="applyServicesChanges()">
-                                    <i class="fas fa-save me-1"></i>Применить изменения услуг
-                                </button>
+                            <div class="col-md-6">
+                                <label class="form-label">Период по</label>
+                                <input type="date" class="form-control" id="endDateFilter">
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Использование (простой вывод) -->
-                <div id="userUsageTab" class="modal-tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-chart-pie me-1"></i>Статистика использования за текущий месяц
-                        </div>
-                        <div class="card-body">
-                            <div id="usageStats" class="row">
-                                <div class="col-md-4 mb-3">
-                                    <div class="stat-card-sm">
-                                        <div class="stat-label">Минуты разговора</div>
-                                        <div class="stat-value" id="usageMinutes">0</div>
-                                        <small class="text-muted">из 300 включено</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <div class="stat-card-sm">
-                                        <div class="stat-label">Интернет трафик</div>
-                                        <div class="stat-value" id="usageInternet">0 МБ</div>
-                                        <small class="text-muted">из 15360 МБ включено</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <div class="stat-card-sm">
-                                        <div class="stat-label">SMS сообщения</div>
-                                        <div class="stat-value" id="usageSMS">0</div>
-                                        <small class="text-muted">из 100 включено</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Данные обновляются автоматически. Для изменения остатков используйте панель управления.
-                                    </div>
+                            <div class="col-md-12">
+                                <div class="form-text">
+                                    <small>Эти даты будут использоваться для всех отчетов, где не указаны собственные фильтры</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>Отмена
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">
-                    <i class="fas fa-save me-2"></i>Сохранить изменения
-                </button>
+
+            <!-- Статистика по должникам -->
+            <div class="main-section">
+                <div class="section-header">
+                    <h3 class="section-title">Статистика по должникам</h3>
+                </div>
+                <div class="section-body">
+                    <div id="debtorsReport">
+                        <!-- Отчет будет загружен здесь -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+           <!-- Модальное окно для отчетов -->
+        <div class="modal fade" id="reportsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Генерация отчетов
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Выберите период и тип отчета. Отчеты генерируются в формате PDF.
+                        </div>
+                        
+                        <!-- Период отчета -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Период отчета
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-calendar-plus me-1"></i>Начальная дата *
+                                            </label>
+                                            <input type="date" class="form-control" id="reportStartDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-calendar-minus me-1"></i>Конечная дата *
+                                            </label>
+                                            <input type="date" class="form-control" id="reportEndDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="reportIncludeCurrentMonth">
+                                            <label class="form-check-label" for="reportIncludeCurrentMonth">
+                                                Включить данные за текущий месяц (неполные)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- В конец модального окна, перед закрывающим тегом </div> -->
+<div class="mt-3">
+    <hr>
+    <div class="text-center">
+        <small class="text-muted">Для тестирования:</small>
+        <div class="btn-group mt-2" role="group">
+            <button class="btn btn-sm btn-outline-primary" onclick="testPDF()">
+                <i class="fas fa-file-pdf me-1"></i>Тест PDF
+            </button>
+            <button class="btn btn-sm btn-outline-info" onclick="runDiagnostics()">
+                <i class="fas fa-stethoscope me-1"></i>Диагностика
+            </button>
+        </div>
+    </div>
 </div>
+                        </div>
 
-            <!-- Модальное окно добавления клиента -->
-            <div class="modal fade" id="addClientModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Добавить клиента</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="addClientForm">
-                                <div class="mb-3">
-                                    <label class="form-label">ФИО *</label>
-                                    <input type="text" class="form-control" id="clientFio" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Номер телефона *</label>
-                                    <input type="tel" class="form-control" id="clientPhone" required placeholder="+375291234567">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Пароль *</label>
-                                    <input type="password" class="form-control" id="clientPassword" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Начальный баланс</label>
-                                    <input type="number" class="form-control" id="clientBalance" value="0" step="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Тариф</label>
-                                    <select class="form-control" id="clientTariff">
-                                        <option value="standard">Стандарт (19.99 BYN)</option>
-                                        <option value="plus+">Плюс+ (29.99 BYN)</option>
-                                        <option value="Super plus">Супер плюс (35.99 BYN)</option>
-                                    </select>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary" onclick="addClient()">Добавить</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Модальное окно регистрации звонка -->
-            <div class="modal fade" id="callModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Зарегистрировать звонок</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="callForm">
-                                <div class="mb-3">
-                                    <label class="form-label">Телефон клиента *</label>
-                                    <input type="tel" class="form-control" id="callClientPhone" required placeholder="+375291234567">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Номер назначения *</label>
-                                    <input type="tel" class="form-control" id="callNumber" required placeholder="+375291111111">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Тип звонка *</label>
-                                    <select class="form-control" id="callType" required>
-                                        <option value="local">Местный</option>
-                                        <option value="international">Международный</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Длительность (секунды) *</label>
-                                    <input type="number" class="form-control" id="callDuration" required min="1" value="60">
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary" onclick="registerCall()">Зарегистрировать</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Модальное окно отправки сообщения -->
-            <div class="modal fade" id="messageModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Отправить сообщение</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="messageForm">
-                                <div class="mb-3">
-                                    <label class="form-label">Телефон клиента *</label>
-                                    <input type="tel" class="form-control" id="messageClientPhone" required placeholder="+375291234567">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Номер получателя *</label>
-                                    <input type="tel" class="form-control" id="messageRecipient" required placeholder="+375291111111">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Текст сообщения *</label>
-                                    <textarea class="form-control" id="messageText" rows="3" required placeholder="Введите текст сообщения..." maxlength="500"></textarea>
-                                    <div class="form-text text-end">
-                                        <span id="messageCharCount">0</span>/500 символов
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Направление *</label>
-                                    <select class="form-control" id="messageDirection" required>
-                                        <option value="outgoing">Исходящее (от клиента)</option>
-                                        <option value="incoming">Входящее (клиенту)</option>
-                                    </select>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary" onclick="sendMessage()">Отправить</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Модальное окно пополнения баланса -->
-            <div class="modal fade" id="addPaymentModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Пополнить баланс</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="addPaymentForm">
-                                <div class="mb-3">
-                                    <label class="form-label">Телефон клиента *</label>
-                                    <input type="tel" class="form-control" id="paymentClientPhone" required placeholder="+375291234567">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Сумма пополнения (BYN) *</label>
-                                    <input type="number" class="form-control" id="paymentAmount" required step="0.01" min="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Метод оплаты</label>
-                                    <select class="form-control" id="paymentMethod">
-                                        <option value="Банковская карта">Банковская карта</option>
-                                        <option value="Наличные">Наличные</option>
-                                        <option value="Электронный кошелек">Электронный кошелек</option>
-                                    </select>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-success" onclick="processPayment()">Пополнить</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Модальное окно изменения трафика -->
-            <div class="modal fade" id="trafficEditModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Изменение трафика клиента</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="trafficEditForm">
-                                <div class="mb-3">
-                                    <label class="form-label">Телефон клиента *</label>
-                                    <input type="tel" class="form-control" id="trafficClientPhone" required placeholder="+375291234567">
-                                    <div class="form-text" id="trafficClientInfo"></div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Изменение трафика (МБ) *</label>
-                                    <input type="text" class="form-control" id="trafficChange" required placeholder="+500 или -300">
-                                    <div class="form-text">
-                                        <ul class="mb-0 mt-1 ps-3">
-                                            <li>Используйте знак "+" для добавления трафика</li>
-                                            <li>Используйте знак "-" для уменьшения трафика</li>
-                                            <li>Пример: +500 добавит 500 МБ</li>
-                                            <li>Пример: -300 уменьшит на 300 МБ</li>
-                                            <li>Если новый трафик превысит лимит тарифа, будет начислена дополнительная плата</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Месяц изменения</label>
-                                    <input type="month" class="form-control" id="trafficMonth" value="">
-                                    <div class="form-text">Оставьте пустым для текущего месяца</div>
-                                </div>
-                                
-                                <div class="alert alert-info" id="trafficInfo">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <small>Текущий трафик:</small>
-                                            <div id="currentTraffic">-</div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <small>Лимит тарифа:</small>
-                                            <div id="tariffLimit">-</div>
+                        <!-- Типы отчетов -->
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Типы отчетов
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <!-- Отчет по пользователям -->
+                                    <div class="col-md-6">
+                                        <div class="card report-card">
+                                            <div class="card-body text-center">
+                                                <div class="report-icon">
+                                                    <i class="fas fa-users fa-2x mb-3"></i>
+                                                </div>
+                                                <h6 class="report-title">Отчет по всем пользователям</h6>
+                                                <p class="report-description">
+                                                    Полная информация о всех пользователях за выбранный период
+                                                </p>
+                                                <button class="btn btn-primary w-100" onclick="generateUsersReport()">
+                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-md-6">
-                                            <small>Оставшийся трафик:</small>
-                                            <div id="remainingTraffic">-</div>
+
+                                    <!-- Отчет по звонкам и сообщениям -->
+                                    <div class="col-md-6">
+                                        <div class="card report-card">
+                                            <div class="card-body text-center">
+                                                <div class="report-icon">
+                                                    <i class="fas fa-phone-alt fa-2x mb-3"></i>
+                                                </div>
+                                                <h6 class="report-title">Отчет по звонкам и сообщениям</h6>
+                                                <p class="report-description">
+                                                    Детальная статистика по звонкам и SMS сообщениям
+                                                </p>
+                                                <button class="btn btn-primary w-100" onclick="generateCallsMessagesReport()">
+                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <small>Стоимость превышения:</small>
-                                            <div id="overLimitCost">-</div>
+                                    </div>
+
+                                    <!-- Отчет по должникам -->
+                                    <div class="col-md-6">
+                                        <div class="card report-card">
+                                            <div class="card-body text-center">
+                                                <div class="report-icon">
+                                                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                                </div>
+                                                <h6 class="report-title">Отчет по должникам</h6>
+                                                <p class="report-description">
+                                                    Список должников и сумма задолженности
+                                                </p>
+                                                <button class="btn btn-danger w-100" onclick="generateDebtorsReport()">
+                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Отчет по оплатам -->
+                                    <div class="col-md-6">
+                                        <div class="card report-card">
+                                            <div class="card-body text-center">
+                                                <div class="report-icon">
+                                                    <i class="fas fa-credit-card fa-2x mb-3"></i>
+                                                </div>
+                                                <h6 class="report-title">Отчет по оплатам</h6>
+                                                <p class="report-description">
+                                                    Движение средств, платежи и поступления
+                                                </p>
+                                                <button class="btn btn-success w-100" onclick="generatePaymentsReport()">
+                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="alert alert-warning d-none" id="trafficWarning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <span id="warningText"></span>
+
+                                <!-- Полный отчет -->
+                                <div class="mt-4">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            Полный отчет (все данные)
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <p class="card-text">
+                                                Генерация полного отчета, включающего все данные за выбранный период
+                                            </p>
+                                            <button class="btn btn-primary" onclick="generateFullReport()">
+                                                <i class="fas fa-file-pdf me-2"></i>Создать полный отчет
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="button" class="btn btn-primary" onclick="applyTrafficChange()">Применить изменение</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Закрыть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <!-- Модальное окно истории отчетов -->
+        <div class="modal fade" id="reportHistoryModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-history me-2"></i>
+                            История сгенерированных отчетов
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Дата создания</th>
+                                        <th>Тип отчета</th>
+                                        <th>Период</th>
+                                        <th>Размер</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportHistoryTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-file-pdf fa-2x mb-3"></i>
+                                                <p>Нет сгенерированных отчетов</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Закрыть
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="clearReportHistory()">
+                            <i class="fas fa-trash me-2"></i>Очистить историю
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Уведомление -->
-        <div class="notification" id="notification"></div>
+    <!-- Уведомление -->
+    <div class="notification" id="notification"></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="admin.js"></script>
-    </body>
-    </html>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

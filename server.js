@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-
+const PDFDocument = require('pdfkit');
 const app = express();
 const PORT = 3000;
 
@@ -11,7 +11,10 @@ let isConnected = false;
 
 async function connectToDatabase() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/mobile_operator');
+        await mongoose.connect('mongodb://localhost:27017/mobile_operator', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
         isConnected = true;
         console.log('✅ Успешное подключение к MongoDB');
         
@@ -108,7 +111,8 @@ const paymentSchema = new mongoose.Schema({
         type: String, 
         enum: ['topup', 'subscription', 'call_payment', 'internet_payment', 'sms_payment', 'tariff_change', 'withdrawal', 'traffic_adjustment'], 
         default: 'topup' 
-    }
+    },
+    description: { type: String }
 });
 
 // Схема услуг пользователя
@@ -390,6 +394,25 @@ async function createTestData() {
                     month: currentMonth
                 });
                 await smsUsage.save();
+                
+                // Тестовые платежи
+                const paymentTypes = ['topup', 'subscription', 'tariff_change'];
+                const paymentMethods = ['Банковская карта', 'Наличные', 'Электронный кошелек'];
+                
+                for (let i = 0; i < 5; i++) {
+                    const paymentDate = new Date();
+                    paymentDate.setDate(paymentDate.getDate() - Math.floor(Math.random() * 30));
+                    
+                    const payment = new Payment({
+                        userId: user._id,
+                        phone: user.phone,
+                        amount: i === 0 ? userData.balance : Math.random() * 100,
+                        method: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+                        type: paymentTypes[Math.floor(Math.random() * paymentTypes.length)],
+                        date: paymentDate
+                    });
+                    await payment.save();
+                }
             }
             
             console.log('✅ Тестовые данные созданы');
@@ -1263,7 +1286,6 @@ app.get('/api/admin/usage/detailed', checkDatabaseConnection, async (req, res) =
                 projection = 'phone recipientNumber messageLength cost direction date';
                 break;
             default:
-                // Для общего списка нужно будет делать отдельную логику
                 return res.status(400).json({
                     success: false,
                     error: 'Укажите тип данных (calls, internet, sms)'
@@ -1669,6 +1691,1641 @@ app.post('/api/admin/traffic/edit', checkDatabaseConnection, async (req, res) =>
     }
 });
 
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ОТЧЕТОВ ==========
+
+// Вспомогательная функция для форматирования даты
+function formatDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+}
+
+function formatDateTime(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleString('ru-RU');
+}
+
+function getStatusLabel(status) {
+    switch(status) {
+        case 'active': return 'Активный';
+        case 'blocked': return 'Заблокирован';
+        case 'suspended': return 'Приостановлен';
+        case 'debtor': return 'Должник';
+        default: return status || 'Неизвестно';
+    }
+}
+
+function getPaymentTypeLabel(type) {
+    const types = {
+        'topup': 'Пополнение',
+        'subscription': 'Абонентская плата',
+        'call_payment': 'Оплата звонков',
+        'internet_payment': 'Оплата интернета',
+        'sms_payment': 'Оплата SMS',
+        'tariff_change': 'Смена тарифа',
+        'withdrawal': 'Списание',
+        'traffic_adjustment': 'Корректировка трафика'
+    };
+    return types[type] || type || '-';
+}
+
+// ========== PDF ОТЧЕТЫ ==========
+
+// Генерация PDF отчета по пользователям
+app.get('/api/reports/users/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate, status, tariff } = req.query;
+        
+        // Фильтрация пользователей
+        let filter = { role: 'client' };
+        if (status === 'debtor') {
+            filter.debt = { $gt: 0 };
+        } else if (status === 'active') {
+            filter.balance = { $gte: 0 };
+            filter.status = 'active';
+        } else if (status === 'blocked') {
+            filter.status = 'blocked';
+        }
+        
+        if (tariff) {
+            filter['tariff.id'] = tariff;
+        }
+        
+        if (startDate && endDate) {
+            filter.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const users = await User.find(filter)
+            .select('fio phone balance debt status tariff creditLimit createdAt')
+            .sort({ createdAt: -1 })
+            .lean();
+        
+        if (users.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Нет данных для отчета по заданным параметрам'
+            });
+        }
+        
+        // Создаем PDF документ
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        // Устанавливаем заголовки для скачивания
+        const fileName = `users_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        // Конвейер PDF
+        doc.pipe(res);
+        
+        // Заголовок отчета
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОТЧЕТ ПО ПОЛЬЗОВАТЕЛЯМ', { align: 'center' })
+           .moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, { align: 'center' })
+           .moveDown(0.5);
+        
+        // Параметры отчета
+        doc.fontSize(11)
+           .fillColor('#333')
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`)
+           .text(`Статус: ${getStatusLabel(status)}`)
+           .text(`Тариф: ${tariff ? TARIFFS[tariff]?.name || tariff : 'Все'}`)
+           .moveDown();
+        
+        // Статистика
+        const stats = {
+            total: users.length,
+            totalBalance: users.reduce((sum, user) => sum + (user.balance || 0), 0),
+            totalDebt: users.reduce((sum, user) => sum + (user.debt || 0), 0),
+            active: users.filter(u => u.status === 'active').length,
+            blocked: users.filter(u => u.status === 'blocked').length
+        };
+        
+        doc.fontSize(12)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Всего пользователей: ${stats.total}`)
+           .text(`Активных: ${stats.active}`)
+           .text(`Заблокированных: ${stats.blocked}`)
+           .text(`Общий баланс: ${stats.totalBalance.toFixed(2)} BYN`)
+           .text(`Общий долг: ${stats.totalDebt.toFixed(2)} BYN`)
+           .moveDown();
+        
+        // Таблица пользователей
+        doc.addPage();
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('СПИСОК ПОЛЬЗОВАТЕЛЕЙ', { align: 'center' })
+           .moveDown();
+        
+        // Заголовки таблицы
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [120, 80, 60, 60, 60, 60, 70];
+        const headers = ['ФИО', 'Телефон', 'Баланс', 'Долг', 'Тариф', 'Статус', 'Дата регистрации'];
+        
+        // Рисуем заголовки таблицы
+        doc.fontSize(9)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(8)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        
+        users.forEach((user, rowIndex) => {
+            // Чередование цветов строк
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 540, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            // Ограничиваем количество строк на странице
+            if (currentY > 700) {
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            const rowData = [
+                user.fio,
+                user.phone,
+                `${(user.balance || 0).toFixed(2)} BYN`,
+                `${(user.debt || 0).toFixed(2)} BYN`,
+                user.tariff?.name || 'Стандарт',
+                getStatusLabel(user.status),
+                user.createdAt ? formatDate(user.createdAt) : '-'
+            ];
+            
+            currentX = tableLeft;
+            rowData.forEach((cell, i) => {
+                // Выделяем отрицательные балансы красным
+                if (i === 2 && (user.balance || 0) < 0) {
+                    doc.fillColor('#dc3545');
+                } else if (i === 3 && (user.debt || 0) > 0) {
+                    doc.fillColor('#dc3545');
+                } else {
+                    doc.fillColor('#333');
+                }
+                
+                doc.text(cell, currentX + 5, currentY, { 
+                    width: colWidths[i] - 10,
+                    height: 20,
+                    align: 'left'
+                });
+                
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Отчет сгенерирован системой "Мобильный оператор"`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        // Завершаем документ
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета по пользователям:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// Генерация PDF отчета по звонкам
+app.get('/api/reports/calls/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate, phone, callType } = req.query;
+        
+        // Фильтрация звонков
+        let filter = {};
+        
+        if (phone) {
+            filter.phone = { $regex: phone, $options: 'i' };
+        }
+        
+        if (callType) {
+            filter.callType = callType;
+        }
+        
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const calls = await Call.find(filter)
+            .populate('userId', 'fio phone')
+            .sort({ date: -1 })
+            .limit(1000) // Ограничиваем для PDF
+            .lean();
+        
+        if (calls.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Нет данных для отчета по заданным параметрам'
+            });
+        }
+        
+        // Создаем PDF документ
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        const fileName = `calls_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Заголовок
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОТЧЕТ ПО ЗВОНКАМ', { align: 'center' })
+           .moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, { align: 'center' })
+           .moveDown(0.5);
+        
+        // Параметры отчета
+        doc.fontSize(11)
+           .fillColor('#333')
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`);
+        
+        if (phone) doc.text(`Телефон: ${phone}`);
+        if (callType) doc.text(`Тип звонка: ${callType === 'local' ? 'Местные' : 'Международные'}`);
+        doc.moveDown();
+        
+        // Статистика
+        const stats = {
+            total: calls.length,
+            totalDuration: calls.reduce((sum, call) => sum + (call.duration || 0), 0),
+            totalCost: calls.reduce((sum, call) => sum + (call.cost || 0), 0),
+            local: calls.filter(c => c.callType === 'local').length,
+            international: calls.filter(c => c.callType === 'international').length
+        };
+        
+        doc.fontSize(12)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Всего звонков: ${stats.total}`)
+           .text(`Общая длительность: ${Math.floor(stats.totalDuration / 60)}:${(stats.totalDuration % 60).toString().padStart(2, '0')}`)
+           .text(`Общая стоимость: ${stats.totalCost.toFixed(2)} BYN`)
+           .text(`Местные звонки: ${stats.local}`)
+           .text(`Международные звонки: ${stats.international}`)
+           .moveDown();
+        
+        // Таблица звонков
+        doc.addPage();
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('ДЕТАЛЬНЫЙ СПИСОК ЗВОНКОВ', { align: 'center' })
+           .moveDown();
+        
+        // Заголовки таблицы
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [90, 100, 70, 80, 60, 60, 60];
+        const headers = ['Дата и время', 'Пользователь', 'Телефон', 'Номер назначения', 'Тип', 'Длительность', 'Стоимость'];
+        
+        doc.fontSize(9)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(8)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        
+        calls.forEach((call, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 520, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            if (currentY > 700) {
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            const rowData = [
+                call.date ? formatDateTime(call.date) : '-',
+                call.userId?.fio || call.userFio || '-',
+                call.phone,
+                call.number,
+                call.callType === 'local' ? 'Местный' : 'Международный',
+                `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}`,
+                `${(call.cost || 0).toFixed(2)} BYN`
+            ];
+            
+            currentX = tableLeft;
+            rowData.forEach((cell, i) => {
+                doc.text(cell, currentX + 5, currentY, { 
+                    width: colWidths[i] - 10,
+                    height: 20,
+                    align: 'left'
+                });
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Отчет сгенерирован системой "Мобильный оператор"`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета по звонкам:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// Тестовый эндпоинт для генерации PDF
+app.get('/api/reports/test/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { type, startDate, endDate } = req.query;
+        
+        // Создаем PDF документ
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        let fileName = 'test_report.pdf';
+        let reportTitle = 'ТЕСТОВЫЙ ОТЧЕТ';
+        
+        // Настройка для разных типов отчетов
+        switch(type) {
+            case 'users':
+                fileName = `users_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ОТЧЕТ ПО ПОЛЬЗОВАТЕЛЯМ';
+                break;
+            case 'calls':
+                fileName = `calls_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ОТЧЕТ ПО ЗВОНКАМ';
+                break;
+            case 'sms':
+                fileName = `sms_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ОТЧЕТ ПО SMS';
+                break;
+            case 'debtors':
+                fileName = `debtors_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ОТЧЕТ ПО ДОЛЖНИКАМ';
+                break;
+            case 'payments':
+                fileName = `payments_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ОТЧЕТ ПО ПЛАТЕЖАМ';
+                break;
+            case 'full':
+                fileName = `full_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                reportTitle = 'ПОЛНЫЙ ОТЧЕТ';
+                break;
+        }
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Заголовок отчета
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text(reportTitle, { align: 'center' })
+           .moveDown();
+        
+        // Информация о отчете
+        doc.fontSize(12)
+           .font('Helvetica')
+           .fillColor('#333')
+           .text(`Тип отчета: ${reportTitle}`)
+           .text(`Дата формирования: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`)
+           .text(`Период: ${startDate || 'Не указано'} - ${endDate || 'Не указано'}`)
+           .moveDown();
+        
+        // Пример данных
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(11)
+           .font('Helvetica')
+           .text('• Общее количество пользователей: 150')
+           .text('• Активных пользователей: 120')
+           .text('• Должников: 30')
+           .text('• Общая задолженность: 1,500.00 BYN')
+           .text('• Средний баланс: 45.50 BYN')
+           .moveDown();
+        
+        // Таблица (пример)
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('ПРИМЕР ДАННЫХ:', { underline: true })
+           .moveDown(0.5);
+        
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [150, 100, 100, 100];
+        const headers = ['Пользователь', 'Телефон', 'Баланс', 'Статус'];
+        
+        // Заголовки таблицы
+        doc.fontSize(10)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(9)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        const exampleData = [
+            ['Иванов И.И.', '+375291234567', '150.50 BYN', 'Активен'],
+            ['Петров П.П.', '+375292345678', '-25.00 BYN', 'Должник'],
+            ['Сидорова А.М.', '+375293456789', '75.00 BYN', 'Активен'],
+            ['Козлов В.С.', '+375294567890', '0.00 BYN', 'Активен'],
+            ['Николаева Е.П.', '+375295678901', '-15.00 BYN', 'Должник']
+        ];
+        
+        exampleData.forEach((row, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 400, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            currentX = tableLeft;
+            row.forEach((cell, i) => {
+                // Выделяем отрицательные балансы красным
+                if (i === 2 && cell.includes('-')) {
+                    doc.fillColor('#dc3545');
+                } else {
+                    doc.fillColor('#333');
+                }
+                
+                doc.text(cell, currentX + 5, currentY, { 
+                    width: colWidths[i] - 10,
+                    align: 'left'
+                });
+                
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Заключительная информация
+        doc.moveDown(2);
+        doc.fontSize(10)
+           .fillColor('#666')
+           .text('* Отчет сгенерирован автоматически системой "Мобильный оператор"')
+           .text('* Все суммы указаны в белорусских рублях (BYN)')
+           .text('* Данные актуальны на момент формирования отчета');
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации тестового PDF:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+// Обновленные эндпоинты для PDF отчетов
+
+// Основной эндпоинт для генерации PDF отчетов
+app.get('/api/reports/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { 
+            type = 'users', 
+            startDate, 
+            endDate, 
+            status, 
+            tariff, 
+            phone, 
+            callType,
+            internetType,
+            direction 
+        } = req.query;
+        
+        // Валидация дат
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > end) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Дата начала не может быть позже даты окончания'
+                });
+            }
+            
+            // Максимальный период - 1 год
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 365) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Период отчета не может превышать 1 год'
+                });
+            }
+        }
+        
+        // Создаем PDF документ
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4',
+            info: {
+                Title: `Отчет ${type} - Мобильный оператор`,
+                Author: 'Система отчетов Мобильного оператора',
+                Subject: 'Статистический отчет',
+                Keywords: 'отчет, статистика, пользователи, звонки, трафик',
+                CreationDate: new Date()
+            }
+        });
+        
+        let fileName = '';
+        
+        // Определяем имя файла в зависимости от типа отчета
+        switch(type) {
+            case 'users':
+                fileName = `users_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateUsersPDF(doc, startDate, endDate, status, tariff);
+                break;
+            case 'calls':
+                fileName = `calls_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateCallsPDF(doc, startDate, endDate, phone, callType);
+                break;
+            case 'internet':
+                fileName = `internet_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateInternetPDF(doc, startDate, endDate, phone, internetType);
+                break;
+            case 'sms':
+                fileName = `sms_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateSMSPDF(doc, startDate, endDate, phone, direction);
+                break;
+            case 'payments':
+                fileName = `payments_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generatePaymentsPDF(doc, startDate, endDate, phone, null);
+                break;
+            case 'debtors':
+                fileName = `debtors_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateDebtorsPDF(doc, startDate, endDate);
+                break;
+            case 'full':
+                fileName = `full_report_${startDate || 'all'}_${endDate || 'current'}.pdf`;
+                await generateFullPDF(doc, startDate, endDate);
+                break;
+            default:
+                fileName = `report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateUsersPDF(doc, startDate, endDate, status, tariff);
+        }
+        
+        // Устанавливаем заголовки
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Description', 'File Transfer');
+        res.setHeader('Pragma', 'public');
+        res.setHeader('Expires', '0');
+        res.setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0');
+        
+        // Потоковая передача PDF
+        doc.pipe(res);
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета: ' + error.message 
+        });
+    }
+});
+
+// Эндпоинт для быстрых отчетов с фильтрами из админ-панели
+app.get('/api/reports/quick/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { 
+            reportType, 
+            startDate, 
+            endDate,
+            status,
+            tariff,
+            phone,
+            callType,
+            direction 
+        } = req.query;
+        
+        // Валидация
+        if (!reportType) {
+            return res.status(400).json({
+                success: false,
+                error: 'Не указан тип отчета'
+            });
+        }
+        
+        // Создаем PDF
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        let fileName = '';
+        
+        switch(reportType) {
+            case 'users':
+                fileName = `users_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateUsersPDF(doc, startDate, endDate, status, tariff);
+                break;
+            case 'debtors':
+                fileName = `debtors_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateDebtorsPDF(doc, startDate, endDate);
+                break;
+            case 'active_users':
+                fileName = `active_users_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateUsersPDF(doc, startDate, endDate, 'active', tariff);
+                break;
+            case 'calls':
+                fileName = `calls_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateCallsPDF(doc, startDate, endDate, phone, callType);
+                break;
+            case 'sms':
+                fileName = `sms_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generateSMSPDF(doc, startDate, endDate, phone, direction);
+                break;
+            case 'payments':
+                fileName = `payments_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                await generatePaymentsPDF(doc, startDate, endDate, phone, null);
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: 'Неизвестный тип отчета'
+                });
+        }
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации быстрого PDF:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+// Вспомогательные функции для отчетов
+
+function getStatusLabel(status) {
+    switch(status) {
+        case 'active': return 'Активный';
+        case 'blocked': return 'Заблокирован';
+        case 'suspended': return 'Приостановлен';
+        case 'all': return 'Все';
+        case 'debtor': return 'Должник';
+        default: return status || 'Неизвестно';
+    }
+}
+
+function getPaymentTypeLabel(type) {
+    const types = {
+        'topup': 'Пополнение',
+        'subscription': 'Абонентская плата',
+        'call_payment': 'Оплата звонков',
+        'internet_payment': 'Оплата интернета',
+        'sms_payment': 'Оплата SMS',
+        'tariff_change': 'Смена тарифа',
+        'withdrawal': 'Списание',
+        'traffic_adjustment': 'Корректировка трафика'
+    };
+    return types[type] || type || 'Неизвестно';
+}
+
+function formatDate(date) {
+    if (!date) return 'Не указано';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'Неверная дата';
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}.${month}.${year}`;
+    } catch (error) {
+        return 'Ошибка формата';
+    }
+}
+
+function formatDateTime(date) {
+    if (!date) return 'Не указано';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'Неверная дата';
+        return d.toLocaleString('ru-RU');
+    } catch (error) {
+        return 'Ошибка формата';
+    }
+}
+// Генерация PDF отчета по интернет трафику
+app.get('/api/reports/internet/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate, phone, type } = req.query;
+        
+        // Фильтрация данных
+        let filter = {};
+        
+        if (phone) {
+            filter.phone = { $regex: phone, $options: 'i' };
+        }
+        
+        if (type) {
+            filter.type = type;
+        }
+        
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const internetUsage = await InternetUsage.find(filter)
+            .populate('userId', 'fio phone')
+            .sort({ date: -1 })
+            .limit(1000)
+            .lean();
+        
+        if (internetUsage.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Нет данных для отчета по заданным параметрам'
+            });
+        }
+        
+        // Создаем PDF
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        const fileName = `internet_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Заголовок
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОТЧЕТ ПО ИНТЕРНЕТ ТРАФИКУ', { align: 'center' })
+           .moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, { align: 'center' })
+           .moveDown(0.5);
+        
+        // Параметры отчета
+        doc.fontSize(11)
+           .fillColor('#333')
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`);
+        
+        if (phone) doc.text(`Телефон: ${phone}`);
+        if (type) doc.text(`Тип подключения: ${type === 'mobile' ? 'Мобильный' : 'Wi-Fi'}`);
+        doc.moveDown();
+        
+        // Статистика
+        const stats = {
+            total: internetUsage.length,
+            totalMB: internetUsage.reduce((sum, usage) => sum + (usage.mbUsed || 0), 0),
+            totalCost: internetUsage.reduce((sum, usage) => sum + (usage.cost || 0), 0),
+            mobile: internetUsage.filter(u => u.type === 'mobile').length,
+            wifi: internetUsage.filter(u => u.type === 'wifi').length
+        };
+        
+        doc.fontSize(12)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Всего сессий: ${stats.total}`)
+           .text(`Общий трафик: ${stats.totalMB.toFixed(2)} МБ (${(stats.totalMB / 1024).toFixed(2)} ГБ)`)
+           .text(`Общая стоимость: ${stats.totalCost.toFixed(2)} BYN`)
+           .text(`Мобильный трафик: ${stats.mobile} сессий`)
+           .text(`Wi-Fi трафик: ${stats.wifi} сессий`)
+           .moveDown();
+        
+        // Таблица данных
+        doc.addPage();
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('ДЕТАЛЬНЫЙ СПИСОК СЕССИЙ', { align: 'center' })
+           .moveDown();
+        
+        // Заголовки таблицы
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [90, 100, 70, 60, 60, 80, 60];
+        const headers = ['Дата и время', 'Пользователь', 'Телефон', 'Трафик (МБ)', 'Тип', 'Длительность', 'Стоимость'];
+        
+        doc.fontSize(9)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(8)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        
+        internetUsage.forEach((usage, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 520, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            if (currentY > 700) {
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            const durationText = usage.sessionDuration > 0 ? 
+                `${Math.floor(usage.sessionDuration / 3600)}ч ${Math.floor((usage.sessionDuration % 3600) / 60)}м` : 
+                'Не указано';
+            
+            const rowData = [
+                usage.date ? formatDateTime(usage.date) : '-',
+                usage.userId?.fio || '-',
+                usage.phone,
+                (usage.mbUsed || 0).toFixed(2),
+                usage.type === 'mobile' ? 'Мобильный' : 'Wi-Fi',
+                durationText,
+                `${(usage.cost || 0).toFixed(2)} BYN`
+            ];
+            
+            currentX = tableLeft;
+            rowData.forEach((cell, i) => {
+                doc.text(cell, currentX + 5, currentY, { 
+                    width: colWidths[i] - 10,
+                    height: 20,
+                    align: 'left'
+                });
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Отчет сгенерирован системой "Мобильный оператор"`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета по интернет трафику:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// Генерация PDF отчета по SMS
+app.get('/api/reports/sms/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate, phone, direction } = req.query;
+        
+        // Фильтрация данных
+        let filter = {};
+        
+        if (phone) {
+            filter.phone = { $regex: phone, $options: 'i' };
+        }
+        
+        if (direction) {
+            filter.direction = direction;
+        }
+        
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const smsUsage = await SmsUsage.find(filter)
+            .populate('userId', 'fio phone')
+            .sort({ date: -1 })
+            .limit(1000)
+            .lean();
+        
+        if (smsUsage.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Нет данных для отчета по заданным параметрам'
+            });
+        }
+        
+        // Создаем PDF
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        const fileName = `sms_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Заголовок
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОТЧЕТ ПО SMS СООБЩЕНИЯМ', { align: 'center' })
+           .moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, { align: 'center' })
+           .moveDown(0.5);
+        
+        // Параметры отчета
+        doc.fontSize(11)
+           .fillColor('#333')
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`);
+        
+        if (phone) doc.text(`Телефон: ${phone}`);
+        if (direction) doc.text(`Направление: ${direction === 'outgoing' ? 'Исходящие' : 'Входящие'}`);
+        doc.moveDown();
+        
+        // Статистика
+        const stats = {
+            total: smsUsage.length,
+            totalCost: smsUsage.reduce((sum, sms) => sum + (sms.cost || 0), 0),
+            outgoing: smsUsage.filter(s => s.direction === 'outgoing').length,
+            incoming: smsUsage.filter(s => s.direction === 'incoming').length
+        };
+        
+        doc.fontSize(12)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Всего сообщений: ${stats.total}`)
+           .text(`Общая стоимость: ${stats.totalCost.toFixed(2)} BYN`)
+           .text(`Исходящие SMS: ${stats.outgoing}`)
+           .text(`Входящие SMS: ${stats.incoming}`)
+           .moveDown();
+        
+        // Таблица данных
+        doc.addPage();
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('ДЕТАЛЬНЫЙ СПИСОК СООБЩЕНИЙ', { align: 'center' })
+           .moveDown();
+        
+        // Заголовки таблицы
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [90, 100, 70, 80, 80, 60, 60];
+        const headers = ['Дата и время', 'Пользователь', 'Телефон', 'Получатель', 'Направление', 'Длина', 'Стоимость'];
+        
+        doc.fontSize(9)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(8)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        
+        smsUsage.forEach((sms, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 540, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            if (currentY > 700) {
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            const rowData = [
+                sms.date ? formatDateTime(sms.date) : '-',
+                sms.userId?.fio || '-',
+                sms.phone,
+                sms.recipientNumber,
+                sms.direction === 'outgoing' ? 'Исходящее' : 'Входящее',
+                `${sms.messageLength || 0} симв.`,
+                `${(sms.cost || 0).toFixed(2)} BYN`
+            ];
+            
+            currentX = tableLeft;
+            rowData.forEach((cell, i) => {
+                doc.text(cell, currentX + 5, currentY, { 
+                    width: colWidths[i] - 10,
+                    height: 20,
+                    align: 'left'
+                });
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Отчет сгенерирован системой "Мобильный оператор"`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета по SMS:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// Генерация PDF отчета по платежам
+app.get('/api/reports/payments/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate, phone, type } = req.query;
+        
+        // Фильтрация платежей
+        let filter = {};
+        
+        if (phone) {
+            filter.phone = { $regex: phone, $options: 'i' };
+        }
+        
+        if (type) {
+            filter.type = type;
+        }
+        
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const payments = await Payment.find(filter)
+            .populate('userId', 'fio phone')
+            .sort({ date: -1 })
+            .limit(1000)
+            .lean();
+        
+        if (payments.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Нет данных для отчета по заданным параметрам'
+            });
+        }
+        
+        // Создаем PDF
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        const fileName = `payments_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Заголовок
+        doc.fontSize(20)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОТЧЕТ ПО ПЛАТЕЖАМ', { align: 'center' })
+           .moveDown();
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, { align: 'center' })
+           .moveDown(0.5);
+        
+        // Параметры отчета
+        doc.fontSize(11)
+           .fillColor('#333')
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`);
+        
+        if (phone) doc.text(`Телефон: ${phone}`);
+        if (type) doc.text(`Тип платежа: ${getPaymentTypeLabel(type)}`);
+        doc.moveDown();
+        
+        // Статистика
+        const stats = {
+            total: payments.length,
+            totalAmount: payments.reduce((sum, payment) => sum + (payment.amount || 0), 0),
+            income: payments.filter(p => p.amount > 0).reduce((sum, p) => sum + p.amount, 0),
+            expense: payments.filter(p => p.amount < 0).reduce((sum, p) => sum + Math.abs(p.amount), 0),
+            topups: payments.filter(p => p.type === 'topup').length,
+            subscriptions: payments.filter(p => p.type === 'subscription').length
+        };
+        
+        doc.fontSize(12)
+           .font('Helvetica-Bold')
+           .text('СТАТИСТИКА:', { underline: true })
+           .moveDown(0.5);
+        
+        doc.fontSize(10)
+           .font('Helvetica')
+           .text(`Всего платежей: ${stats.total}`)
+           .text(`Общая сумма: ${stats.totalAmount.toFixed(2)} BYN`)
+           .text(`Поступления: ${stats.income.toFixed(2)} BYN`)
+           .text(`Списания: ${stats.expense.toFixed(2)} BYN`)
+           .text(`Пополнений: ${stats.topups}`)
+           .text(`Списаний абонплаты: ${stats.subscriptions}`)
+           .moveDown();
+        
+        // Таблица данных
+        doc.addPage();
+        doc.fontSize(14)
+           .font('Helvetica-Bold')
+           .text('ДЕТАЛЬНЫЙ СПИСОК ПЛАТЕЖЕЙ', { align: 'center' })
+           .moveDown();
+        
+        // Заголовки таблицы
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const colWidths = [90, 100, 70, 60, 80, 70, 60];
+        const headers = ['Дата и время', 'Пользователь', 'Телефон', 'Сумма', 'Тип', 'Метод', 'Статус'];
+        
+        doc.fontSize(9)
+           .font('Helvetica-Bold')
+           .fillColor('#fff');
+        
+        let currentX = tableLeft;
+        headers.forEach((header, i) => {
+            doc.rect(currentX, tableTop, colWidths[i], 20)
+               .fill('#1976d2');
+            doc.fillColor('#fff')
+               .text(header, currentX + 5, tableTop + 5, { width: colWidths[i] - 10 });
+            currentX += colWidths[i];
+        });
+        
+        // Данные таблицы
+        doc.fontSize(8)
+           .font('Helvetica')
+           .fillColor('#333');
+        
+        let currentY = tableTop + 25;
+        
+        payments.forEach((payment, rowIndex) => {
+            if (rowIndex % 2 === 0) {
+                doc.rect(tableLeft, currentY - 5, 530, 20)
+                   .fill('#f8f9fa');
+            }
+            
+            if (currentY > 700) {
+                doc.addPage();
+                currentY = 50;
+            }
+            
+            const amountColor = payment.amount > 0 ? '#28a745' : '#dc3545';
+            const amountSign = payment.amount > 0 ? '+' : '';
+            
+            const rowData = [
+                payment.date ? formatDateTime(payment.date) : '-',
+                payment.userId?.fio || '-',
+                payment.phone,
+                { text: `${amountSign}${(payment.amount || 0).toFixed(2)} BYN`, color: amountColor },
+                getPaymentTypeLabel(payment.type),
+                payment.method || '-',
+                'Успешно'
+            ];
+            
+            currentX = tableLeft;
+            rowData.forEach((cell, i) => {
+                if (typeof cell === 'object' && cell.color) {
+                    doc.fillColor(cell.color);
+                    doc.text(cell.text, currentX + 5, currentY, { 
+                        width: colWidths[i] - 10,
+                        height: 20,
+                        align: 'left'
+                    });
+                    doc.fillColor('#333');
+                } else {
+                    doc.text(cell, currentX + 5, currentY, { 
+                        width: colWidths[i] - 10,
+                        height: 20,
+                        align: 'left'
+                    });
+                }
+                currentX += colWidths[i];
+            });
+            
+            currentY += 20;
+        });
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Отчет сгенерирован системой "Мобильный оператор"`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF отчета по платежам:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// Генерация полного отчета (все данные)
+app.get('/api/reports/full/pdf', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        // Фильтр по дате
+        const dateFilter = {};
+        if (startDate && endDate) {
+            dateFilter.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        // Получаем все данные
+        const [users, calls, internet, sms, payments] = await Promise.all([
+            User.find({ role: 'client', ...dateFilter })
+                .select('fio phone balance debt status tariff createdAt')
+                .sort({ createdAt: -1 })
+                .lean(),
+            Call.find(dateFilter)
+                .populate('userId', 'fio phone')
+                .sort({ date: -1 })
+                .limit(500)
+                .lean(),
+            InternetUsage.find(dateFilter)
+                .populate('userId', 'fio phone')
+                .sort({ date: -1 })
+                .limit(500)
+                .lean(),
+            SmsUsage.find(dateFilter)
+                .populate('userId', 'fio phone')
+                .sort({ date: -1 })
+                .limit(500)
+                .lean(),
+            Payment.find(dateFilter)
+                .populate('userId', 'fio phone')
+                .sort({ date: -1 })
+                .limit(500)
+                .lean()
+        ]);
+        
+        // Общая статистика
+        const totalStats = {
+            users: users.length,
+            calls: calls.length,
+            internet: internet.length,
+            sms: sms.length,
+            payments: payments.length,
+            totalBalance: users.reduce((sum, user) => sum + (user.balance || 0), 0),
+            totalDebt: users.reduce((sum, user) => sum + (user.debt || 0), 0),
+            totalRevenue: payments.filter(p => p.amount > 0).reduce((sum, p) => sum + p.amount, 0),
+            totalExpenses: payments.filter(p => p.amount < 0).reduce((sum, p) => sum + Math.abs(p.amount), 0)
+        };
+        
+        // Создаем PDF
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
+        
+        const fileName = `full_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        doc.pipe(res);
+        
+        // Титульная страница
+        doc.fontSize(24)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ПОЛНЫЙ ОТЧЕТ', 0, 200, { align: 'center' });
+        
+        doc.fontSize(16)
+           .font('Helvetica')
+           .fillColor('#666')
+           .text('Мобильный оператор', 0, 250, { align: 'center' });
+        
+        doc.fontSize(12)
+           .text(`Период: ${startDate ? formatDate(startDate) : 'Все время'} ${endDate ? ' - ' + formatDate(endDate) : ''}`, 
+                 0, 300, { align: 'center' });
+        
+        doc.fontSize(10)
+           .text(`Сформировано: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}`, 
+                 0, 320, { align: 'center' });
+        
+        doc.moveDown(5);
+        
+        // Общая статистика (новая страница)
+        doc.addPage();
+        doc.fontSize(18)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('ОБЩАЯ СТАТИСТИКА', { align: 'center' })
+           .moveDown();
+        
+        const statsTop = doc.y;
+        const statsLeft = 50;
+        const statCardWidth = 150;
+        const statCardHeight = 60;
+        const statMargin = 20;
+        
+        const statsData = [
+            { label: 'Пользователи', value: totalStats.users, color: '#1976d2' },
+            { label: 'Звонки', value: totalStats.calls, color: '#28a745' },
+            { label: 'Интернет сессии', value: totalStats.internet, color: '#ffc107' },
+            { label: 'SMS сообщения', value: totalStats.sms, color: '#17a2b8' },
+            { label: 'Платежи', value: totalStats.payments, color: '#6f42c1' },
+            { label: 'Общий баланс', value: `${totalStats.totalBalance.toFixed(2)} BYN`, color: '#20c997' }
+        ];
+        
+        let currentX = statsLeft;
+        let currentY = statsTop;
+        
+        statsData.forEach((stat, index) => {
+            if (index > 0 && index % 2 === 0) {
+                currentX = statsLeft;
+                currentY += statCardHeight + statMargin;
+            }
+            
+            doc.roundedRect(currentX, currentY, statCardWidth, statCardHeight, 5)
+               .fill(stat.color);
+            
+            doc.fontSize(10)
+               .font('Helvetica-Bold')
+               .fillColor('#fff')
+               .text(stat.label, currentX + 10, currentY + 10, { width: statCardWidth - 20 });
+            
+            doc.fontSize(16)
+               .font('Helvetica-Bold')
+               .fillColor('#fff')
+               .text(stat.value.toString(), currentX + 10, currentY + 30, { width: statCardWidth - 20 });
+            
+            currentX += statCardWidth + statMargin;
+        });
+        
+        // Финансовая статистика
+        doc.moveDown(2);
+        currentY = doc.y + 100;
+        
+        const financeStats = [
+            { label: 'Общий доход', value: totalStats.totalRevenue.toFixed(2) + ' BYN', color: '#28a745' },
+            { label: 'Общие расходы', value: totalStats.totalExpenses.toFixed(2) + ' BYN', color: '#dc3545' },
+            { label: 'Общий долг', value: totalStats.totalDebt.toFixed(2) + ' BYN', color: '#fd7e14' }
+        ];
+        
+        currentX = statsLeft;
+        financeStats.forEach((stat) => {
+            doc.roundedRect(currentX, currentY, 160, 50, 5)
+               .fill(stat.color);
+            
+            doc.fontSize(10)
+               .font('Helvetica-Bold')
+               .fillColor('#fff')
+               .text(stat.label, currentX + 10, currentY + 10, { width: 140 });
+            
+            doc.fontSize(14)
+               .font('Helvetica-Bold')
+               .fillColor('#fff')
+               .text(stat.value, currentX + 10, currentY + 25, { width: 140 });
+            
+            currentX += 170;
+        });
+        
+        // Страница с пользователями
+        doc.addPage();
+        doc.fontSize(18)
+           .font('Helvetica-Bold')
+           .fillColor('#1976d2')
+           .text('СТАТИСТИКА ПОЛЬЗОВАТЕЛЕЙ', { align: 'center' })
+           .moveDown();
+        
+        if (users.length > 0) {
+            // Топ 10 пользователей по балансу
+            const topUsers = [...users]
+                .sort((a, b) => (b.balance || 0) - (a.balance || 0))
+                .slice(0, 10);
+            
+            doc.fontSize(12)
+               .font('Helvetica-Bold')
+               .fillColor('#333')
+               .text('Топ 10 пользователей по балансу:', { underline: true })
+               .moveDown(0.5);
+            
+            doc.fontSize(10)
+               .font('Helvetica');
+            
+            topUsers.forEach((user, index) => {
+                const balanceColor = (user.balance || 0) >= 0 ? '#28a745' : '#dc3545';
+                doc.fillColor('#333')
+                   .text(`${index + 1}. ${user.fio} (${user.phone})`, { continued: true });
+                doc.fillColor(balanceColor)
+                   .text(` ${(user.balance || 0).toFixed(2)} BYN`);
+                doc.fillColor('#333');
+            });
+            
+            doc.moveDown();
+            
+            // Статистика по статусам
+            const statusStats = {
+                active: users.filter(u => u.status === 'active').length,
+                blocked: users.filter(u => u.status === 'blocked').length,
+                debtors: users.filter(u => (user.debt || 0) > 0).length
+            };
+            
+            doc.fontSize(12)
+               .font('Helvetica-Bold')
+               .text('Статистика по статусам:', { underline: true })
+               .moveDown(0.5);
+            
+            doc.fontSize(10)
+               .text(`Активных: ${statusStats.active}`)
+               .text(`Заблокированных: ${statusStats.blocked}`)
+               .text(`Должников: ${statusStats.debtors}`);
+        }
+        
+        // Номер страницы
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.fontSize(8)
+               .fillColor('#666')
+               .text(
+                   `Страница ${i + 1} из ${pageCount} | Полный отчет | Сформировано: ${new Date().toLocaleDateString('ru-RU')}`,
+                   50, 800, { align: 'center' }
+               );
+        }
+        
+        doc.end();
+        
+    } catch (error) {
+        console.error('❌ Ошибка генерации полного PDF отчета:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка генерации отчета' 
+        });
+    }
+});
+
+// ========== ОСТАЛЬНЫЕ API ==========
+
 // Обновление тарифа клиента
 app.put('/api/admin/clients/:id/tariff', checkDatabaseConnection, async (req, res) => {
     try {
@@ -1764,8 +3421,6 @@ app.put('/api/admin/clients/:id', checkDatabaseConnection, async (req, res) => {
         });
     }
 });
-
-// ========== ОСТАЛЬНЫЕ API (оставляем без изменений) ==========
 
 // Получение истории звонков
 app.get('/api/user/calls', checkDatabaseConnection, async (req, res) => {
@@ -2812,21 +4467,55 @@ app.get('/api/admin/sms', checkDatabaseConnection, async (req, res) => {
 // Отчет о должниках
 app.get('/api/reports/debtors', checkDatabaseConnection, async (req, res) => {
     try {
-        const debtors = await User.find({ 
-            debt: { $gt: 0 } 
-        }).select('fio phone balance debt tariff status createdAt').lean();
+        const { startDate, endDate } = req.query;
+        
+        // Фильтрация должников по дате
+        let filter = { 
+            debt: { $gt: 0 },
+            role: 'client'
+        };
+        
+        if (startDate && endDate) {
+            filter.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate + 'T23:59:59.999Z')
+            };
+        }
+        
+        const debtors = await User.find(filter)
+            .select('fio phone balance debt tariff status createdAt')
+            .sort({ debt: -1 })
+            .lean();
+
+        const totalDebt = debtors.reduce((sum, user) => sum + (user.debt || 0), 0);
+        const averageDebt = debtors.length > 0 ? totalDebt / debtors.length : 0;
+        const maxDebt = debtors.length > 0 ? Math.max(...debtors.map(d => d.debt || 0)) : 0;
 
         const report = {
             success: true,
-            totalDebtors: debtors.length,
-            totalDebt: debtors.reduce((sum, user) => sum + (user.debt || 0), 0).toFixed(2) + ' BYN',
+            period: {
+                start: startDate || 'Все время',
+                end: endDate || 'Текущая дата'
+            },
+            statistics: {
+                totalDebtors: debtors.length,
+                totalDebt: totalDebt.toFixed(2),
+                averageDebt: averageDebt.toFixed(2),
+                maxDebt: maxDebt.toFixed(2),
+                debtGroups: {
+                    small: debtors.filter(d => d.debt <= 50).length,
+                    medium: debtors.filter(d => d.debt > 50 && d.debt <= 200).length,
+                    large: debtors.filter(d => d.debt > 200).length
+                }
+            },
             debtors: debtors.map(user => ({
                 fio: user.fio,
                 phone: user.phone,
-                balance: (user.balance || 0).toFixed(2) + ' BYN',
-                debt: (user.debt || 0).toFixed(2) + ' BYN',
+                balance: (user.balance || 0).toFixed(2),
+                debt: (user.debt || 0).toFixed(2),
                 tariff: user.tariff?.name || 'Стандарт',
-                status: user.status || 'active'
+                status: user.status || 'active',
+                createdAt: user.createdAt ? formatDate(user.createdAt) : '-'
             }))
         };
 
@@ -2836,6 +4525,367 @@ app.get('/api/reports/debtors', checkDatabaseConnection, async (req, res) => {
         res.status(500).json({ 
             success: false,
             error: 'Ошибка формирования отчета' 
+        });
+    }
+});
+
+// ========== НОВЫЕ API ДЛЯ АДМИН-ПАНЕЛИ ==========
+
+// Получение услуг пользователя для админ-панели
+app.get('/api/admin/user/services', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { phone } = req.query;
+        
+        if (!phone) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указан номер телефона' 
+            });
+        }
+
+        const user = await User.findOne({ phone });
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        const userServices = await UserService.find({ userId: user._id });
+        
+        const allServices = [
+            {
+                id: 'roaming',
+                name: 'Международный роуминг',
+                price: 5,
+                description: 'Возможность пользоваться связью за границей',
+                category: 'связь'
+            },
+            {
+                id: 'callerId',
+                name: 'Определитель номера',
+                price: 2,
+                description: 'Показывает номер входящего вызова',
+                category: 'связь'
+            },
+            {
+                id: 'antispam',
+                name: 'Антиспам',
+                price: 3,
+                description: 'Блокировка спам-звонков',
+                category: 'защита'
+            },
+            {
+                id: 'music',
+                name: 'Музыкальный сервис',
+                price: 7,
+                description: 'Безлимитная музыка без трафика',
+                category: 'развлечения'
+            },
+            {
+                id: 'games',
+                name: 'Игровая подписка',
+                price: 10,
+                description: 'Доступ к играм без трафика',
+                category: 'развлечения'
+            },
+            {
+                id: 'cloud',
+                name: 'Облачное хранилище',
+                price: 4,
+                description: '50 ГБ облачного хранилища',
+                category: 'хранилище'
+            },
+            {
+                id: 'news',
+                name: 'Новостная подписка',
+                price: 1,
+                description: 'Ежедневные новости по SMS',
+                category: 'информация'
+            },
+            {
+                id: 'weather',
+                name: 'Прогноз погоды',
+                price: 1,
+                description: 'Ежедневный прогноз погоды',
+                category: 'информация'
+            }
+        ];
+
+        const servicesWithStatus = allServices.map(service => {
+            const userService = userServices.find(us => us.serviceId === service.id);
+            return {
+                ...service,
+                active: userService ? userService.active : false,
+                price: `${service.price} BYN`,
+                activationDate: userService ? userService.activationDate : null,
+                deactivationDate: userService ? userService.deactivationDate : null
+            };
+        });
+
+        res.json({
+            success: true,
+            services: servicesWithStatus
+        });
+    } catch (error) {
+        console.error('❌ Ошибка получения услуг:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения услуг' 
+        });
+    }
+});
+
+// Обновление услуг пользователя (админ)
+app.post('/api/admin/user/services/update', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { userId, services } = req.body;
+        
+        if (!userId || !Array.isArray(services)) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Неверные данные' 
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        // Удаляем все существующие услуги пользователя
+        await UserService.deleteMany({ userId: user._id });
+
+        // Добавляем новые услуги
+        const servicePromises = services.map(serviceId => {
+            const service = {
+                id: 'roaming',
+                name: 'Международный роуминг',
+                price: 5,
+                description: 'Возможность пользоваться связью за границей',
+                category: 'связь'
+            };
+            
+            return UserService.create({
+                userId: user._id,
+                phone: user.phone,
+                serviceId: serviceId,
+                serviceName: service.name,
+                active: true,
+                activationDate: new Date()
+            });
+        });
+
+        await Promise.all(servicePromises);
+
+        res.json({ 
+            success: true, 
+            message: 'Услуги успешно обновлены',
+            services: services
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка обновления услуг:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка обновления услуг' 
+        });
+    }
+});
+
+// Пополнение/списание баланса пользователя (админ)
+app.post('/api/admin/clients/:id/balance', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { amount, operation } = req.body;
+
+        if (!amount || !operation) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указаны сумма или операция' 
+            });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum) || amountNum <= 0) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Неверная сумма' 
+            });
+        }
+
+        let newBalance = user.balance;
+        let paymentType = 'topup';
+
+        if (operation === 'add') {
+            newBalance += amountNum;
+            paymentType = 'topup';
+        } else if (operation === 'withdraw') {
+            const availableBalance = user.balance + (user.creditLimit || 0);
+            if (amountNum > availableBalance) {
+                return res.status(400).json({ 
+                    success: false,
+                    error: 'Недостаточно средств для списания' 
+                });
+            }
+            newBalance -= amountNum;
+            paymentType = 'withdrawal';
+        } else {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Неизвестная операция' 
+            });
+        }
+
+        user.balance = newBalance;
+        
+        if (user.balance < 0) {
+            user.debt = Math.abs(user.balance);
+        } else {
+            user.debt = 0;
+        }
+        
+        await user.save();
+
+        const payment = new Payment({
+            userId: user._id,
+            phone: user.phone,
+            amount: operation === 'add' ? amountNum : -amountNum,
+            method: 'Административная операция',
+            type: paymentType,
+            date: new Date()
+        });
+        await payment.save();
+
+        res.json({ 
+            success: true, 
+            message: `Баланс успешно ${operation === 'add' ? 'пополнен' : 'списан'} на ${amountNum} BYN`,
+            newBalance: user.balance,
+            debt: user.debt
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка операции с балансом:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка операции с балансом' 
+        });
+    }
+});
+
+// Получение статистики использования для конкретного пользователя
+app.get('/api/admin/user/usage', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { phone } = req.query;
+        
+        if (!phone) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указан номер телефона' 
+            });
+        }
+
+        const user = await User.findOne({ phone });
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Пользователь не найден' 
+            });
+        }
+        
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        
+        // Получаем статистику по звонкам
+        const calls = await Call.find({ 
+            phone: user.phone,
+            month: currentMonth 
+        });
+        const totalCallMinutes = calls.reduce((sum, call) => sum + Math.floor(call.duration / 60), 0);
+        
+        // Получаем статистику по интернету
+        const internetUsage = await InternetUsage.find({ 
+            phone: user.phone,
+            month: currentMonth 
+        });
+        const totalInternetMB = internetUsage.reduce((sum, usage) => sum + usage.mbUsed, 0);
+        
+        // Получаем статистику по SMS
+        const smsUsage = await SmsUsage.find({ 
+            phone: user.phone,
+            month: currentMonth 
+        });
+        const totalSMS = smsUsage.length;
+        
+        res.json({
+            success: true,
+            usage: {
+                minutes: totalCallMinutes,
+                internetMB: totalInternetMB,
+                sms: totalSMS,
+                tariffMinutes: user.tariff.includedMinutes || 300,
+                tariffInternetMB: (user.tariff.internetGB || 15) * 1024,
+                tariffSMS: user.tariff.smsCount || 100
+            }
+        });
+    } catch (error) {
+        console.error('❌ Ошибка получения статистики использования:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения статистики' 
+        });
+    }
+});
+
+// ========== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+// Проверка существования пользователя по телефону
+app.get('/api/admin/user/exists', checkDatabaseConnection, async (req, res) => {
+    try {
+        const { phone } = req.query;
+        
+        if (!phone) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Не указан номер телефона' 
+            });
+        }
+
+        const user = await User.findOne({ phone });
+        
+        if (!user) {
+            return res.json({
+                success: false,
+                exists: false,
+                message: 'Пользователь не найден'
+            });
+        }
+
+        res.json({
+            success: true,
+            exists: true,
+            user: {
+                fio: user.fio,
+                phone: user.phone,
+                tariff: user.tariff,
+                balance: user.balance
+            }
+        });
+    } catch (error) {
+        console.error('❌ Ошибка проверки пользователя:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка проверки пользователя' 
         });
     }
 });
@@ -3073,6 +5123,7 @@ async function initializeApp() {
             console.log(`   - Админ-панель с фильтрацией`);
             console.log(`   - Клиентский личный кабинет`);
             console.log(`   - Редактирование трафика клиентов`);
+            console.log(`   - Генерация PDF отчетов`);
         });
     } catch (error) {
         console.error('❌ Ошибка инициализации приложения:', error);
