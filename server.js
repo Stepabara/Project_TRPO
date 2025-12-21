@@ -1467,7 +1467,6 @@ app.get('/api/tariffs', (req, res) => {
     }
 });
 
-// Смена тарифа
 app.post('/api/user/tariff/change', (req, res) => {
     try {
         const { phone, tariffId } = req.body;
@@ -1487,7 +1486,9 @@ app.post('/api/user/tariff/change', (req, res) => {
             });
         }
         
+        const user = database.users[userIndex];
         const newTariff = TARIFFS[tariffId];
+        
         if (!newTariff) {
             return res.status(400).json({
                 success: false,
@@ -1496,13 +1497,52 @@ app.post('/api/user/tariff/change', (req, res) => {
         }
         
         console.log('🔄 Смена тарифа:', {
-            user: database.users[userIndex].fio,
-            oldTariff: database.users[userIndex].tariff?.name || 'Не указан',
-            newTariff: newTariff.name
+            user: user.fio,
+            oldTariff: user.tariff?.name || 'Не указан',
+            newTariff: newTariff.name,
+            oldPrice: user.tariff?.price || 0,
+            newPrice: newTariff.price
         });
         
-        // Сохраняем полные данные тарифа
-        database.users[userIndex].tariff = {
+        // РАССЧИТЫВАЕМ РАЗНИЦУ В ЦЕНЕ
+        const oldTariffPrice = user.tariff?.price || TARIFFS.standard.price;
+        const priceDifference = newTariff.price - oldTariffPrice;
+        
+        // ЕСЛИ НОВЫЙ ТАРИФ ДОРОЖЕ - СПИСЫВАЕМ РАЗНИЦУ
+        if (priceDifference > 0) {
+            if (user.balance < priceDifference) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Недостаточно средств. Требуется дополнительно ${priceDifference.toFixed(2)} BYN для смены тарифа`
+                });
+            }
+            
+            // СПИСЫВАЕМ РАЗНИЦУ
+            user.balance -= priceDifference;
+            
+            // СОЗДАЕМ ЗАПИСЬ О ПЛАТЕЖЕ
+            const payment = {
+                _id: `payment_${database.nextPaymentId}`,
+                userId: user._id,
+                phone: phone,
+                amount: priceDifference,
+                type: 'tariff_change',
+                description: `Смена тарифа с ${user.tariff?.name || 'Стандарт'} на ${newTariff.name}`,
+                date: new Date(),
+                status: 'completed'
+            };
+            
+            database.payments.push(payment);
+            database.nextPaymentId++;
+        }
+        
+        // ЕСЛИ НОВЫЙ ТАРИФ ДЕШЕВЛЕ - НЕ ВОЗВРАЩАЕМ ДЕНЬГИ (или можно добавить эту логику)
+        // if (priceDifference < 0) {
+        //     // Возврат денег
+        // }
+        
+        // МЕНЯЕМ ТАРИФ С ПОЛНЫМИ ДАННЫМИ
+        user.tariff = {
             id: newTariff.id,
             name: newTariff.name,
             price: newTariff.price,
@@ -1512,22 +1552,25 @@ app.post('/api/user/tariff/change', (req, res) => {
             minutePrice: newTariff.minutePrice,
             internetPricePerMB: newTariff.internetPricePerMB,
             smsPrice: newTariff.smsPrice,
-            internationalMinutePrice: newTariff.internationalMinutePrice
+            internationalMinutePrice: newTariff.internationalMinutePrice,
+            changedAt: new Date()
         };
         
-        // Сохраняем изменения
+        // СОХРАНЯЕМ ИЗМЕНЕНИЯ
         saveDatabase();
         
-        // Формируем полные данные для ответа
+        // ФОРМИРУЕМ ПОЛНЫЕ ДАННЫЕ ДЛЯ ОТВЕТА
         const fullTariffData = {
-            ...newTariff,
+            ...user.tariff,
             features: getTariffFeatures(newTariff)
         };
         
         res.json({
             success: true,
             message: 'Тариф успешно изменен',
-            newTariff: fullTariffData
+            newTariff: fullTariffData,
+            amountCharged: priceDifference > 0 ? priceDifference : 0,
+            newBalance: user.balance
         });
         
     } catch (error) {
@@ -1538,6 +1581,100 @@ app.post('/api/user/tariff/change', (req, res) => {
         });
     }
 });
+// Получение истории платежей пользователя
+app.get('/api/user/payments', (req, res) => {
+    try {
+        const { phone } = req.query;
+        
+        if (!phone) {
+            return res.status(400).json({
+                success: false,
+                error: 'Не указан телефон'
+            });
+        }
+        
+        const user = database.users.find(u => u.phone === phone);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Пользователь не найден'
+            });
+        }
+        
+        const userPayments = database.payments
+            .filter(p => p.userId === user._id || p.phone === phone)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        res.json({
+            success: true,
+            payments: userPayments.map(p => ({
+                id: p._id,
+                amount: p.amount,
+                type: p.type,
+                description: p.description,
+                date: formatDate(p.date),
+                status: p.status || 'completed'
+            }))
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения платежей:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения платежей' 
+        });
+    }
+});
+async function toggleServiceDirect(serviceId, activate) {
+    try {
+        const actionText = activate ? 'Подключение' : 'Отключение';
+        showNotification(`${actionText} услуги...`, 'info');
+        
+        const response = await fetch('/api/user/services/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phone: currentUser.phone,
+                serviceId: serviceId,
+                activate: activate
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            const action = activate ? 'подключена' : 'отключена';
+            const message = activate 
+                ? `✅ Услуга подключена. Списано: ${result.amountCharged} BYN` 
+                : `✅ Услуга отключена`;
+            
+            showNotification(message, 'success');
+            
+            // ОБНОВЛЯЕМ БАЛАНС ПОЛЬЗОВАТЕЛЯ
+            if (result.newBalance !== undefined) {
+                currentUser.balance = result.newBalance;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateUserInterface();
+            }
+            
+            // Обновляем интерфейс
+            setTimeout(() => {
+                loadServices();
+                loadUserData();
+                loadDashboardData();
+            }, 1000);
+            
+        } else {
+            showNotification(`❌ ${result.error || 'Ошибка изменения услуги'}`, 'error');
+        }
+
+    } catch (error) {
+        console.error('Ошибка переключения услуги:', error);
+        throw error;
+    }
+}
 
 // Регистрация нового пользователя
 app.post('/api/register', async (req, res) => {
@@ -1813,7 +1950,6 @@ app.get('/api/user/services', (req, res) => {
     }
 });
 
-// Управление услугами пользователя
 app.post('/api/user/services/toggle', (req, res) => {
     try {
         const { phone, serviceId, activate } = req.body;
@@ -1833,43 +1969,87 @@ app.post('/api/user/services/toggle', (req, res) => {
             });
         }
         
-        // Находим или создаем услугу
+        // НАХОДИМ СТОИМОСТЬ УСЛУГИ
+        const servicePrice = getServicePrice(serviceId);
+        
+        // ЕСЛИ ПОДКЛЮЧАЕМ УСЛУГУ - ПРОВЕРЯЕМ И СПИСЫВАЕМ БАЛАНС
+        if (activate) {
+            // Проверка баланса
+            if (user.balance < servicePrice) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Недостаточно средств. Стоимость услуги: ${servicePrice.toFixed(2)} BYN`
+                });
+            }
+            
+            // Списание баланса
+            user.balance -= servicePrice;
+            
+            // СОЗДАЕМ ЗАПИСЬ О ПЛАТЕЖЕ
+            const payment = {
+                _id: `payment_${database.nextPaymentId}`,
+                userId: user._id,
+                phone: phone,
+                amount: servicePrice,
+                type: 'service_activation',
+                description: `Активация услуги: ${getServiceName(serviceId)}`,
+                date: new Date(),
+                status: 'completed'
+            };
+            
+            database.payments.push(payment);
+            database.nextPaymentId++;
+        }
+        
+        // НАХОДИМ ИЛИ СОЗДАЕМ УСЛУГУ
         let service = database.userServices.find(s => 
             s.userId === user._id && s.serviceId === serviceId
         );
         
         if (activate) {
-            // Подключаем услугу
+            // ПОДКЛЮЧАЕМ УСЛУГУ
             if (!service) {
                 service = {
                     _id: `service_${database.nextServiceId}`,
                     userId: user._id,
                     serviceId: serviceId,
                     name: getServiceName(serviceId),
-                    price: getServicePrice(serviceId),
+                    price: servicePrice,
                     description: getServiceDescription(serviceId),
                     category: getServiceCategory(serviceId),
                     active: true,
-                    activatedAt: new Date()
+                    activatedAt: new Date(),
+                    lastChargeDate: new Date() // Добавляем дату последнего списания
                 };
                 database.userServices.push(service);
                 database.nextServiceId++;
             } else {
                 service.active = true;
+                service.lastChargeDate = new Date();
             }
         } else {
-            // Отключаем услугу
+            // ОТКЛЮЧАЕМ УСЛУГУ
             if (service) {
                 service.active = false;
+                service.deactivatedAt = new Date();
             }
         }
         
-        // Сохраняем изменения
+        // СОХРАНЯЕМ ИЗМЕНЕНИЯ
         saveDatabase();
         
+        // ВОЗВРАЩАЕМ ПОЛНУЮ ИНФОРМАЦИЮ
         res.json({
             success: true,
-            message: `Услуга ${activate ? 'подключена' : 'отключена'}`
+            message: `Услуга ${activate ? 'подключена' : 'отключена'}`,
+            service: service ? {
+                id: service.serviceId,
+                name: service.name,
+                price: service.price,
+                active: service.active
+            } : null,
+            amountCharged: activate ? servicePrice : 0,
+            newBalance: user.balance
         });
         
     } catch (error) {

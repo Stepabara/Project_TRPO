@@ -174,7 +174,7 @@
       "phone": "+375999999955",
       "password": "$2a$10$5vIaX19g3qsIBfg/eiu4jO0jc5owuyMKzIiHotU6CtMsNNl9CMNQS",
       "role": "client",
-      "balance": 0,
+      "balance": 2.0199999999999996,
       "tariff": {
         "id": "standard",
         "name": "Стандарт",
@@ -230,6 +230,32 @@
       "method": "online",
       "date": "2025-12-21T11:55:14.859Z",
       "status": "completed"
+    },
+    {
+      "_id": "payment_002",
+      "userId": "user_002",
+      "phone": "+375999999955",
+      "amount": 10,
+      "type": "topup",
+      "method": "online",
+      "date": "2025-12-21T16:29:52.609Z",
+      "status": "completed"
+    },
+    {
+      "_id": "payment_3",
+      "userId": "user_002",
+      "amount": 4.99,
+      "type": "service_activation",
+      "description": "Подключение услуги: Музыка",
+      "date": "2025-12-21T16:47:58.954Z"
+    },
+    {
+      "_id": "payment_4",
+      "userId": "user_002",
+      "amount": 2.99,
+      "type": "service_activation",
+      "description": "Подключение услуги: Антивирус",
+      "date": "2025-12-21T16:48:07.339Z"
     }
   ],
   "userServices": [
@@ -323,10 +349,32 @@
       "category": "безопасность",
       "active": true,
       "activatedAt": "2025-12-21T11:55:00.058Z"
+    },
+    {
+      "_id": "service_12",
+      "userId": "user_002",
+      "serviceId": "music",
+      "name": "Музыка",
+      "price": 4.99,
+      "description": "Стриминг музыки без рекламы и ограничений",
+      "category": "развлечения",
+      "active": false,
+      "activatedAt": "2025-12-21T16:29:41.151Z"
+    },
+    {
+      "_id": "service_13",
+      "userId": "user_002",
+      "serviceId": "cloud",
+      "name": "Облако",
+      "price": 1.99,
+      "description": "50 ГБ облачного хранилища для файлов",
+      "category": "хранилище",
+      "active": true,
+      "activatedAt": "2025-12-21T16:29:56.553Z"
     }
   ],
   "nextUserId": 4,
   "nextCallId": 1,
-  "nextPaymentId": 2,
-  "nextServiceId": 12
+  "nextPaymentId": 5,
+  "nextServiceId": 14
 }
