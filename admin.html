@@ -7,41 +7,104 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
+    <style>
+        /* Дополнительные стили */
+        .clickable-row:hover {
+            cursor: pointer;
+            background-color: #f5f5f5 !important;
+        }
+        
+        .modal-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-tab.active {
+            border-bottom-color: #0d6efd;
+            font-weight: bold;
+        }
+        
+        .modal-tab-content {
+            display: none;
+        }
+        
+        .modal-tab-content.active {
+            display: block;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+    </style>
 </head>
 <body>
-<!-- Верхнее меню -->
-<nav class="top-menu">
-    <div class="menu-container">
-        <a href="#" class="logo">Admin</a>
-        
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a class="nav-link active" onclick="showSection('dashboard')">
-                    <i class="fas fa-home"></i>
-                    <span>Главная</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="showReportsModal()">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Отчеты</span>
-                </a>
-            </li>
+    <!-- Верхнее меню -->
+    <nav class="top-menu">
+        <div class="menu-container">
+            <a href="#" class="logo">Admin</a>
             
-           
-        </ul>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('dashboard')">
+                        <i class="fas fa-home"></i>
+                        <span>Главная</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('reports')">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Отчеты</span>
+                    </a>
+                </li>
+            </ul>
 
-        <div class="user-menu">
-            <div class="user-info">
-                <div class="user-avatar">A</div>
-                <div class="user-name">Администратор</div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-avatar">A</div>
+                    <div class="user-name">Администратор</div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <!-- Основной контент -->
     <div class="container">
@@ -122,7 +185,14 @@
                                 </tr>
                             </thead>
                             <tbody id="recentClientsTable">
-                                <!-- Клиенты будут загружены здесь -->
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Загрузка...</span>
+                                        </div>
+                                        <p class="mt-2">Загрузка клиентов...</p>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -267,6 +337,25 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Добавьте после карточек с отчетами -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-stethoscope me-2"></i>Диагностика отчетов
+            </div>
+            <div class="card-body text-center">
+                <p class="card-text">Если отчеты не скачиваются, проверьте работу API</p>
+                <button class="btn btn-outline-warning" onclick="testPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Тест PDF
+                </button>
+                <button class="btn btn-outline-info ms-2" onclick="testDirectLink()">
+                    <i class="fas fa-link me-2"></i>Проверить ссылку
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
 
@@ -277,245 +366,2131 @@
                 </div>
                 <div class="section-body">
                     <div id="debtorsReport">
-                        <!-- Отчет будет загружен здесь -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Нажмите кнопку "Должники (PDF)" выше, чтобы сгенерировать отчет по должникам
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-           <!-- Модальное окно для отчетов -->
-        <div class="modal fade" id="reportsModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-file-pdf me-2"></i>
-                            Генерация отчетов
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-info mb-4">
+    <!-- Модальное окно добавления клиента -->
+    <div class="modal fade" id="addClientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Добавить клиента
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClientForm" onsubmit="addClient(); return false;">
+                        <div class="mb-3">
+                            <label class="form-label">ФИО *</label>
+                            <input type="text" class="form-control" id="clientFio" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон *</label>
+                            <input type="tel" class="form-control" id="clientPhone" 
+                                   placeholder="+375291234567" pattern="^\+375[0-9]{9}$" required>
+                            <div class="form-text">Формат: +375XXXXXXXXX</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Пароль *</label>
+                            <input type="password" class="form-control" id="clientPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Начальный баланс (BYN)</label>
+                            <input type="number" class="form-control" id="clientBalance" value="0" step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тариф</label>
+                            <select class="form-select" id="clientTariff">
+                                <option value="standard">Стандарт (19.99 BYN/мес)</option>
+                                <option value="plus+">Плюс+ (29.99 BYN/мес)</option>
+                                <option value="Super plus">Супер плюс (35.99 BYN/мес)</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            Выберите период и тип отчета. Отчеты генерируются в формате PDF.
+                            После добавления клиент получит доступ к личному кабинету по номеру телефона и паролю
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="addClient()">
+                        <i class="fas fa-user-plus me-2"></i>Добавить клиента
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно регистрации звонка -->
+    <div class="modal fade" id="callModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-phone me-2"></i>Зарегистрировать звонок
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="callForm" onsubmit="registerCall(); return false;">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="callClientPhone" 
+                                   placeholder="+375291234567" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Номер абонента *</label>
+                            <input type="tel" class="form-control" id="callNumber" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тип звонка *</label>
+                            <select class="form-select" id="callType" required>
+                                <option value="local">Местный</option>
+                                <option value="international">Международный</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Длительность (секунды) *</label>
+                            <input type="number" class="form-control" id="callDuration" 
+                                   min="1" max="3600" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="registerCall()">
+                        <i class="fas fa-save me-2"></i>Зарегистрировать
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно отправки сообщения -->
+    <div class="modal fade" id="messageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comment me-2"></i>Отправить сообщение
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="messageForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="messageClientPhone" 
+                                   placeholder="+375291234567" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Получатель *</label>
+                            <input type="tel" class="form-control" id="messageRecipient" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Текст сообщения *</label>
+                            <textarea class="form-control" id="messageText" rows="3" required 
+                                      maxlength="160" oninput="document.getElementById('messageCharCount').textContent = this.value.length"></textarea>
+                            <div class="form-text">
+                                <span id="messageCharCount">0</span>/160 символов
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Направление *</label>
+                            <select class="form-select" id="messageDirection" required>
+                                <option value="outgoing">Исходящее</option>
+                                <option value="incoming">Входящее</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane me-2"></i>Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-credit-card me-2"></i>Пополнить баланс
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPaymentForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="paymentClientPhone" 
+                                   placeholder="+375291234567" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Сумма (BYN) *</label>
+                            <input type="number" class="form-control" id="paymentAmount" 
+                                   step="0.01" min="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Метод оплаты *</label>
+                            <select class="form-select" id="paymentMethod" required>
+                                <option value="card">Банковская карта</option>
+                                <option value="cash">Наличные</option>
+                                <option value="transfer">Банковский перевод</option>
+                                <option value="terminal">Платежный терминал</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Средства будут зачислены на баланс клиента немедленно
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="processPayment()">
+                        <i class="fas fa-check me-2"></i>Пополнить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно изменения трафика -->
+    <div class="modal fade" id="trafficEditModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-network-wired me-2"></i>Изменение трафика
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="trafficEditForm">
+                        <div class="mb-3">
+                            <label class="form-label">Телефон клиента *</label>
+                            <input type="tel" class="form-control" id="trafficClientPhone" 
+                                   placeholder="+375291234567" required
+                                   onchange="loadClientTrafficInfo(this.value)">
                         </div>
                         
-                        <!-- Период отчета -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                Период отчета
+                        <div class="mb-3">
+                            <div id="trafficClientInfo" class="text-muted">
+                                Введите номер телефона для загрузки информации
                             </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-label">
-                                                <i class="fas fa-calendar-plus me-1"></i>Начальная дата *
-                                            </label>
-                                            <input type="date" class="form-control" id="reportStartDate" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-label">
-                                                <i class="fas fa-calendar-minus me-1"></i>Конечная дата *
-                                            </label>
-                                            <input type="date" class="form-control" id="reportEndDate" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="reportIncludeCurrentMonth">
-                                            <label class="form-check-label" for="reportIncludeCurrentMonth">
-                                                Включить данные за текущий месяц (неполные)
-                                            </label>
-                                        </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Текущий трафик</h6>
+                                        <p id="currentTraffic" class="h4">-</p>
                                     </div>
                                 </div>
                             </div>
-                            <!-- В конец модального окна, перед закрывающим тегом </div> -->
-<div class="mt-3">
-    <hr>
-    <div class="text-center">
-        <small class="text-muted">Для тестирования:</small>
-        <div class="btn-group mt-2" role="group">
-            <button class="btn btn-sm btn-outline-primary" onclick="testPDF()">
-                <i class="fas fa-file-pdf me-1"></i>Тест PDF
-            </button>
-            <button class="btn btn-sm btn-outline-info" onclick="runDiagnostics()">
-                <i class="fas fa-stethoscope me-1"></i>Диагностика
-            </button>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Лимит тарифа</h6>
+                                        <p id="tariffLimit" class="h4">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Месяц</label>
+                            <input type="month" class="form-control" id="trafficMonth">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Изменение трафика (МБ)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+/-</span>
+                                <input type="text" class="form-control" id="trafficChange" 
+                                       placeholder="Например: +500 или -300"
+                                       oninput="calculateTrafficChange()">
+                            </div>
+                            <div class="form-text">
+                                Введите положительное число для добавления, отрицательное для списания
+                            </div>
+                        </div>
+                        
+                        <div id="trafficWarning" class="alert alert-warning d-none">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="warningText"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Остаток после изменения</label>
+                            <div id="remainingTraffic" class="h5 text-primary">-</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Стоимость превышения</label>
+                            <div id="overLimitCost" class="h6 text-danger">-</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="applyTrafficChange()">
+                        <i class="fas fa-save me-2"></i>Применить
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Модальное окно всех клиентов -->
+    <div class="modal fade" id="allClientsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-users me-2"></i>
+                        Все клиенты
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" 
+                                       id="allClientsSearch" 
+                                       placeholder="Поиск по ФИО или телефону"
+                                       onkeyup="loadAllClientsTable()">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="allClientsStatus" onchange="loadAllClientsTable()">
+                                <option value="">Все статусы</option>
+                                <option value="active">Активные</option>
+                                <option value="blocked">Заблокированные</option>
+                                <option value="debtor">Должники</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="allClientsTariff" onchange="loadAllClientsTable()">
+                                <option value="">Все тарифы</option>
+                                <option value="standard">Стандарт</option>
+                                <option value="plus+">Плюс+</option>
+                                <option value="Super plus">Супер плюс</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearAllClientsFilters()">
+                                <i class="fas fa-eraser"></i> Очистить
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>#</th>
+                                    <th>ФИО</th>
+                                    <th>Телефон</th>
+                                    <th>Баланс</th>
+                                    <th>Долг</th>
+                                    <th>Тариф</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allClientsTable">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Загрузка...</span>
+                                        </div>
+                                        <p class="mt-2">Загрузка данных...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted" id="allClientsCount">Загрузка...</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Закрыть
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="showAddClientModal()">
+                        <i class="fas fa-user-plus me-2"></i>Добавить клиента
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования пользователя -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>
+                        Редактирование клиента
+                        <span id="modalUserPhoneTitle" class="badge bg-light text-dark ms-2"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Вкладки -->
+                    <ul class="nav nav-tabs mb-3" id="userTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" onclick="showUserTab('info')">
+                                <i class="fas fa-info-circle me-1"></i>Основное
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="showUserTab('finance')">
+                                <i class="fas fa-money-bill-wave me-1"></i>Финансы
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="showUserTab('services')">
+                                <i class="fas fa-cogs me-1"></i>Услуги
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Скрытое поле для ID -->
+                    <input type="hidden" id="editUserId">
+                    
+                    <!-- Вкладка Основное -->
+                    <div id="userInfoTab" class="tab-content active">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">ФИО *</label>
+                                <input type="text" class="form-control" id="editUserFio" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" id="editUserStatus">
+                                    <option value="active">Активный</option>
+                                    <option value="blocked">Заблокирован</option>
+                                    <option value="suspended">Приостановлен</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Тариф</label>
+                                <select class="form-select" id="editUserTariff">
+                                    <option value="standard">Стандарт</option>
+                                    <option value="plus+">Плюс+</option>
+                                    <option value="Super plus">Супер плюс</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Новый пароль (оставьте пустым, если не меняется)</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="editUserPassword">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('editUserPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Информация о текущем тарифе -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6><i class="fas fa-info-circle me-2"></i>Текущий тариф</h6>
+                            <div id="currentTariffInfo" class="small">
+                                Загрузка...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка Финансы -->
+                    <div id="userFinanceTab" class="tab-content" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-wallet me-2"></i>Текущий баланс
+                                        </h6>
+                                        <h4 id="modalUserBalance" class="text-success fw-bold">0.00 BYN</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Задолженность
+                                        </h6>
+                                        <h4 id="modalUserDebt" class="text-danger fw-bold">0.00 BYN</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="fas fa-plus-circle me-2"></i>Пополнить баланс
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group mb-2">
+                                            <input type="number" class="form-control" 
+                                                   id="addBalanceAmount" 
+                                                   placeholder="Сумма" 
+                                                   min="0.01" step="0.01">
+                                            <span class="input-group-text">BYN</span>
+                                        </div>
+                                        <div class="btn-group w-100 mb-2">
+                                            <button class="btn btn-outline-success btn-sm" onclick="quickAddBalance(10)">10</button>
+                                            <button class="btn btn-outline-success btn-sm" onclick="quickAddBalance(20)">20</button>
+                                            <button class="btn btn-outline-success btn-sm" onclick="quickAddBalance(50)">50</button>
+                                            <button class="btn btn-outline-success btn-sm" onclick="quickAddBalance(100)">100</button>
+                                        </div>
+                                        <button class="btn btn-success w-100" onclick="addBalanceToUser()">
+                                            <i class="fas fa-plus me-2"></i>Пополнить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-warning text-dark">
+                                        <i class="fas fa-minus-circle me-2"></i>Списать средства
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" 
+                                                   id="withdrawBalanceAmount" 
+                                                   placeholder="Сумма" 
+                                                   min="0.01" step="0.01">
+                                            <span class="input-group-text">BYN</span>
+                                        </div>
+                                        <button class="btn btn-warning w-100" onclick="withdrawBalanceFromUser()">
+                                            <i class="fas fa-minus me-2"></i>Списать
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка Услуги -->
+                  <!-- Вкладка Услуги -->
+<div id="userServicesTab" class="tab-content" style="display: none;">
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Выберите услуги для подключения. Стоимость будет включена в ежемесячный платеж.
+    </div>
+    
+    <h6 class="mb-3">Подключенные услуги</h6>
+    <div id="userServicesList" class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                У пользователя нет подключенных услуг
+            </div>
+        </div>
+    </div>
+    
+    <h6 class="mb-3">Доступные услуги</h6>
+    <div id="availableServices" class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="text-center text-muted py-3">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <p class="mt-2">Загрузка услуг...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопка сохранения -->
+    <div class="d-grid gap-2">
+        <button type="button" class="btn btn-success" onclick="applyServicesChanges()">
+            <i class="fas fa-save me-2"></i>Сохранить изменения услуг
+        </button>
+    </div>
 </div>
-                        </div>
-
-                        <!-- Типы отчетов -->
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Типы отчетов
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <!-- Отчет по пользователям -->
-                                    <div class="col-md-6">
-                                        <div class="card report-card">
-                                            <div class="card-body text-center">
-                                                <div class="report-icon">
-                                                    <i class="fas fa-users fa-2x mb-3"></i>
-                                                </div>
-                                                <h6 class="report-title">Отчет по всем пользователям</h6>
-                                                <p class="report-description">
-                                                    Полная информация о всех пользователях за выбранный период
-                                                </p>
-                                                <button class="btn btn-primary w-100" onclick="generateUsersReport()">
-                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Отчет по звонкам и сообщениям -->
-                                    <div class="col-md-6">
-                                        <div class="card report-card">
-                                            <div class="card-body text-center">
-                                                <div class="report-icon">
-                                                    <i class="fas fa-phone-alt fa-2x mb-3"></i>
-                                                </div>
-                                                <h6 class="report-title">Отчет по звонкам и сообщениям</h6>
-                                                <p class="report-description">
-                                                    Детальная статистика по звонкам и SMS сообщениям
-                                                </p>
-                                                <button class="btn btn-primary w-100" onclick="generateCallsMessagesReport()">
-                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Отчет по должникам -->
-                                    <div class="col-md-6">
-                                        <div class="card report-card">
-                                            <div class="card-body text-center">
-                                                <div class="report-icon">
-                                                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                                                </div>
-                                                <h6 class="report-title">Отчет по должникам</h6>
-                                                <p class="report-description">
-                                                    Список должников и сумма задолженности
-                                                </p>
-                                                <button class="btn btn-danger w-100" onclick="generateDebtorsReport()">
-                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Отчет по оплатам -->
-                                    <div class="col-md-6">
-                                        <div class="card report-card">
-                                            <div class="card-body text-center">
-                                                <div class="report-icon">
-                                                    <i class="fas fa-credit-card fa-2x mb-3"></i>
-                                                </div>
-                                                <h6 class="report-title">Отчет по оплатам</h6>
-                                                <p class="report-description">
-                                                    Движение средств, платежи и поступления
-                                                </p>
-                                                <button class="btn btn-success w-100" onclick="generatePaymentsReport()">
-                                                    <i class="fas fa-file-pdf me-2"></i>Создать отчет
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Полный отчет -->
-                                <div class="mt-4">
-                                    <div class="card border-primary">
-                                        <div class="card-header bg-primary text-white">
-                                            <i class="fas fa-file-alt me-2"></i>
-                                            Полный отчет (все данные)
-                                        </div>
-                                        <div class="card-body text-center">
-                                            <p class="card-text">
-                                                Генерация полного отчета, включающего все данные за выбранный период
-                                            </p>
-                                            <button class="btn btn-primary" onclick="generateFullReport()">
-                                                <i class="fas fa-file-pdf me-2"></i>Создать полный отчет
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Закрыть
-                        </button>
-                    </div>
                 </div>
-            </div>
-        
-        </div>
-
-        <!-- Модальное окно истории отчетов -->
-        <div class="modal fade" id="reportHistoryModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-history me-2"></i>
-                            История сгенерированных отчетов
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Дата создания</th>
-                                        <th>Тип отчета</th>
-                                        <th>Период</th>
-                                        <th>Размер</th>
-                                        <th>Статус</th>
-                                        <th>Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reportHistoryTable">
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4">
-                                            <div class="text-muted">
-                                                <i class="fas fa-file-pdf fa-2x mb-3"></i>
-                                                <p>Нет сгенерированных отчетов</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Закрыть
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="clearReportHistory()">
-                            <i class="fas fa-trash me-2"></i>Очистить историю
-                        </button>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Отмена
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveUserChanges()">
+                        <i class="fas fa-save me-2"></i>Сохранить изменения
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
     <!-- Уведомление -->
     <div class="notification" id="notification"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="admin.js"></script>
+    <script>
+        // Глобальные переменные
+        let allClients = [];
+        let currentEditingUser = null;
+        let currentCallsPage = 1;
+        let currentMessagesPage = 1;
+        const callsPerPage = 10;
+        const messagesPerPage = 10;
+
+        // Объект с описанием услуг
+        const servicesData = {
+            'roaming': {
+                name: 'Международный роуминг',
+                price: 5,
+                description: 'Возможность пользоваться связью за границей',
+                category: 'связь'
+            },
+            'callerId': {
+                name: 'Определитель номера',
+                price: 2,
+                description: 'Показывает номер входящего вызова',
+                category: 'связь'
+            },
+            'antispam': {
+                name: 'Антиспам',
+                price: 3,
+                description: 'Блокировка спам-звонков',
+                category: 'защита'
+            },
+            'music': {
+                name: 'Музыкальный сервис',
+                price: 7,
+                description: 'Безлимитная музыка без трафика',
+                category: 'развлечения'
+            },
+            'games': {
+                name: 'Игровая подписка',
+                price: 10,
+                description: 'Доступ к играм без трафика',
+                category: 'развлечения'
+            },
+            'cloud': {
+                name: 'Облачное хранилище',
+                price: 4,
+                description: '50 ГБ облачного хранилища',
+                category: 'хранилище'
+            },
+            'news': {
+                name: 'Новостная подписка',
+                price: 1,
+                description: 'Ежедневные новости по SMS',
+                category: 'информация'
+            },
+            'weather': {
+                name: 'Прогноз погоды',
+                price: 1,
+                description: 'Ежедневный прогноз погоды',
+                category: 'информация'
+            }
+        };
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Инициализация админ-панели...');
+            
+            // Установка дат по умолчанию
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            // Установка дат в фильтрах отчетов
+            document.getElementById('startDateFilter').value = firstDayOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDateFilter').value = today.toISOString().split('T')[0];
+            
+            // Загрузка начальных данных
+            loadDashboardData();
+            
+            // Автообновление каждые 30 секунд
+            setInterval(loadDashboardData, 30000);
+            
+            console.log('Админ-панель инициализирована');
+        });
+
+        // Функция переключения секций
+        function showSection(sectionId) {
+            // Скрыть все секции
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Скрыть активные вкладки в меню
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Показать выбранную секцию
+            document.getElementById(sectionId + '-section').classList.add('active');
+            
+            // Активировать вкладку в меню
+            event.target.classList.add('active');
+            
+            // Если открываем отчеты, загружаем данные
+            if (sectionId === 'reports') {
+                loadDashboardData();
+            }
+        }
+
+        // Загрузка данных дашборда
+        async function loadDashboardData() {
+            try {
+                await loadStatistics();
+                await loadRecentClients();
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+                showNotification('Ошибка загрузки данных', 'error');
+            }
+        }
+
+        // Загрузка статистики
+        async function loadStatistics() {
+            try {
+                console.log('Загрузка статистики...');
+                
+                const response = await fetch('/api/admin/statistics');
+                const result = await response.json();
+                
+                console.log('Результат статистики:', result);
+                
+                if (result.success) {
+                    const stats = result.statistics;
+                    
+                    document.getElementById('totalClients').textContent = stats.totalClients || 0;
+                    document.getElementById('activeClients').textContent = stats.activeClients || 0;
+                    document.getElementById('debtorsCount').textContent = stats.debtors || 0;
+                    document.getElementById('totalDebt').textContent = 
+                        (stats.totalDebt || 0) + ' BYN';
+                } else {
+                    console.error('Ошибка загрузки статистики:', result.error);
+                    showNotification('Ошибка загрузки статистики', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+                showNotification('Ошибка загрузки статистики', 'error');
+            }
+        }
+
+        // Загрузка последних клиентов
+        async function loadRecentClients() {
+            try {
+                console.log('Загрузка последних клиентов...');
+                
+                const response = await fetch('/api/admin/clients?limit=5');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Результат загрузки клиентов:', result);
+                
+                if (result.success) {
+                    const recentClients = result.clients || [];
+                    const tbody = document.getElementById('recentClientsTable');
+                    
+                    if (recentClients.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                    <p>Нет данных о клиентах</p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    tbody.innerHTML = recentClients.map(client => {
+                        const balanceValue = parseFloat(client.balance) || 0;
+                        const tariffName = client.tariff?.name || 'Не указан';
+                        
+                        return `
+                            <tr class="clickable-row" onclick="editUser('${client._id}')">
+                                <td>${client.fio || 'Не указано'}</td>
+                                <td>${client.phone || 'Не указано'}</td>
+                                <td class="${balanceValue < 0 ? 'text-danger' : 'text-success'} fw-bold">
+                                    ${balanceValue.toFixed(2)} BYN
+                                </td>
+                                <td>${tariffName}</td>
+                                <td>
+                                    <span class="badge ${client.status === 'active' ? 'bg-success' : 
+                                        client.status === 'blocked' ? 'bg-danger' : 'bg-warning'}">
+                                        ${client.status === 'active' ? 'Активный' : 
+                                         client.status === 'blocked' ? 'Заблокирован' : 
+                                         client.status || 'Неизвестно'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" 
+                                            onclick="event.stopPropagation(); deleteClient('${client._id}', '${client.fio}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    console.error('Ошибка загрузки клиентов:', result.error);
+                    showNotification(result.error || 'Ошибка загрузки клиентов', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки клиентов:', error);
+                showNotification('Ошибка загрузки клиентов: ' + error.message, 'error');
+            }
+        }
+
+        // Функция показа модального окна всех клиентов
+        async function showAllClientsModal() {
+            try {
+                console.log('Открытие модального окна всех клиентов...');
+                
+                // Затем загружаем данные
+                await loadAllClientsTable();
+                
+                // Показываем модальное окно
+                const modalElement = document.getElementById('allClientsModal');
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+                
+                showNotification('Загружаются все клиенты...', 'info');
+                
+            } catch (error) {
+                console.error('Ошибка открытия модального окна клиентов:', error);
+                showNotification('Ошибка открытия списка клиентов', 'error');
+            }
+        }
+
+        // Функция загрузки данных в таблицу клиентов
+        async function loadAllClientsTable() {
+            try {
+                console.log('Загрузка данных клиентов...');
+                
+                const tbody = document.getElementById('allClientsTable');
+                if (!tbody) {
+                    console.error('Таблица allClientsTable не найдена');
+                    return;
+                }
+                
+                // Показываем загрузку
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="mt-2">Загрузка клиентов...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Получаем значения фильтров
+                const search = document.getElementById('allClientsSearch')?.value || '';
+                const statusFilter = document.getElementById('allClientsStatus')?.value || '';
+                const tariffFilter = document.getElementById('allClientsTariff')?.value || '';
+                
+                // Формируем URL запроса
+                let url = '/api/admin/clients?limit=1000';
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (statusFilter) url += `&status=${encodeURIComponent(statusFilter)}`;
+                if (tariffFilter) url += `&tariff=${encodeURIComponent(tariffFilter)}`;
+                
+                console.log('Запрос:', url);
+                
+                // Делаем запрос
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                console.log('Результат:', result);
+                
+                if (result.success) {
+                    const clients = result.clients || [];
+                    allClients = clients;
+                    
+                    // Обновляем счетчик
+                    const countElement = document.getElementById('allClientsCount');
+                    if (countElement) {
+                        countElement.textContent = `Найдено клиентов: ${clients.length}`;
+                    }
+                    
+                    // Если нет клиентов
+                    if (clients.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="fas fa-users-slash fa-2x mb-2"></i>
+                                    <p>Клиенты не найдены</p>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    // Формируем строки таблицы
+                    let html = '';
+                    clients.forEach((client, index) => {
+                        const balance = parseFloat(client.balance) || 0;
+                        const debt = parseFloat(client.debt) || 0;
+                        const tariffName = client.tariff?.name || 'Не указан';
+                        
+                        html += `
+                        <tr class="clickable-row" onclick="editUser('${client._id}')">
+                            <td>${index + 1}</td>
+                            <td>${client.fio || 'Не указано'}</td>
+                            <td>${client.phone || 'Не указано'}</td>
+                            <td class="${balance < 0 ? 'text-danger fw-bold' : 'text-success fw-bold'}">
+                                ${balance.toFixed(2)} BYN
+                            </td>
+                            <td class="${debt > 0 ? 'text-danger fw-bold' : ''}">
+                                ${debt.toFixed(2)} BYN
+                            </td>
+                            <td>${tariffName}</td>
+                            <td>
+                                <span class="badge ${client.status === 'active' ? 'bg-success' : 
+                                                  client.status === 'blocked' ? 'bg-danger' : 
+                                                  'bg-warning'}">
+                                    ${client.status === 'active' ? 'Активный' : 
+                                     client.status === 'blocked' ? 'Заблокирован' : 
+                                     client.status || 'Неизвестно'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="event.stopPropagation(); editUser('${client._id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        `;
+                    });
+                    
+                    tbody.innerHTML = html;
+                    showNotification(`Загружено ${clients.length} клиентов`, 'success');
+                    
+                } else {
+                    console.error('Ошибка загрузки клиентов:', result.error);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-danger">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p>Ошибка загрузки: ${result.error || 'Неизвестная ошибка'}</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки таблицы клиентов:', error);
+                
+                const tbody = document.getElementById('allClientsTable');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-danger">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p>Ошибка: ${error.message}</p>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadAllClientsTable()">
+                                    <i class="fas fa-redo"></i> Повторить
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+        // Функция очистки фильтров
+        function clearAllClientsFilters() {
+            console.log('Очистка фильтров...');
+            
+            const searchInput = document.getElementById('allClientsSearch');
+            const statusSelect = document.getElementById('allClientsStatus');
+            const tariffSelect = document.getElementById('allClientsTariff');
+            
+            if (searchInput) searchInput.value = '';
+            if (statusSelect) statusSelect.value = '';
+            if (tariffSelect) tariffSelect.value = '';
+            
+            // Перезагружаем таблицу
+            loadAllClientsTable();
+            
+            showNotification('Фильтры очищены', 'info');
+        }
+
+        // Редактирование пользователя
+        async function editUser(userId) {
+            try {
+                console.log('Редактирование пользователя:', userId);
+                
+                // Найти пользователя в текущих данных
+                let user = null;
+                
+                // Ищем в уже загруженных данных
+                if (allClients && allClients.length > 0) {
+                    user = allClients.find(c => c._id === userId);
+                }
+                
+                // Если не нашли, делаем запрос к API
+                if (!user) {
+                    showNotification('Загрузка данных пользователя...', 'info');
+                    
+                    const response = await fetch(`/api/admin/clients?search=${encodeURIComponent(userId)}`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.clients.length > 0) {
+                        user = result.clients.find(c => c._id === userId);
+                    }
+                }
+                
+                if (!user) {
+                    showNotification('Пользователь не найден', 'error');
+                    return;
+                }
+                
+                // Сохраняем текущего пользователя
+                currentEditingUser = user;
+                
+                // Заполняем форму
+                populateEditUserForm(user);
+                
+                // Показываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                modal.show();
+                
+                showNotification('Данные пользователя загружены', 'success');
+                
+            } catch (error) {
+                console.error('Ошибка редактирования пользователя:', error);
+                showNotification('Ошибка загрузки данных пользователя', 'error');
+            }
+        }
+
+        // Функция заполнения формы редактирования
+        function populateEditUserForm(user) {
+            console.log('Заполнение формы для пользователя:', user.fio);
+            
+            // Заполняем основные поля
+            document.getElementById('editUserId').value = user._id;
+            document.getElementById('editUserFio').value = user.fio || '';
+            document.getElementById('editUserStatus').value = user.status || 'active';
+            document.getElementById('editUserTariff').value = user.tariff?.id || 'standard';
+            document.getElementById('editUserPassword').value = '';
+            
+            // Обновляем заголовок
+            const titleElement = document.getElementById('modalUserPhoneTitle');
+            if (titleElement) {
+                titleElement.textContent = user.phone || '';
+            }
+            
+            // Заполняем информацию о тарифе
+            const tariffInfoElement = document.getElementById('currentTariffInfo');
+            if (tariffInfoElement && user.tariff) {
+                tariffInfoElement.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Название:</small>
+                            <div><strong>${user.tariff.name || 'Не указано'}</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Стоимость:</small>
+                            <div><strong>${user.tariff.price || 0} BYN/мес</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Минуты:</small>
+                            <div>${user.tariff.includedMinutes || 0}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Интернет:</small>
+                            <div>${user.tariff.internetGB || 0} ГБ</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Заполняем финансовую информацию
+            const balance = parseFloat(user.balance) || 0;
+            const debt = parseFloat(user.debt) || 0;
+            const creditLimit = parseFloat(user.creditLimit) || 50;
+            
+            document.getElementById('modalUserBalance').innerHTML = 
+                `<span class="${balance >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                    ${balance.toFixed(2)} BYN
+                </span>`;
+            
+            document.getElementById('modalUserDebt').innerHTML = 
+                `<span class="text-danger fw-bold">
+                    ${debt.toFixed(2)} BYN
+                </span>`;
+            
+            // Сбрасываем поля финансовых операций
+            document.getElementById('addBalanceAmount').value = '';
+            document.getElementById('withdrawBalanceAmount').value = '';
+            
+            // Показываем вкладку "Основное"
+            showUserTab('info');
+            
+            console.log('Форма заполнена');
+        }
+
+        // Показать вкладку пользователя
+        function showUserTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Скрыть все кнопки вкладок
+            document.querySelectorAll('#userTabs .nav-link').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показать выбранную вкладку
+            document.getElementById('user' + tabName.charAt(0).toUpperCase() + tabName.slice(1) + 'Tab').style.display = 'block';
+            
+            // Активировать кнопку вкладки
+            event.target.classList.add('active');
+            
+            // Если выбрана вкладка услуг, загружаем список услуг
+            if (tabName === 'services') {
+                loadUserServices();
+            }
+        }
+
+        // Загрузка подключенных услуг пользователя
+        async function loadUserServices() {
+    if (!currentEditingUser) return;
+    
+    try {
+        const servicesList = document.getElementById('userServicesList');
+        const availableServices = document.getElementById('availableServices');
+        
+        // Показываем загрузку
+        servicesList.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Загрузка услуг...
+                </div>
+            </div>
+        `;
+        
+        // Загружаем реальные услуги пользователя
+        const response = await fetch(`/api/admin/user/services?phone=${encodeURIComponent(currentEditingUser.phone)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const userServices = result.services || [];
+            
+            // Обновляем список подключенных услуг
+            if (userServices.length === 0) {
+                servicesList.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            У пользователя нет подключенных услуг
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Группируем услуги по категориям
+                const servicesByCategory = {};
+                
+                userServices.forEach(service => {
+                    const serviceData = servicesData[service.serviceId];
+                    if (serviceData) {
+                        if (!servicesByCategory[serviceData.category]) {
+                            servicesByCategory[serviceData.category] = [];
+                        }
+                        servicesByCategory[serviceData.category].push({
+                            ...service,
+                            ...serviceData
+                        });
+                    }
+                });
+                
+                // Отображаем услуги по категориям
+                let servicesHTML = '';
+                
+                Object.keys(servicesByCategory).forEach(category => {
+                    const categoryServices = servicesByCategory[category];
+                    const categoryTotal = categoryServices.reduce((sum, service) => {
+                        return sum + (service.price || 0);
+                    }, 0);
+                    
+                    servicesHTML += `
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header py-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-${getCategoryIcon(category)} me-2"></i>
+                                        ${getCategoryName(category)}
+                                        <span class="badge bg-secondary float-end">${categoryServices.length} услуг</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        ${categoryServices.map(service => `
+                                            <div class="col-md-6">
+                                                <div class="alert alert-success mb-0">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <strong>${service.name}</strong><br>
+                                                            <small class="text-muted">${service.description}</small><br>
+                                                            <span class="badge bg-primary">${service.price} BYN/мес</span>
+                                                        </div>
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   id="connected_service_${service.serviceId}" 
+                                                                   value="${service.serviceId}" 
+                                                                   checked
+                                                                   disabled
+                                                                   style="cursor: default;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    ${categoryServices.length > 1 ? `
+                                        <div class="mt-2 text-end">
+                                            <small class="text-muted">
+                                                Итого по категории: <strong>${categoryTotal.toFixed(2)} BYN/мес</strong>
+                                            </small>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Добавляем общую стоимость
+                const totalCost = userServices.reduce((total, service) => {
+                    const serviceData = servicesData[service.serviceId];
+                    return total + (serviceData?.price || 0);
+                }, 0);
+                
+                servicesHTML += `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong><i class="fas fa-calculator me-2"></i>Общая стоимость услуг</strong><br>
+                                    <small>Ежемесячная плата за все подключенные услуги</small>
+                                </div>
+                                <div class="h4 mb-0">${totalCost.toFixed(2)} BYN</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                servicesList.innerHTML = servicesHTML;
+            }
+            
+            // Обновляем состояние чекбоксов в списке доступных услуг
+            const activeServiceIds = userServices.map(s => s.serviceId);
+            updateServicesCheckboxes(activeServiceIds);
+            
+        } else {
+            throw new Error(result.error || 'Ошибка загрузки услуг');
+        }
+        
+        // Инициализируем чекбоксы услуг
+        initializeServicesCheckboxes();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки услуг:', error);
+        const servicesList = document.getElementById('userServicesList');
+        servicesList.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Ошибка загрузки услуг: ${error.message}
+                </div>
+            </div>
+        `;
+    }
+}
+// Применить изменения услуг
+// Применить изменения услуг
+async function applyServicesChanges() {
+    if (!currentEditingUser) {
+        showNotification('Пользователь не выбран', 'error');
+        return;
+    }
+    
+    try {
+        // Собираем выбранные услуги
+        const selectedServices = [];
+        const serviceCheckboxes = document.querySelectorAll('#availableServices input[type="checkbox"]:checked');
+        
+        serviceCheckboxes.forEach(checkbox => {
+            selectedServices.push(checkbox.value);
+        });
+        
+        console.log('Выбранные услуги:', selectedServices);
+        showNotification('Обновление услуг...', 'warning');
+        
+        const response = await fetch('/api/admin/user/services/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: currentEditingUser._id,
+                services: selectedServices
+            })
+        });
+        
+        const result = await response.json();
+        console.log('Результат обновления услуг:', result);
+        
+        if (result.success) {
+            showNotification(`Услуги успешно обновлены (${selectedServices.length} услуг)`, 'success');
+            
+            // Обновляем список услуг
+            setTimeout(() => {
+                loadUserServices();
+            }, 500);
+            
+        } else {
+            showNotification(result.error || 'Ошибка обновления услуг', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Ошибка обновления услуг:', error);
+        showNotification('Ошибка обновления услуг: ' + error.message, 'error');
+    }
+}
+        function initializeServicesCheckboxes() {
+            const availableServicesContainer = document.getElementById('availableServices');
+            
+            // Создаем HTML для чекбоксов с группировкой по категориям
+            const categories = {};
+            
+            Object.keys(servicesData).forEach(serviceId => {
+                const service = servicesData[serviceId];
+                if (!categories[service.category]) {
+                    categories[service.category] = [];
+                }
+                categories[service.category].push({ id: serviceId, ...service });
+            });
+            
+            let servicesHTML = '';
+            
+            Object.keys(categories).forEach(category => {
+                const categoryServices = categories[category];
+                const categoryName = getCategoryName(category);
+                const categoryIcon = getCategoryIcon(category);
+                
+                servicesHTML += `
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-${categoryIcon} me-2"></i>
+                                    ${categoryName}
+                                    <span class="badge bg-secondary float-end">${categoryServices.length}</span>
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    ${categoryServices.map(service => `
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="service_${service.id}" 
+                                                       value="${service.id}">
+                                                <label class="form-check-label" for="service_${service.id}">
+                                                    <strong>${service.name}</strong><br>
+                                                    <small class="text-muted">${service.description}</small><br>
+                                                    <span class="badge bg-success">${service.price} BYN/мес</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            availableServicesContainer.innerHTML = servicesHTML;
+        }
+
+        // Получение названия категории
+        function getCategoryName(categoryKey) {
+            const categoryNames = {
+                'связь': 'Услуги связи',
+                'защита': 'Защита и безопасность',
+                'развлечения': 'Развлечения',
+                'хранилище': 'Хранилище',
+                'информация': 'Информационные услуги'
+            };
+            return categoryNames[categoryKey] || categoryKey;
+        }
+
+        // Получение иконки для категории
+        function getCategoryIcon(category) {
+            const icons = {
+                'связь': 'phone',
+                'защита': 'shield-alt',
+                'развлечения': 'gamepad',
+                'хранилище': 'cloud',
+                'информация': 'newspaper'
+            };
+            return icons[category] || 'cog';
+        }
+
+        // Обновление состояния чекбоксов
+        function updateServicesCheckboxes(userServices = []) {
+            document.querySelectorAll('#availableServices input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = userServices.includes(checkbox.value);
+                
+                // Добавляем обработчик для визуальной обратной связи
+                checkbox.addEventListener('change', function() {
+                    const serviceId = this.value;
+                    const service = servicesData[serviceId];
+                    const label = this.closest('.form-check').querySelector('.form-check-label');
+                    
+                    if (this.checked) {
+                        label.classList.add('text-success');
+                        label.classList.remove('text-muted');
+                    } else {
+                        label.classList.remove('text-success');
+                        label.classList.add('text-muted');
+                    }
+                });
+            });
+        }
+
+        // Переключение видимости пароля
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = event.target.closest('button');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                input.type = 'password';
+                button.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        }
+
+        // Быстрое пополнение баланса
+        function quickAddBalance(amount) {
+            document.getElementById('addBalanceAmount').value = amount;
+        }
+
+        // Пополнение баланса пользователя
+        async function addBalanceToUser() {
+            if (!currentEditingUser) {
+                showNotification('Пользователь не выбран', 'error');
+                return;
+            }
+            
+            const amountInput = document.getElementById('addBalanceAmount');
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                showNotification('Введите корректную сумму (больше 0)', 'error');
+                amountInput.focus();
+                return;
+            }
+            
+            try {
+                showNotification('Пополнение баланса...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос
+                // Для демонстрации просто обновляем интерфейс
+                
+                const currentBalance = parseFloat(currentEditingUser.balance) || 0;
+                currentEditingUser.balance = currentBalance + amount;
+                
+                // Обновляем отображение баланса
+                const newBalance = currentEditingUser.balance;
+                document.getElementById('modalUserBalance').innerHTML = 
+                    `<span class="${newBalance >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                        ${newBalance.toFixed(2)} BYN
+                    </span>`;
+                
+                amountInput.value = '';
+                
+                showNotification(`Баланс пополнен на ${amount.toFixed(2)} BYN`, 'success');
+                
+            } catch (error) {
+                console.error('Ошибка пополнения баланса:', error);
+                showNotification('Ошибка пополнения баланса', 'error');
+            }
+        }
+
+        // Списание средств с пользователя
+        async function withdrawBalanceFromUser() {
+            if (!currentEditingUser) {
+                showNotification('Пользователь не выбран', 'error');
+                return;
+            }
+            
+            const amountInput = document.getElementById('withdrawBalanceAmount');
+            const amount = parseFloat(amountInput.value);
+            
+            if (!amount || amount <= 0 || isNaN(amount)) {
+                showNotification('Введите корректную сумму (больше 0)', 'error');
+                amountInput.focus();
+                return;
+            }
+            
+            try {
+                showNotification('Списание средств...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос
+                // Для демонстрации просто обновляем интерфейс
+                
+                const currentBalance = parseFloat(currentEditingUser.balance) || 0;
+                currentEditingUser.balance = currentBalance - amount;
+                
+                // Обновляем отображение баланса
+                const newBalance = currentEditingUser.balance;
+                document.getElementById('modalUserBalance').innerHTML = 
+                    `<span class="${newBalance >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                        ${newBalance.toFixed(2)} BYN
+                    </span>`;
+                
+                // Обновляем долг
+                if (newBalance < 0) {
+                    currentEditingUser.debt = Math.abs(newBalance);
+                    document.getElementById('modalUserDebt').innerHTML = 
+                        `<span class="text-danger fw-bold">
+                            ${currentEditingUser.debt.toFixed(2)} BYN
+                        </span>`;
+                }
+                
+                amountInput.value = '';
+                
+                showNotification(`Списано ${amount.toFixed(2)} BYN`, 'success');
+                
+            } catch (error) {
+                console.error('Ошибка списания средств:', error);
+                showNotification('Ошибка списания средств', 'error');
+            }
+        }
+
+        // Сохранение изменений пользователя
+        async function saveUserChanges() {
+            if (!currentEditingUser) {
+                showNotification('Пользователь не выбран', 'error');
+                return;
+            }
+            
+            try {
+                const userId = document.getElementById('editUserId').value;
+                const userData = {
+                    fio: document.getElementById('editUserFio').value,
+                    status: document.getElementById('editUserStatus').value,
+                    tariff: document.getElementById('editUserTariff').value
+                };
+                
+                // Добавляем пароль, если он указан
+                const newPassword = document.getElementById('editUserPassword').value;
+                if (newPassword) {
+                    userData.password = newPassword;
+                }
+                
+                showNotification('Сохранение изменений...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос
+                // Для демонстрации просто обновляем интерфейс
+                
+                // Обновляем данные в интерфейсе
+                currentEditingUser.fio = userData.fio;
+                currentEditingUser.status = userData.status;
+                currentEditingUser.tariff = {
+                    id: userData.tariff,
+                    name: userData.tariff === 'standard' ? 'Стандарт' : 
+                          userData.tariff === 'plus+' ? 'Плюс+' : 
+                          userData.tariff === 'Super plus' ? 'Супер плюс' : 'Премиум',
+                    price: userData.tariff === 'standard' ? 19.99 : 
+                           userData.tariff === 'plus+' ? 29.99 : 
+                           userData.tariff === 'Super plus' ? 35.99 : 49.99,
+                    includedMinutes: userData.tariff === 'standard' ? 300 : 
+                                    userData.tariff === 'plus+' ? 500 : 
+                                    userData.tariff === 'Super plus' ? 1000 : 2000,
+                    internetGB: userData.tariff === 'standard' ? 15 : 
+                               userData.tariff === 'plus+' ? 25 : 
+                               userData.tariff === 'Super plus' ? 50 : 100,
+                    includedSMS: userData.tariff === 'standard' ? 100 : 
+                                userData.tariff === 'plus+' ? 200 : 
+                                userData.tariff === 'Super plus' ? 500 : 1000
+                };
+                
+                showNotification('Изменения успешно сохранены', 'success');
+                
+                // Обновляем дашборд
+                loadDashboardData();
+                
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                modal.hide();
+                
+            } catch (error) {
+                console.error('Ошибка сохранения изменений:', error);
+                showNotification('Ошибка сохранения изменений', 'error');
+            }
+        }
+
+        // Удаление клиента
+        async function deleteClient(userId, userName) {
+            if (!confirm(`Вы уверены, что хотите удалить пользователя "${userName}"? Это действие нельзя отменить.`)) {
+                return;
+            }
+
+            try {
+                // В реальном приложении здесь будет fetch запрос DELETE
+                showNotification('Удаление пользователя...', 'warning');
+                
+                // Для демонстрации просто обновляем интерфейс через 1 секунду
+                setTimeout(() => {
+                    showNotification(`Пользователь ${userName} удален`, 'success');
+                    loadDashboardData();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка удаления пользователя:', error);
+                showNotification('Ошибка удаления пользователя', 'error');
+            }
+        }
+
+        // Показать модальное окно добавления клиента
+        function showAddClientModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
+            modal.show();
+        }
+
+        // Добавление клиента
+        async function addClient() {
+            try {
+                const fio = document.getElementById('clientFio').value;
+                const phone = document.getElementById('clientPhone').value;
+                const password = document.getElementById('clientPassword').value;
+                const balance = parseFloat(document.getElementById('clientBalance').value) || 0;
+                const tariff = document.getElementById('clientTariff').value;
+
+                if (!fio || !phone || !password) {
+                    showNotification('Заполните обязательные поля', 'error');
+                    return;
+                }
+
+                if (!/^\+375[0-9]{9}$/.test(phone)) {
+                    showNotification('Некорректный номер телефона. Формат: +375XXXXXXXXX', 'error');
+                    return;
+                }
+
+                showNotification('Добавление клиента...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос POST
+                // Для демонстрации просто обновляем интерфейс
+                
+                setTimeout(() => {
+                    showNotification('Клиент успешно добавлен', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
+                    document.getElementById('addClientForm').reset();
+                    loadDashboardData();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка добавления клиента:', error);
+                showNotification('Ошибка добавления клиента: ' + error.message, 'error');
+            }
+        }
+
+        // Показать модальное окно регистрации звонка
+        function showCallModal() {
+            const modal = new bootstrap.Modal(document.getElementById('callModal'));
+            modal.show();
+        }
+
+        // Регистрация звонка
+        async function registerCall() {
+            try {
+                const phone = document.getElementById('callClientPhone').value;
+                const number = document.getElementById('callNumber').value;
+                const callType = document.getElementById('callType').value;
+                const duration = parseInt(document.getElementById('callDuration').value);
+
+                if (!phone || !number || !duration || !callType) {
+                    showNotification('Заполните все поля', 'error');
+                    return;
+                }
+
+                showNotification('Регистрация звонка...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос POST
+                // Для демонстрации просто обновляем интерфейс
+                
+                setTimeout(() => {
+                    showNotification('Звонок успешно зарегистрирован', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('callModal')).hide();
+                    document.getElementById('callForm').reset();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка регистрации звонка:', error);
+                showNotification('Ошибка регистрации звонка', 'error');
+            }
+        }
+
+        // Показать модальное окно отправки сообщения
+        function showMessageModal() {
+            const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+            modal.show();
+        }
+
+        // Отправка сообщения
+        async function sendMessage() {
+            try {
+                const phone = document.getElementById('messageClientPhone').value;
+                const recipient = document.getElementById('messageRecipient').value;
+                const messageText = document.getElementById('messageText').value;
+                const direction = document.getElementById('messageDirection').value;
+
+                if (!phone || !recipient || !messageText || !direction) {
+                    showNotification('Заполните все поля', 'error');
+                    return;
+                }
+
+                showNotification('Отправка сообщения...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос POST
+                // Для демонстрации просто обновляем интерфейс
+                
+                setTimeout(() => {
+                    showNotification('Сообщение успешно отправлено', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('messageModal')).hide();
+                    document.getElementById('messageForm').reset();
+                    document.getElementById('messageCharCount').textContent = '0';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                showNotification('Ошибка отправки сообщения', 'error');
+            }
+        }
+
+        // Показать модальное окно пополнения баланса
+        function showAddPaymentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
+            modal.show();
+        }
+
+        // Обработка платежа
+        async function processPayment() {
+            try {
+                const phone = document.getElementById('paymentClientPhone').value;
+                const amount = parseFloat(document.getElementById('paymentAmount').value);
+                const method = document.getElementById('paymentMethod').value;
+
+                if (!phone || !amount || amount <= 0) {
+                    showNotification('Заполните все поля корректно', 'error');
+                    return;
+                }
+
+                showNotification('Пополнение баланса...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос POST
+                // Для демонстрации просто обновляем интерфейс
+                
+                setTimeout(() => {
+                    showNotification(`Баланс пополнен на ${amount} BYN`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addPaymentModal')).hide();
+                    document.getElementById('addPaymentForm').reset();
+                    loadDashboardData();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка пополнения баланса:', error);
+                showNotification('Ошибка пополнения баланса', 'error');
+            }
+        }
+
+        // Показать модальное окно изменения трафика
+        function showTrafficEditModal() {
+            const modal = new bootstrap.Modal(document.getElementById('trafficEditModal'));
+            modal.show();
+            
+            // Сбросить форму
+            document.getElementById('trafficEditForm').reset();
+            document.getElementById('trafficClientInfo').textContent = 'Введите номер телефона для загрузки информации';
+            document.getElementById('currentTraffic').textContent = '-';
+            document.getElementById('tariffLimit').textContent = '-';
+            document.getElementById('remainingTraffic').textContent = '-';
+            document.getElementById('overLimitCost').textContent = '-';
+            document.getElementById('trafficWarning').classList.add('d-none');
+            
+            // Установить текущий месяц
+            const today = new Date();
+            const currentMonth = today.toISOString().slice(0, 7);
+            document.getElementById('trafficMonth').value = currentMonth;
+        }
+
+        // Загрузка информации о трафике клиента
+        async function loadClientTrafficInfo(phone) {
+            try {
+                if (!phone) {
+                    document.getElementById('trafficClientInfo').innerHTML = 
+                        `<span class="text-danger">Введите номер телефона</span>`;
+                    return;
+                }
+                
+                // Для демонстрации показываем фиктивные данные
+                const client = allClients.find(c => c.phone === phone);
+                if (!client) {
+                    document.getElementById('trafficClientInfo').innerHTML = 
+                        `<span class="text-danger">Клиент не найден</span>`;
+                    return;
+                }
+
+                // Отображаем информацию о клиенте
+                document.getElementById('trafficClientInfo').innerHTML = 
+                    `<strong>${client.fio}</strong>, тариф: ${client.tariff.name}`;
+                
+                // Фиктивные данные о трафике для демонстрации
+                const currentGB = 8.5;
+                const currentMB = currentGB * 1024;
+                const limitGB = client.tariff.internetGB || 15;
+                const limitMB = limitGB * 1024;
+                const remainingGB = Math.max(0, limitGB - currentGB);
+                const remainingMB = remainingGB * 1024;
+                const overCost = 0.01; // 0.01 BYN за МБ
+                
+                // Отображаем информацию о трафике
+                document.getElementById('currentTraffic').innerHTML = 
+                    `<strong>${currentGB.toFixed(2)} ГБ</strong> (${currentMB.toFixed(0)} МБ)`;
+                document.getElementById('tariffLimit').innerHTML = 
+                    `<strong>${limitGB} ГБ</strong> (${limitMB.toFixed(0)} МБ)`;
+                document.getElementById('remainingTraffic').innerHTML = 
+                    `<strong>${remainingGB.toFixed(2)} ГБ</strong> (${remainingMB.toFixed(0)} МБ)`;
+                document.getElementById('overLimitCost').innerHTML = 
+                    `<strong>${overCost.toFixed(2)} BYN/МБ</strong> за превышение`;
+                
+                // Сохраняем данные для расчетов
+                document.getElementById('trafficEditForm').dataset.currentMB = currentMB;
+                document.getElementById('trafficEditForm').dataset.limitMB = limitMB;
+                document.getElementById('trafficEditForm').dataset.overCost = overCost;
+
+            } catch (error) {
+                console.error('Ошибка загрузки информации о трафике:', error);
+                document.getElementById('trafficClientInfo').innerHTML = 
+                    `<span class="text-danger">Ошибка загрузки данных</span>`;
+            }
+        }
+
+        // Расчет изменения трафика
+        function calculateTrafficChange() {
+            const changeInput = document.getElementById('trafficChange').value.trim();
+            const form = document.getElementById('trafficEditForm');
+            
+            if (!changeInput) {
+                document.getElementById('trafficWarning').classList.add('d-none');
+                return;
+            }
+            
+            // Проверяем формат ввода
+            if (!/^[+-]?\d+(\.\d+)?$/.test(changeInput)) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    'Неверный формат. Используйте числа со знаком "+" или "-" (например: +500 или -300)';
+                return;
+            }
+            
+            const changeValue = parseFloat(changeInput);
+            const currentMB = parseFloat(form.dataset.currentMB) || 0;
+            const limitMB = parseFloat(form.dataset.limitMB) || 0;
+            const overCost = parseFloat(form.dataset.overCost) || 0.01;
+            
+            if (isNaN(currentMB) || isNaN(limitMB)) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    'Сначала введите номер телефона клиента';
+                return;
+            }
+            
+            // Рассчитываем новый трафик
+            const newMB = currentMB + changeValue;
+            
+            if (newMB < 0) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    `Невозможно уменьшить трафик ниже 0. Текущий трафик: ${currentMB.toFixed(0)} МБ`;
+                return;
+            }
+            
+            // Проверяем превышение лимита
+            const overMB = Math.max(0, newMB - limitMB);
+            const cost = overMB * overCost;
+            
+            if (overMB > 0) {
+                document.getElementById('trafficWarning').classList.remove('d-none');
+                document.getElementById('warningText').textContent = 
+                    `Внимание! После изменения трафик превысит лимит на ${overMB.toFixed(0)} МБ. ` +
+                    `Будет начислена дополнительная плата: ${cost.toFixed(2)} BYN`;
+            } else {
+                document.getElementById('trafficWarning').classList.add('d-none');
+            }
+            
+            // Обновляем остаток
+            const remainingMB = Math.max(0, limitMB - newMB);
+            const remainingGB = remainingMB / 1024;
+            document.getElementById('remainingTraffic').innerHTML = 
+                `<strong>${remainingGB.toFixed(2)} ГБ</strong> (${remainingMB.toFixed(0)} МБ)`;
+        }
+
+        // Применение изменения трафика
+        async function applyTrafficChange() {
+            try {
+                const phone = document.getElementById('trafficClientPhone').value;
+                const trafficChange = document.getElementById('trafficChange').value.trim();
+                const month = document.getElementById('trafficMonth').value;
+                
+                if (!phone || !trafficChange) {
+                    showNotification('Заполните все обязательные поля', 'error');
+                    return;
+                }
+                
+                // Проверяем формат ввода
+                if (!/^[+-]?\d+(\.\d+)?$/.test(trafficChange)) {
+                    showNotification('Неверный формат изменения трафика. Используйте числа со знаком "+" или "-"', 'error');
+                    return;
+                }
+                
+                showNotification('Применение изменений...', 'warning');
+                
+                // В реальном приложении здесь будет fetch запрос POST
+                // Для демонстрации просто обновляем интерфейс
+                
+                setTimeout(() => {
+                    showNotification('Изменения трафика применены', 'success');
+                    
+                    // Сбросить форму
+                    document.getElementById('trafficEditForm').reset();
+                    document.getElementById('trafficClientInfo').textContent = 'Введите номер телефона для загрузки информации';
+                    document.getElementById('currentTraffic').textContent = '-';
+                    document.getElementById('tariffLimit').textContent = '-';
+                    document.getElementById('remainingTraffic').textContent = '-';
+                    document.getElementById('overLimitCost').textContent = '-';
+                    document.getElementById('trafficWarning').classList.add('d-none');
+                    
+                    // Закрыть модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('trafficEditModal'));
+                    modal.hide();
+                    
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Ошибка изменения трафика:', error);
+                showNotification('Ошибка изменения трафика', 'error');
+            }
+        }
+
+// Функции для отчетов
+// Используйте английскую версию отчетов
+async function exportUsersReport() {
+    try {
+        showNotification('Формирование отчета по пользователям...', 'info');
+        
+        const link = document.createElement('a');
+        link.href = '/api/reports/simple/users/pdf';
+        link.download = `users_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => {
+            showNotification('Отчет по пользователям успешно сформирован', 'success');
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по пользователям:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+// Проверка прямой ссылки
+function testDirectLink() {
+    try {
+        // Открываем API в новой вкладке
+        window.open('/api/reports/test/pdf', '_blank');
+        showNotification('Открываю PDF в новой вкладке...', 'info');
+    } catch (error) {
+        console.error('Ошибка открытия ссылки:', error);
+        showNotification('Ошибка: ' + error.message, 'error');
+    }
+}
+// Функции для отчетов - ИСПРАВЛЕННЫЕ ВЕРСИИ
+async function exportUsersReport() {
+    try {
+        showNotification('Формирование отчета по пользователям...', 'info');
+        
+        // Открываем напрямую без создания ссылки
+        window.open('/api/reports/users/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по пользователям:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportDebtorsReport() {
+    try {
+        showNotification('Формирование отчета по должникам...', 'info');
+        
+        window.open('/api/reports/debtors/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по должникам:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportActiveUsersReport() {
+    try {
+        showNotification('Формирование отчета по активным пользователям...', 'info');
+        
+        window.open('/api/reports/users/pdf?status=active', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по активным пользователям:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportCallsReport() {
+    try {
+        showNotification('Формирование отчета по звонкам...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по звонкам:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportInternetReport() {
+    try {
+        showNotification('Формирование отчета по интернет трафику...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по интернету:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportSMSReport() {
+    try {
+        showNotification('Формирование отчета по SMS...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по SMS:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportPaymentsReport() {
+    try {
+        showNotification('Формирование отчета по платежам...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта отчета по платежам:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+async function exportFullReport() {
+    try {
+        showNotification('Формирование полного отчета...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('Ошибка экспорта полного отчета:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+// Тестовая функция для проверки PDF
+async function testPDF() {
+    try {
+        showNotification('Генерация тестового отчета...', 'info');
+        
+        window.open('/api/reports/test/pdf', '_blank');
+        
+    } catch (error) {
+        console.error('❌ Ошибка тестирования PDF:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+}
+
+// Проверка прямой ссылки
+function testDirectLink() {
+    try {
+        window.open('/api/reports/test/pdf', '_blank');
+        showNotification('Открываю PDF в новой вкладке...', 'info');
+    } catch (error) {
+        console.error('Ошибка открытия ссылки:', error);
+        showNotification('Ошибка: ' + error.message, 'error');
+    }
+}     
+function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Выход
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                window.location.href = '/';
+            }
+        }
+    </script>
 </body>
 </html>

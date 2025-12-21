@@ -10,6 +10,8 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.22.1",
+    "fontkit": "^2.0.4",
+    "mongodb-memory-server": "^11.0.0",
     "mongoose": "^8.20.4",
     "pdfkit": "^0.17.2"
   }

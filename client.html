@@ -34,6 +34,8 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.6;
+            font-family: 'Roboto', sans-serif;
+
         }
 
         /* Верхнее меню */
@@ -1090,7 +1092,19 @@
             background-color: var(--danger);
             animation: blink 1s infinite;
         }
-
+         @font-face {
+        font-family: 'Roboto';
+        src: url('fonts/Roboto-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    
+    @font-face {
+        font-family: 'Roboto';
+        src: url('fonts/Roboto-Bold.ttf') format('truetype');
+        font-weight: bold;
+        font-style: normal;
+    }
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -1165,6 +1179,7 @@
     </style>
 </head>
 <body>
+    
     <!-- Верхнее меню -->
     <nav class="top-menu">
         <div class="menu-container">
@@ -1640,6 +1655,89 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
     <script>
         // ========== КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ ==========
+
+
+// Функция для логирования в консоль браузера
+function debugLog(message, data = null) {
+    console.log(`🔍 ${message}`, data || '');
+}
+
+async function initializeApp() {
+    try {
+        const userData = localStorage.getItem('currentUser');
+        if (!userData) {
+            window.location.href = '/';
+            return;
+        }
+
+        currentUser = JSON.parse(userData);
+        debugLog('Текущий пользователь:', {
+            fio: currentUser.fio,
+            phone: currentUser.phone,
+            tariff: currentUser.tariff?.name || 'Не указан'
+        });
+        
+        updateUserInterface();
+        await loadDashboardData();
+        
+        // Установка дат по умолчанию для фильтров истории
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementById('historyStartDate').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('historyEndDate').value = today.toISOString().split('T')[0];
+        
+        // Запуск периодического обновления данных трафика
+        startPeriodicUsageUpdate();
+        
+    } catch (error) {
+        console.error('❌ Ошибка инициализации:', error);
+        showNotification('Ошибка загрузки приложения', 'error');
+    }
+}
+
+async function loadUserData() {
+    try {
+        debugLog('Загрузка данных пользователя...');
+        
+        const response = await fetch(`/api/user/data?phone=${encodeURIComponent(currentUser.phone)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        debugLog('Ответ сервера:', result);
+        
+        if (result.success) {
+            // Объединяем старые и новые данные
+            currentUser = { 
+                ...currentUser, 
+                ...result,
+                tariff: result.tariff || currentUser.tariff
+            };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            updateUserData(result);
+            debugLog('✅ Данные пользователя обновлены:', {
+                fio: result.fio,
+                tariff: result.tariff?.name || 'Не указан',
+                balance: result.balance
+            });
+        } else {
+            throw new Error(result.error || 'Ошибка загрузки данных');
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка загрузки данных пользователя:', error);
+        showNotification('Ошибка загрузки данных пользователя', 'error');
+        
+        if (currentUser) {
+            updateUserData(currentUser);
+        }
+    }
+}
+        // ========== КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ ==========
         let currentUser = null;
         let currentUsageData = null;
         let currentHistoryPage = 1;
@@ -1903,36 +2001,53 @@
         }
 
         // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
-        function updateUserData(data) {
-            if (data.tariff) {
-                document.getElementById('tariffName').textContent = data.tariff.name;
-                document.getElementById('tariffPriceDisplay').textContent = `${data.tariff.price} BYN/месяц`;
-                document.getElementById('currentTariffName').textContent = data.tariff.name;
-                document.getElementById('currentTariffPrice').textContent = `${data.tariff.price} BYN/мес`;
-                
-                const featuresList = document.getElementById('tariffFeatures');
-                if (data.tariff.features) {
-                    featuresList.innerHTML = data.tariff.features.map(feature => 
-                        `<li>${feature}</li>`
-                    ).join('');
-                }
-            }
-            
-            if (data.balance !== undefined) {
-                document.getElementById('balanceAmount').textContent = `${data.balance.toFixed(2)} BYN`;
-            }
-            
-            document.getElementById('userStatus').textContent = data.status === 'active' ? 'Активен' : 'Неактивен';
-            
-            if (data.debt > 0) {
-                document.getElementById('debtInfo').textContent = `Задолженность: ${data.debt.toFixed(2)} BYN`;
-                document.getElementById('debtInfo').style.color = '#e74c3c';
-            } else {
-                document.getElementById('debtInfo').textContent = 'Нет задолженности';
-                document.getElementById('debtInfo').style.color = '';
-            }
+    function updateUserData(data) {
+    console.log('📊 Обновление интерфейса пользователя:', data);
+    
+    if (data.tariff) {
+        console.log('📋 Данные тарифа:', data.tariff);
+        
+        document.getElementById('tariffName').textContent = data.tariff.name;
+        document.getElementById('tariffPriceDisplay').textContent = `${data.tariff.price} BYN/месяц`;
+        document.getElementById('currentTariffName').textContent = data.tariff.name;
+        document.getElementById('currentTariffPrice').textContent = `${data.tariff.price} BYN/мес`;
+        
+        const featuresList = document.getElementById('tariffFeatures');
+        if (data.tariff.features && Array.isArray(data.tariff.features)) {
+            featuresList.innerHTML = data.tariff.features.map(feature => 
+                `<li>${feature}</li>`
+            ).join('');
+        } else {
+            // Формируем фичи из базовых данных тарифа
+            const features = [
+                `${data.tariff.includedMinutes || 0} минут звонков`,
+                `${data.tariff.internetGB || 0} ГБ интернета`,
+                `${data.tariff.smsCount || 0} SMS`,
+                `Сверх лимита: ${data.tariff.minutePrice || 0.10} BYN/мин`,
+                `Интернет: ${data.tariff.internetPricePerMB || 0.01} BYN/МБ`
+            ];
+            featuresList.innerHTML = features.map(feature => `<li>${feature}</li>`).join('');
         }
-
+    } else {
+        console.warn('⚠️ Данные тарифа не получены');
+        document.getElementById('tariffName').textContent = 'Не указан';
+        document.getElementById('currentTariffName').textContent = 'Не указан';
+    }
+    
+    if (data.balance !== undefined) {
+        document.getElementById('balanceAmount').textContent = `${data.balance.toFixed(2)} BYN`;
+    }
+    
+    document.getElementById('userStatus').textContent = data.status === 'active' ? 'Активен' : 'Неактивен';
+    
+    if (data.debt > 0) {
+        document.getElementById('debtInfo').textContent = `Задолженность: ${data.debt.toFixed(2)} BYN`;
+        document.getElementById('debtInfo').style.color = '#e74c3c';
+    } else {
+        document.getElementById('debtInfo').textContent = 'Нет задолженности';
+        document.getElementById('debtInfo').style.color = '';
+    }
+}
         function updateUsageData(data) {
             if (!data) return;
             

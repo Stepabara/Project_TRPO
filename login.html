@@ -948,6 +948,110 @@
             }
         });
 
+        // Обработка формы регистрации
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const fio = document.getElementById('registerFio').value;
+    const phone = document.getElementById('registerPhone').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    // Нормализуем телефон для проверки
+    const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const normalizedAdminPhone = '+375256082909'.replace(/[\s\-\(\)]/g, '');
+    
+    // Проверка номера администратора
+    if (normalizedPhone === normalizedAdminPhone) {
+        showMessage('registerMessage', '❌ Этот номер телефона зарезервирован для администратора', 'error');
+        return;
+    }
+
+    // Валидация
+    if (!fio || !phone || !password || !confirmPassword) {
+        showMessage('registerMessage', 'Заполните все поля', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showMessage('registerMessage', 'Пароль должен содержать минимум 6 символов', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showMessage('registerMessage', 'Пароли не совпадают', 'error');
+        return;
+    }
+
+    setLoading('registerBtn', 'registerLoading', 'registerText', true);
+    hideAllMessages();
+
+    try {
+        // Формируем данные для регистрации
+        const userData = { 
+            fio: fio.trim(), 
+            phone: normalizedPhone, // Используем нормализованный номер
+            password: password,
+            tariff: 'standard'  // Автоматически назначаем тариф "Стандарт"
+        };
+
+        console.log('Отправка запроса на регистрацию:', userData);
+        
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        console.log('Статус ответа:', response.status);
+        
+        let result;
+        try {
+            result = await response.json();
+            console.log('Ответ сервера:', result);
+        } catch (parseError) {
+            console.error('Ошибка парсинга JSON:', parseError);
+            showMessage('registerMessage', '❌ Ошибка формата ответа сервера', 'error');
+            makeCatSad();
+            return;
+        }
+        
+        if (result.success) {
+            showMessage('registerMessage', `✅ ${result.message}`, 'success');
+            
+            // Сохраняем данные пользователя при регистрации
+            if (result.user) {
+                localStorage.setItem('currentUser', JSON.stringify(result.user));
+                console.log('Пользователь зарегистрирован:', result.user);
+            }
+            
+            makeCatHappy();
+            
+            // Очистка формы и переключение на вход
+            document.getElementById('registerForm').reset();
+            document.getElementById('passwordStrength').className = 'password-strength';
+            document.getElementById('passwordMatchText').textContent = '';
+            document.getElementById('adminPhoneWarning').style.display = 'none';
+            
+            setTimeout(() => {
+                showTab('login');
+            }, 2000);
+        } else {
+            showMessage('registerMessage', `❌ ${result.message || 'Ошибка регистрации'}`, 'error');
+            makeCatSad();
+        }
+    } catch (error) {
+        console.error('Ошибка сети при регистрации:', error);
+        showMessage('registerMessage', '❌ Ошибка соединения с сервером. Проверьте, запущен ли сервер.', 'error');
+        makeCatSad();
+    } finally {
+        setLoading('registerBtn', 'registerLoading', 'registerText', false);
+    }
+});
+
         // Обработка формы регистрации с добавлением тарифа "Стандарт"
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
