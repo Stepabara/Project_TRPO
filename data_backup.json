@@ -30,7 +30,7 @@
       "phone": "+375291234567",
       "password": "$2a$10$lrmTfeLA3k5CqZ.2yW3.1uqYGGzHS8NgRDcERc2OibZnYpjyBGUES",
       "role": "client",
-      "balance": -134.59000000000003,
+      "balance": -114.64000000000003,
       "tariff": {
         "id": "standard",
         "name": "Стандарт",
@@ -54,7 +54,7 @@
       "phone": "+375292345678",
       "password": "$2a$10$lrmTfeLA3k5CqZ.2yW3.1uqYGGzHS8NgRDcERc2OibZnYpjyBGUES",
       "role": "client",
-      "balance": -45.96,
+      "balance": -25,
       "tariff": {
         "id": "plus+",
         "name": "Плюс+",
@@ -174,7 +174,7 @@
       "phone": "+375999999955",
       "password": "$2a$10$5vIaX19g3qsIBfg/eiu4jO0jc5owuyMKzIiHotU6CtMsNNl9CMNQS",
       "role": "client",
-      "balance": 202.02,
+      "balance": 2.0199999999999996,
       "tariff": {
         "id": "standard",
         "name": "Стандарт",
@@ -599,49 +599,41 @@
       ],
       "date": "2025-12-23T19:51:05.949Z",
       "status": "completed"
-    },
-    {
-      "_id": "payment_1766522176741",
-      "userId": "user_001",
-      "phone": "+375291234567",
-      "amount": 8.98,
-      "type": "services_update",
-      "description": "Обновление пакета услуг (2 услуг)",
-      "date": "2025-12-23T20:36:16.741Z",
-      "status": "completed"
-    },
-    {
-      "_id": "payment_1766522385303",
-      "userId": "user_001",
-      "phone": "+375291234567",
-      "amount": 10.97,
-      "type": "services_update",
-      "description": "Обновление пакета услуг (3 услуг)",
-      "date": "2025-12-23T20:39:45.303Z",
-      "status": "completed"
-    },
-    {
-      "_id": "payment_016",
-      "userId": "user_002",
-      "phone": "+375999999955",
-      "amount": 200,
-      "type": "topup",
-      "method": "online",
-      "date": "2025-12-24T05:08:30.787Z",
-      "status": "completed"
-    },
-    {
-      "_id": "payment_1766553392038",
-      "userId": "user_002",
-      "phone": "+375292345678",
-      "amount": 20.96,
-      "type": "services_update",
-      "description": "Обновление пакета услуг (6 услуг)",
-      "date": "2025-12-24T05:16:32.038Z",
-      "status": "completed"
     }
   ],
   "userServices": [
+    {
+      "_id": "service_002",
+      "userId": "user_002",
+      "serviceId": "antispam",
+      "name": "Антиспам",
+      "price": 3,
+      "active": true,
+      "activatedAt": "2025-12-06T11:00:20.779Z",
+      "nextPayment": "2026-01-05T11:00:20.779Z"
+    },
+    {
+      "_id": "service_12",
+      "userId": "user_002",
+      "serviceId": "music",
+      "name": "Музыка",
+      "price": 4.99,
+      "description": "Стриминг музыки без рекламы и ограничений",
+      "category": "развлечения",
+      "active": false,
+      "activatedAt": "2025-12-21T16:29:41.151Z"
+    },
+    {
+      "_id": "service_13",
+      "userId": "user_002",
+      "serviceId": "cloud",
+      "name": "Облако",
+      "price": 1.99,
+      "description": "50 ГБ облачного хранилища для файлов",
+      "category": "хранилище",
+      "active": true,
+      "activatedAt": "2025-12-21T16:29:56.553Z"
+    },
     {
       "_id": "service_56",
       "userId": "user_003",
@@ -679,31 +671,7 @@
       "lastChargeDate": "2025-12-23T19:51:05.949Z"
     },
     {
-      "_id": "service_1766522385302_0_qym3fo6qh",
-      "userId": "user_001",
-      "serviceId": "music",
-      "name": "Музыка",
-      "price": 4.99,
-      "description": "Стриминг музыки без рекламы и ограничений",
-      "category": "развлечения",
-      "active": true,
-      "activatedAt": "2025-12-23T20:39:45.303Z",
-      "lastChargeDate": "2025-12-23T20:39:45.303Z"
-    },
-    {
-      "_id": "service_1766522385303_1_t27g4owpo",
-      "userId": "user_001",
-      "serviceId": "games",
-      "name": "Игровая подписка",
-      "price": 3.99,
-      "description": "Доступ к каталогу мобильных игр",
-      "category": "развлечения",
-      "active": true,
-      "activatedAt": "2025-12-23T20:39:45.303Z",
-      "lastChargeDate": "2025-12-23T20:39:45.303Z"
-    },
-    {
-      "_id": "service_1766522385303_2_l2rkadggi",
+      "_id": "service_1766521735663_syl5ytuws",
       "userId": "user_001",
       "serviceId": "cloud",
       "name": "Облако",
@@ -711,85 +679,36 @@
       "description": "50 ГБ облачного хранилища для файлов",
       "category": "хранилище",
       "active": true,
-      "activatedAt": "2025-12-23T20:39:45.303Z",
-      "lastChargeDate": "2025-12-23T20:39:45.303Z"
+      "activatedAt": "2025-12-23T20:28:55.663Z",
+      "lastChargeDate": "2025-12-23T20:28:55.663Z"
     },
     {
-      "_id": "service_1766553392031_0_cl53e9qrt",
-      "userId": "user_002",
-      "serviceId": "cloud",
-      "name": "Облако",
-      "price": 1.99,
-      "description": "50 ГБ облачного хранилища для файлов",
-      "category": "хранилище",
+      "_id": "service_1766521735663_irxi2lh7e",
+      "userId": "user_001",
+      "serviceId": "roaming",
+      "name": "Услуга",
+      "price": 5,
+      "description": "Дополнительная услуга",
+      "category": "другое",
       "active": true,
-      "activatedAt": "2025-12-24T05:16:32.031Z",
-      "lastChargeDate": "2025-12-24T05:16:32.031Z"
+      "activatedAt": "2025-12-23T20:28:55.663Z",
+      "lastChargeDate": "2025-12-23T20:28:55.663Z"
     },
     {
-      "_id": "service_1766553392032_1_qrnzpq3if",
-      "userId": "user_002",
-      "serviceId": "antivirus",
-      "name": "Антивирус",
-      "price": 2.99,
-      "description": "Защита устройства от вирусов и вредоносных программ",
-      "category": "безопасность",
-      "active": true,
-      "activatedAt": "2025-12-24T05:16:32.032Z",
-      "lastChargeDate": "2025-12-24T05:16:32.032Z"
-    },
-    {
-      "_id": "service_1766553392032_2_7v0sgp999",
-      "userId": "user_002",
-      "serviceId": "music",
-      "name": "Музыка",
-      "price": 4.99,
-      "description": "Стриминг музыки без рекламы и ограничений",
-      "category": "развлечения",
-      "active": true,
-      "activatedAt": "2025-12-24T05:16:32.032Z",
-      "lastChargeDate": "2025-12-24T05:16:32.032Z"
-    },
-    {
-      "_id": "service_1766553392035_3_dwakvlip8",
-      "userId": "user_002",
-      "serviceId": "games",
-      "name": "Игровая подписка",
-      "price": 3.99,
-      "description": "Доступ к каталогу мобильных игр",
-      "category": "развлечения",
-      "active": true,
-      "activatedAt": "2025-12-24T05:16:32.035Z",
-      "lastChargeDate": "2025-12-24T05:16:32.035Z"
-    },
-    {
-      "_id": "service_1766553392036_4_0exhw55qg",
-      "userId": "user_002",
+      "_id": "service_1766521735663_sr4ql1g8b",
+      "userId": "user_001",
       "serviceId": "callerId",
       "name": "Услуга",
       "price": 2,
       "description": "Дополнительная услуга",
       "category": "другое",
       "active": true,
-      "activatedAt": "2025-12-24T05:16:32.036Z",
-      "lastChargeDate": "2025-12-24T05:16:32.036Z"
-    },
-    {
-      "_id": "service_1766553392037_5_z5e4kvypg",
-      "userId": "user_002",
-      "serviceId": "roaming",
-      "name": "Услуга",
-      "price": 5,
-      "description": "Дополнительная услуга",
-      "category": "другое",
-      "active": false,
-      "activatedAt": "2025-12-24T05:16:32.037Z",
-      "lastChargeDate": "2025-12-24T05:16:32.037Z",
-      "deactivatedAt": "2025-12-24T05:17:18.576Z"
+      "activatedAt": "2025-12-23T20:28:55.663Z",
+      "lastChargeDate": "2025-12-23T20:28:55.663Z"
     }
   ],
   "nextUserId": 4,
   "nextCallId": 1,
-  "nextPaymentId": 17,
+  "nextPaymentId": 16,
   "nextServiceId": 59
 }

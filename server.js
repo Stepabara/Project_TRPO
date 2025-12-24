@@ -90,13 +90,46 @@ function loadDatabase() {
 
 function saveDatabase() {
     try {
-        const data = JSON.stringify(database, null, 2);
-        fs.writeFileSync(DATA_FILE, data, 'utf8');
-        console.log('Данные сохранены');
+        console.log('💾 СОХРАНЕНИЕ БАЗЫ ДАННЫХ...');
+        
+        const dataToSave = {
+            users: database.users || [],
+            calls: database.calls || [],
+            internetUsage: database.internetUsage || [],
+            smsUsage: database.smsUsage || [],
+            payments: database.payments || [],
+            userServices: database.userServices || [],
+            nextUserId: database.nextUserId || 1,
+            nextCallId: database.nextCallId || 1,
+            nextPaymentId: database.nextPaymentId || 1,
+            nextServiceId: database.nextServiceId || 1
+        };
+        
+        console.log('📊 Данные для сохранения:');
+        console.log('- Пользователей:', dataToSave.users.length);
+        console.log('- Услуг:', dataToSave.userServices.length);
+        console.log('- Платежей:', dataToSave.payments.length);
+        
+        // Сохраняем в файл
+        const dataStr = JSON.stringify(dataToSave, null, 2);
+        fs.writeFileSync(DATA_FILE, dataStr, 'utf8');
+        
+        console.log('✅ База сохранена в файл:', DATA_FILE);
+        
+        // Проверяем, что файл создан
+        if (fs.existsSync(DATA_FILE)) {
+            const stats = fs.statSync(DATA_FILE);
+            console.log('📁 Размер файла:', stats.size, 'байт');
+        } else {
+            console.error('❌ Файл не создан!');
+        }
+        
     } catch (error) {
-        console.error('Ошибка сохранения данных:', error);
+        console.error('❌ ОШИБКА СОХРАНЕНИЯ:', error);
+        console.error('Stack trace:', error.stack);
     }
 }
+
 
 // Загружаем данные при запуске
 let database = loadDatabase();
@@ -1625,6 +1658,98 @@ app.get('/api/user/payments', (req, res) => {
         });
     }
 });
+// Обновление услуг пользователя (админ)
+app.post('/api/user/services/update', async (req, res) => {
+    try {
+        const { userId, phone, services } = req.body;
+        
+        console.log('Обновление услуг для пользователя:', { userId, phone, services });
+        
+        if (!userId || !services) {
+            return res.status(400).json({
+                success: false,
+                error: 'Не указаны необходимые данные'
+            });
+        }
+        
+        const user = database.users.find(u => u._id === userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'Пользователь не найден'
+            });
+        }
+        
+        // Получаем стоимость услуг
+        const servicesPrice = services.reduce((total, serviceId) => {
+            const price = getServicePrice(serviceId);
+            return total + price;
+        }, 0);
+        
+        // Проверяем баланс
+        if (user.balance < servicesPrice) {
+            return res.status(400).json({
+                success: false,
+                error: `Недостаточно средств. Общая стоимость услуг: ${servicesPrice.toFixed(2)} BYN`
+            });
+        }
+        
+        // Удаляем старые услуги пользователя
+        database.userServices = database.userServices.filter(s => s.userId !== userId);
+        
+        // Добавляем новые услуги
+        services.forEach(serviceId => {
+            const service = {
+                _id: `service_${database.nextServiceId}`,
+                userId: userId,
+                serviceId: serviceId,
+                name: getServiceName(serviceId),
+                price: getServicePrice(serviceId),
+                description: getServiceDescription(serviceId),
+                category: getServiceCategory(serviceId),
+                active: true,
+                activatedAt: new Date(),
+                lastChargeDate: new Date()
+            };
+            database.userServices.push(service);
+            database.nextServiceId++;
+        });
+        
+        // Списание средств
+        user.balance -= servicesPrice;
+        
+        // Сохраняем платеж
+        const payment = {
+            _id: `payment_${database.nextPaymentId}`,
+            userId: userId,
+            phone: phone,
+            amount: servicesPrice,
+            type: 'services_update',
+            description: `Обновление пакета услуг (${services.length} услуг)`,
+            date: new Date(),
+            status: 'completed'
+        };
+        database.payments.push(payment);
+        database.nextPaymentId++;
+        
+        // Сохраняем изменения
+        saveDatabase();
+        
+        res.json({
+            success: true,
+            message: 'Услуги успешно обновлены',
+            amountCharged: servicesPrice,
+            newBalance: user.balance
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка обновления услуг:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка обновления услуг' 
+        });
+    }
+});
 async function toggleServiceDirect(serviceId, activate) {
     try {
         const actionText = activate ? 'Подключение' : 'Отключение';
@@ -1676,105 +1801,38 @@ async function toggleServiceDirect(serviceId, activate) {
     }
 }
 
-// Регистрация нового пользователя
+// В функции регистрации исправьте генерацию ID
 app.post('/api/register', async (req, res) => {
     try {
-        const { fio, phone, password, tariff = 'standard' } = req.body;
+        // ... существующий код ...
         
-        console.log('📝 Регистрация нового пользователя:', { fio, phone });
+        // Генерируем уникальный ID
+        const existingUsers = database.users.filter(u => u.role === 'client');
+        const newUserId = `user_${(existingUsers.length + 1).toString().padStart(3, '0')}`;
         
-        if (!fio || !phone || !password) {
-            return res.json({
-                success: false,
-                message: 'Заполните все обязательные поля'
-            });
-        }
-
-        // Проверяем уникальность номера телефона
-        if (database.users.some(u => u.phone === phone)) {
-            return res.json({
-                success: false,
-                message: 'Пользователь с таким номером телефона уже существует'
-            });
-        }
-
-        // Проверяем формат телефона
-        if (!/^\+375[0-9]{9}$/.test(phone.replace(/\s/g, ''))) {
-            return res.json({
-                success: false,
-                message: 'Неверный формат номера телефона. Используйте формат: +375XXXXXXXXX'
-            });
-        }
-
-        // Хешируем пароль
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Получаем тариф
-        const selectedTariff = TARIFFS[tariff] || TARIFFS.standard;
-        
-        // Создаем нового пользователя
         const newUser = {
-            _id: `user_${database.nextUserId.toString().padStart(3, '0')}`,
-            fio: fio.trim(),
-            phone: phone.replace(/\s/g, ''),
-            password: hashedPassword,
-            role: 'client',
-            balance: 0,
-            tariff: {
-                id: selectedTariff.id,
-                name: selectedTariff.name,
-                price: selectedTariff.price,
-                includedMinutes: selectedTariff.includedMinutes,
-                internetGB: selectedTariff.internetGB,
-                smsCount: selectedTariff.smsCount,
-                minutePrice: selectedTariff.minutePrice,
-                internetPricePerMB: selectedTariff.internetPricePerMB,
-                smsPrice: selectedTariff.smsPrice,
-                internationalMinutePrice: selectedTariff.internationalMinutePrice
-            },
-            creditLimit: 50,
-            status: 'active',
-            debt: 0,
-            createdAt: new Date()
+            _id: newUserId,
+            // ... остальные поля ...
         };
-
-        // Добавляем пользователя в базу
-        database.users.push(newUser);
-        database.nextUserId++;
         
-        // Сохраняем изменения
-        saveDatabase();
-
-        console.log('✅ Пользователь зарегистрирован:', newUser.fio);
-        
-        // Формируем ответ без пароля
-        const userResponse = {
-            _id: newUser._id,
-            fio: newUser.fio,
-            phone: newUser.phone,
-            role: newUser.role,
-            balance: newUser.balance,
-            creditLimit: newUser.creditLimit,
-            status: newUser.status,
-            tariff: newUser.tariff,
-            debt: newUser.debt,
-            createdAt: newUser.createdAt
-        };
-
-        res.json({
-            success: true,
-            message: 'Регистрация прошла успешно! Теперь вы можете войти в систему.',
-            user: userResponse
-        });
-
+        // ... остальной код ...
     } catch (error) {
-        console.error('❌ Ошибка регистрации:', error);
-        res.json({
-            success: false,
-            message: 'Ошибка сервера при регистрации'
-        });
+        // ... обработка ошибок ...
     }
 });
+
+// Или добавьте проверку уникальности
+function generateUniqueUserId() {
+    let maxId = 0;
+    database.users.forEach(user => {
+        if (user._id && user._id.startsWith('user_')) {
+            const num = parseInt(user._id.replace('user_', ''));
+            if (num > maxId) maxId = num;
+        }
+    });
+    return `user_${(maxId + 1).toString().padStart(3, '0')}`;
+}
+
 
 // Авторизация
 app.post('/api/login', async (req, res) => {
@@ -1865,10 +1923,126 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Тестовый endpoint для проверки работы API
+app.get('/api/test/services', (req, res) => {
+    try {
+        const { phone } = req.query;
+        
+        console.log('🧪 Тестовый запрос услуг для:', phone);
+        
+        // Возвращаем тестовые данные
+        res.json({
+            success: true,
+            message: 'API работает!',
+            testData: true,
+            services: [
+                {
+                    id: 'test1',
+                    serviceId: 'test1',
+                    name: 'Тестовая услуга 1',
+                    description: 'Это тестовая услуга',
+                    price: 2.99,
+                    category: 'тест',
+                    active: true
+                },
+                {
+                    id: 'test2',
+                    serviceId: 'test2', 
+                    name: 'Тестовая услуга 2',
+                    description: 'Еще одна тестовая услуга',
+                    price: 4.99,
+                    category: 'тест',
+                    active: false
+                }
+            ],
+            user: {
+                phone: phone,
+                timestamp: new Date().toISOString()
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка тестового endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Получение всех доступных услуг (новый endpoint)
+app.get('/api/services', (req, res) => {
+    try {
+        console.log('📡 Запрос всех услуг');
+        
+        // Стандартный набор услуг
+        const allServices = [
+            {
+                id: 'antivirus',
+                name: 'Антивирус',
+                description: 'Защита устройства от вирусов и вредоносных программ',
+                price: '2.99 BYN/мес',
+                category: 'безопасность'
+            },
+            {
+                id: 'music',
+                name: 'Музыка',
+                description: 'Стриминг музыки без рекламы и ограничений',
+                price: '4.99 BYN/мес',
+                category: 'развлечения'
+            },
+            {
+                id: 'cloud',
+                name: 'Облако',
+                description: '50 ГБ облачного хранилища для файлов',
+                price: '1.99 BYN/мес',
+                category: 'хранилище'
+            },
+            {
+                id: 'games',
+                name: 'Игровая подписка',
+                description: 'Доступ к каталогу мобильных игр',
+                price: '3.99 BYN/мес',
+                category: 'развлечения'
+            },
+            {
+                id: 'roaming',
+                name: 'Международный роуминг',
+                description: 'Возможность пользоваться связью за границей',
+                price: '5.00 BYN/мес',
+                category: 'связь'
+            },
+            {
+                id: 'callerId',
+                name: 'Определитель номера',
+                description: 'Показывает номер входящего вызова',
+                price: '2.00 BYN/мес',
+                category: 'связь'
+            }
+        ];
+        
+        res.json({
+            success: true,
+            services: allServices,
+            count: allServices.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения услуг:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения услуг' 
+        });
+    }
+});
+
 // Получение услуг пользователя
+// Получение услуг пользователя (исправленная версия)
 app.get('/api/user/services', (req, res) => {
     try {
         const { phone } = req.query;
+        
+        console.log('📡 Запрос услуг для телефона:', phone);
         
         if (!phone) {
             return res.status(400).json({
@@ -1877,75 +2051,46 @@ app.get('/api/user/services', (req, res) => {
             });
         }
         
+        // Находим пользователя
         const user = database.users.find(u => u.phone === phone);
         if (!user) {
+            console.log('❌ Пользователь не найден для телефона:', phone);
             return res.status(404).json({
                 success: false,
                 error: 'Пользователь не найден'
             });
         }
         
+        console.log('✅ Пользователь найден:', user.fio);
+        
         // Получаем услуги пользователя из базы
         const userServices = database.userServices.filter(service => 
-            service.userId === user._id && service.active
+            service.userId === user._id && service.active !== false
         );
         
-        // Формируем ответ
-        const services = userServices.map(service => ({
-            id: service.serviceId,
-            name: service.name || 'Услуга',
-            category: service.category || 'другое',
-            price: `${service.price || 0} BYN`,
-            description: service.description || 'Дополнительная услуга',
-            active: true
-        }));
+        console.log('📊 Найдено услуг у пользователя:', userServices.length);
         
-        // Добавляем доступные услуги, которые не подключены
-        const availableServices = [
-            {
-                id: 'antivirus',
-                name: 'Антивирус',
-                category: 'безопасность',
-                price: '2.99 BYN',
-                description: 'Защита устройства от вирусов и вредоносных программ',
-                active: services.some(s => s.id === 'antivirus')
-            },
-            {
-                id: 'music',
-                name: 'Музыка',
-                category: 'развлечения',
-                price: '4.99 BYN',
-                description: 'Стриминг музыки без рекламы и ограничений',
-                active: services.some(s => s.id === 'music')
-            },
-            {
-                id: 'cloud',
-                name: 'Облако',
-                category: 'хранилище',
-                price: '1.99 BYN',
-                description: '50 ГБ облачного хранилища для файлов',
-                active: services.some(s => s.id === 'cloud')
-            },
-            {
-                id: 'games',
-                name: 'Игровая подписка',
-                category: 'развлечения',
-                price: '3.99 BYN',
-                description: 'Доступ к каталогу мобильных игр',
-                active: services.some(s => s.id === 'games')
-            }
-        ];
-        
+        // Всегда возвращаем успешный ответ с массивом услуг
         res.json({
             success: true,
-            services: availableServices
+            services: userServices.map(service => ({
+                id: service.serviceId || service.id,
+                serviceId: service.serviceId || service.id,
+                name: service.name || 'Услуга',
+                description: service.description || 'Дополнительная услуга',
+                price: service.price || 0,
+                category: service.category || 'другое',
+                active: service.active !== false
+            })),
+            count: userServices.length
         });
         
     } catch (error) {
         console.error('❌ Ошибка получения услуг пользователя:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Ошибка получения услуг пользователя' 
+            error: 'Ошибка получения услуг пользователя',
+            details: error.message
         });
     }
 });
@@ -2061,6 +2206,359 @@ app.post('/api/user/services/toggle', (req, res) => {
     }
 });
 
+// В server.js добавьте простой тестовый endpoint
+app.post('/api/test/services/simple', async (req, res) => {
+    console.log('🧪 Тестовый запрос на обновление услуг');
+    
+    try {
+        // Простая логика без сложных операций
+        const { userId, services } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({ error: 'Нет userId' });
+        }
+        
+        // Ищем пользователя
+        const user = database.users.find(u => u._id === userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        
+        // Просто уменьшаем баланс на 10 BYN для теста
+        user.balance -= 10;
+        
+        // Возвращаем успех
+        res.json({
+            success: true,
+            message: 'Тест успешен',
+            newBalance: user.balance,
+            test: true
+        });
+        
+    } catch (error) {
+        console.error('Тестовая ошибка:', error);
+        res.status(500).json({ error: 'Тестовая ошибка' });
+    }
+});
+
+
+app.post('/api/admin/user/services/update', async (req, res) => {
+    console.log('='.repeat(60));
+    console.log('🔄 ЗАПРОС НА ОБНОВЛЕНИЕ УСЛУГ');
+    console.log('Время:', new Date().toISOString());
+    
+    try {
+        const { userId, phone, services } = req.body;
+        
+        console.log('📦 Полученные данные:', { 
+            userId, 
+            phone, 
+            servicesCount: services ? services.length : 0,
+            services: services 
+        });
+        
+        // 1. Проверяем данные
+        if (!userId || !phone || !services) {
+            console.error('❌ Недостаточно данных:', { userId, phone, services });
+            return res.status(400).json({
+                success: false,
+                error: 'Не указаны необходимые данные'
+            });
+        }
+        
+        // 2. Находим пользователя
+        console.log('🔍 Ищем пользователя с ID:', userId);
+        const userIndex = database.users.findIndex(u => u._id === userId);
+        
+        if (userIndex === -1) {
+            console.error('❌ Пользователь не найден! ID:', userId);
+            console.log('📋 Доступные пользователи:');
+            database.users.forEach(u => console.log(`  - ${u._id}: ${u.fio} (${u.phone})`));
+            
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Пользователь не найден' 
+            });
+        }
+        
+        const user = database.users[userIndex];
+        console.log('✅ Пользователь найден:', user.fio, 'Баланс:', user.balance);
+        
+        // 3. Удаляем старые услуги пользователя
+        console.log('🗑️ Удаляем старые услуги...');
+        const oldServicesCount = database.userServices.filter(s => s.userId === userId).length;
+        database.userServices = database.userServices.filter(s => s.userId !== userId);
+        console.log(`✅ Удалено услуг: ${oldServicesCount}`);
+        
+        // 4. Создаем новые услуги
+        console.log('➕ Создаем новые услуги...');
+        
+        // Цены услуг
+        const servicePrices = {
+            'antivirus': 2.99,
+            'music': 4.99,
+            'cloud': 1.99,
+            'games': 3.99,
+            'roaming': 5.00,
+            'callerId': 2.00,
+            'antispam': 3.00
+        };
+        
+        let totalCost = 0;
+        const newServices = [];
+        
+        // Для каждой выбранной услуги
+        services.forEach((serviceId, index) => {
+            const price = servicePrices[serviceId] || 1.99;
+            totalCost += price;
+            
+            const serviceData = {
+                _id: `service_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+                userId: userId,
+                serviceId: serviceId,
+                name: getServiceName(serviceId),
+                price: price,
+                description: getServiceDescription(serviceId),
+                category: getServiceCategory(serviceId),
+                active: true,
+                activatedAt: new Date(),
+                lastChargeDate: new Date()
+            };
+            
+            database.userServices.push(serviceData);
+            newServices.push(serviceData);
+            
+            console.log(`  ✅ ${serviceData.name}: ${price} BYN`);
+        });
+        
+        console.log(`💰 Общая стоимость: ${totalCost.toFixed(2)} BYN`);
+        
+        // 5. Обновляем баланс пользователя
+        const oldBalance = user.balance;
+        user.balance = oldBalance - totalCost;
+        console.log(`💳 Баланс обновлен: ${oldBalance.toFixed(2)} → ${user.balance.toFixed(2)} BYN`);
+        
+        // 6. Добавляем запись о платеже
+        const paymentId = `payment_${Date.now()}`;
+        const payment = {
+            _id: paymentId,
+            userId: userId,
+            phone: phone,
+            amount: totalCost,
+            type: 'services_update',
+            description: `Обновление пакета услуг (${services.length} услуг)`,
+            date: new Date(),
+            status: 'completed'
+        };
+        
+        database.payments.push(payment);
+        console.log(`💸 Платеж создан: ${paymentId}, сумма: ${totalCost} BYN`);
+        
+        // 7. СОХРАНЯЕМ В БАЗУ ДАННЫХ
+        console.log('💾 Сохраняем изменения...');
+        saveDatabase();
+        
+        // 8. ПРОВЕРЯЕМ СОХРАНЕНИЕ
+        console.log('🔍 Проверяем сохранение...');
+        if (fs.existsSync(DATA_FILE)) {
+            const savedData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+            const savedUser = savedData.users.find(u => u._id === userId);
+            const savedServices = savedData.userServices.filter(s => s.userId === userId);
+            
+            console.log('✅ Проверка сохранения:');
+            console.log(`  • Пользователь ${savedUser?.fio}: баланс = ${savedUser?.balance}`);
+            console.log(`  • Услуг у пользователя: ${savedServices.length}`);
+        }
+        
+        // 9. Возвращаем ответ
+        const responseData = {
+            success: true,
+            message: `Услуги обновлены успешно!`,
+            servicesCount: services.length,
+            amountCharged: totalCost,
+            newBalance: user.balance,
+            services: newServices.map(s => ({
+                id: s.serviceId,
+                name: s.name,
+                price: s.price
+            }))
+        };
+        
+        console.log('📤 Отправляем ответ:', responseData);
+        console.log('='.repeat(60));
+        
+        res.json(responseData);
+        
+    } catch (error) {
+        console.error('❌ КРИТИЧЕСКАЯ ОШИБКА:', error);
+        console.error('Stack trace:', error.stack);
+        
+        res.status(500).json({ 
+            success: false, 
+            error: 'Внутренняя ошибка сервера',
+            details: error.message 
+        });
+    }
+});
+
+// Вспомогательные функции для услуг
+function getServiceName(serviceId) {
+    const names = {
+        'antivirus': 'Антивирус',
+        'music': 'Музыка',
+        'cloud': 'Облако',
+        'games': 'Игровая подписка',
+        'roaming': 'Международный роуминг',
+        'callerId': 'Определитель номера'
+    };
+    return names[serviceId] || serviceId;
+}
+// В server.js добавьте:
+app.get('/api/debug/data', (req, res) => {
+    try {
+        const stats = {
+            totalUsers: database.users.length,
+            totalServices: database.userServices.length,
+            userServicesByUser: {},
+            dataFileExists: fs.existsSync(DATA_FILE)
+        };
+        
+        // Группируем услуги по пользователям
+        database.users.forEach(user => {
+            const userServices = database.userServices.filter(s => s.userId === user._id);
+            stats.userServicesByUser[user.fio] = userServices.length;
+        });
+        
+        res.json({
+            success: true,
+            stats: stats,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+function getServiceDescription(serviceId) {
+    const descriptions = {
+        'antivirus': 'Защита устройства от вирусов и вредоносных программ',
+        'music': 'Стриминг музыки без рекламы и ограничений',
+        'cloud': '50 ГБ облачного хранилища для файлов',
+        'games': 'Доступ к каталогу мобильных игр',
+        'roaming': 'Возможность пользоваться связью за границей',
+        'callerId': 'Показывает номер входящего вызова'
+    };
+    return descriptions[serviceId] || 'Дополнительная услуга';
+}
+
+function getServiceCategory(serviceId) {
+    const categories = {
+        'antivirus': 'безопасность',
+        'music': 'развлечения',
+        'cloud': 'хранилище',
+        'games': 'развлечения',
+        'roaming': 'связь',
+        'callerId': 'связь'
+    };
+    return categories[serviceId] || 'другое';
+}
+
+
+// Проверка функции saveDatabase
+function testSaveDatabase() {
+    console.log('🧪 Тестирование saveDatabase()');
+    try {
+        saveDatabase();
+        console.log('✅ saveDatabase() работает нормально');
+        return true;
+    } catch (error) {
+        console.error('❌ Ошибка в saveDatabase():', error);
+        return false;
+    }
+}
+
+// Вызовем тест при запуске
+testSaveDatabase();
+
+// ========== ПОЛУЧЕНИЕ ВСЕХ ДОСТУПНЫХ УСЛУГ ==========
+app.get('/api/services', (req, res) => {
+    try {
+        console.log('📡 Запрос всех доступных услуг');
+        
+        const allServices = [
+            {
+                id: 'antivirus',
+                name: 'Антивирус',
+                description: 'Защита устройства от вирусов и вредоносных программ',
+                price: '2.99 BYN/мес',
+                category: 'безопасность'
+            },
+            {
+                id: 'music',
+                name: 'Музыка',
+                description: 'Стриминг музыки без рекламы и ограничений',
+                price: '4.99 BYN/мес',
+                category: 'развлечения'
+            },
+            {
+                id: 'cloud',
+                name: 'Облако',
+                description: '50 ГБ облачного хранилища для файлов',
+                price: '1.99 BYN/мес',
+                category: 'хранилище'
+            },
+            {
+                id: 'games',
+                name: 'Игровая подписка',
+                description: 'Доступ к каталогу мобильных игр',
+                price: '3.99 BYN/мес',
+                category: 'развлечения'
+            },
+            {
+                id: 'roaming',
+                name: 'Международный роуминг',
+                description: 'Возможность пользоваться связью за границей',
+                price: '5.00 BYN/мес',
+                category: 'связь'
+            },
+            {
+                id: 'callerId',
+                name: 'Определитель номера',
+                description: 'Показывает номер входящего вызова',
+                price: '2.00 BYN/мес',
+                category: 'связь'
+            },
+            {
+                id: 'antispam',
+                name: 'Антиспам',
+                description: 'Блокировка спам-звонков',
+                price: '3.00 BYN/мес',
+                category: 'защита'
+            }
+        ];
+        
+        res.json({
+            success: true,
+            services: allServices,
+            count: allServices.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения услуг:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Ошибка получения услуг' 
+        });
+    }
+});
+
+// ДУБЛИРУЮЩИЙ ENDPOINT ДЛЯ СОВМЕСТИМОСТИ
+app.post('/api/user/services/update', async (req, res) => {
+    console.log('📱 [DEBUG] Запрос на /api/user/services/update, перенаправляем...');
+    req.url = '/api/admin/user/services/update';
+    return app._router.handle(req, res);
+});
+
 // Вспомогательные функции для услуг
 function getServiceName(serviceId) {
     const names = {
@@ -2102,6 +2600,15 @@ function getServiceCategory(serviceId) {
     return categories[serviceId] || 'другое';
 }
 
+
+
+// Альтернативный endpoint (для совместимости)
+app.post('/api/user/services/update', async (req, res) => {
+    console.log('📱 Альтернативный endpoint /api/user/services/update вызван');
+    // Просто перенаправляем на основной endpoint
+    req.url = '/api/admin/user/services/update';
+    return app._router.handle(req, res);
+});
 // Пополнение баланса
 app.post('/api/payment/topup', (req, res) => {
     try {
